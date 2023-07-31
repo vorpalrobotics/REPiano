@@ -1,0 +1,1741 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>REPiano Practice Tracker</title>
+  <style>
+    .green-note {
+      color: green;
+    }
+    .red-note {
+      color: red;
+    }
+    th.col, td.col, td, th {
+      border-left:1px solid black;
+      border-right:1px solid black;
+    }
+    th {
+      border-top:1px solid black;
+      border-bottom:1px solid black;
+    }
+    button, select {
+      font-size:14px;
+      margin-right:20px;
+    }
+
+    .bigstat {
+      font-size: 30px;
+    }
+
+    .smallstat {
+      font-size: 18px;
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/webmidi@next/dist/iife/webmidi.iife.js"></script>
+</head>
+<body>
+  <div><span id=uitop style="font-size:18px"><strong>REP<em>iano</em></strong>&nbsp;&nbsp;</span>
+    <div id="presetMenuContainer" style="margin:10px;font-size:16px;display:inline;"></div>
+    <button id="setNotesButton" onclick="setNotes()">Manual Set</button>
+    <button id="doneButton" onclick="done()" style=display:inline disabled>DONE</button></span>
+  </div>
+</body>
+
+  <div style="max-height:90vh; padding-top:10px;">
+    <table id=data style="border-collapse:collapse; border: 1px solid black;width:100%">
+      <tr style="border-bottom:1px solid black;vertical-align: top;">
+        <td style='width:20%;vertical-align:top;'><div style='width:100%;height:100%;text-align:center;vertical-align:top;'>
+          <span id="testname" style=display:block;width:100%>&nbsp;</span>
+          <select id="handSelect" onchange="setNoteFilters();" style="width:100%">
+            <option value="left">Left Hand</option>
+            <option value="right">Right Hand</option>
+            <option value="both" selected>Both Hands</option>
+          </select>
+          <div id="elapsedTime" style="font-size:50px;text-align:center;width:100%">0:00</div>
+          <button id="testNotesButton" onclick="testNotes()" style=width:100%>START</button></div>
+        </td>
+        <td colspan=4><div id="statsDiv" style="font-size:12px">&nbsp;<br>&nbsp;</div></td></tr>
+        <tr><td colspan=2 style="border-bottom:1px solid black;position:relative;">
+          <div style="width:100%"><canvas id=graphCanvas style="width:100%;height:70vh;position:relative;"></canvas></div>
+          <div style="position:absolute;bottom:0;left:0;">
+            <strong>LH:</strong>
+            <div id="notesLH" style="display:inline-block"></div><br>
+            <strong>RH:</strong>
+            <div id="notesRH" style="display:inline-block"></div>
+          </td></tr>
+      <tr>
+        <td colspan=2 style="vertical-align: top;">
+          <strong>Console:</strong>
+          <div id="console" style="max-height:40vh;overflow-y:auto;"></div>
+        </td>
+      </tr>
+    </table>
+    <div style=max-width:80vw>
+    <h2>Explanations:</h2>
+    <h3>Top line statistics</h3>
+    <dl>
+      <dt>REPS</dt><dd>The number of repetitions completed. For a run to count as a valid REP there must be no note errors. A note error is a NoteFail.</dd>
+      <dt>NoteFail</dt><dd>The number of runs in which you hit an incorrect note.</dd>
+      <dt>QFail</dt><dd>The number of runs where there was a Quality Fail. A Quality Fail doesn't cause
+        you to lose the REP. A Quality Fail occurs if you get 3 strikes on quality metrics, which are defined
+        below.</dd>
+      <dt>BPM</dt><dd>The beats per minute speed of your most recent run that did not have a note fail. This
+        assumes each note played is a "beat". So this is really "notes per minute".</dd>
+      <dt>Avg, Max, Best</dt><dd>These are the Average BPM, Maximum BPM, and Best BPM, respectively. Best BPM
+        is defined as the maximum BPM among runs with no strikes, in other words your highest BPM during a high
+        quality run.</dd>
+      <dt>AvgHQ, AvgMQ, AvgLQ</dt><dd>These are the average BPM values during High Quality (0 strikes), Medium Quality (1 strike),
+        and Low Quality (2 or more strikes) runs. As always, runs with a note failure don't count at all, as they are considered
+        totally failed runs for which BPM can't really be measured.</dd>
+      </dl>
+    <h3>Bottom Line Statistics</h3>
+    The second line of stats give quality metrics.
+    <dl>
+    <dt>HTQ</dt><dd>Hands Together Quality measures what percentage of time your hands struck the corresponding notes
+      at the same time. Over 85% is considered high quality.</dd>
+    <dt>MetQ</dt><dd>Metric Quality measures how similar the lengths of time of each note is. If every note was played exacty the same amount of time this measure would be 100%.
+      If the standard deviation of note durations is bigger than the mean note duration this measure would be 0 percent.
+      You can ignore this stat if you are purposefully playing some notes longer than others, for example you are
+      playing your scales to a rhythm. The mean and standard deviation are displayed under this stat in a small font in the format: mean&plusmn;sd.</dd>
+    <dt>DynQ</dt><dd>Dynamic Quality measures whether each note was played with the same loudness (velocity in midi terms).
+      If every note is equally loud this will be 100%. If the standard deviation of loudness is greater than the mean loudness this will be
+      zero percent. The mean and standard deviation are displayed under this stat in a small font in the format: mean&plusmn;sd. You can ignore this stat
+      if you are purposefully putting a louder beat on certain notes, or if you are purposefully playing one hand loud and the other soft.</dd>
+    <dt>LegQ</dt><dd>Legato quality measures how well you are playing Legato (smoothly without breaks). Note that strikes are not assigned to low legato scores since we don't know if you're attempting to play legato or not. If each note (in each hand) starts exactly when the
+      last note finishes every single time, this measure will be 100%. A very small overlap is not penalized because some teachers instruct that legato has
+      a small overlap. A gap or a larger overlap is penalized. Underneath this stat there is a display of the amount of average gap in milliseconds (when there was a gap), and the amount of average overlap (when there was an overlap).
+      If you are purposely playing one hand legato and one hand staccatto you can just bear in mind that this figure would only be 50% at most (i.e. half the notes are perfect legato).</dd>
+    <dt>StaQ</dt><dd>Staccatto Quality, like Legato Quality, measures how closely you are playing Staccatto. It also doesn't cause strikes for the same reason as
+      Legato Quality doesn't. A perfect score of 100% would occur if every note has a gap afterwards of at least the duration of the note. We do not attempt to distinguish different kinds of staccatto.</dd>
+    </dl>
+    <p>Strikes occur on a run with no note failures when one or more quality metrics (not counting LegQ or StaQ) are below certain values.
+       Generally, scores of 85 or higher get zero strikes. Scores between 70 and 84 inclusive get 1 strike. Scores between 50 and 69 inclusive get 2 strikes, and scores under 50 get 3 strikes.
+       Strikes are added up between the HTQ, MetQ, and DynQ stats. Zero total strikes is considered a "high quality run", one total strike is a "medium quality run" and anything more than 1 strike
+       is considered a "quality fail".
+    <h3>The Graph</h3>
+    <p>The graph only displays data on runs without note fails.</p>
+    <p>The graph shows proportional note start/end times as a bar graph, blue for left hand notes and red for right hand.</p>
+    <p>The loudness (midi velocity) on a scale of 0 to 100 is displayed in white letters right on the note bars. Also, standard piano abbreviations such as "pp" for pianissimo or "mf" for mezzo forte are printed. However, depending on your exact midi keyboard parameters these may not be accurate, so just consider them approximations.
+      Each bar's internal color is also faded the more softly it was played.</p>
+    <p>For scales/arpeggios that have fingering data, the finger that was supposed to play the note is displayed underneath the bars.
+      The left hand finger is blue and the right hand finger is red.</p>
+    <p>On any run with 2 or more quality strikes, the words "Slow Down!" are printed on the graph in a large font.</p>
+    <p>A legend in the upper right corner shows the proportional horizontal time scale for 100 milliseconds (1/10 of second). This can give you a feeling for how large gaps/overlaps are between
+      played notes, how consistent note durations are, etc.</p>
+    <p>Using the graph, you might be able to pick out fingering problems, for example some fingers might be
+      holding too long or releasing too quickly in a consistent way. By concentrating on making those fingers
+      consistent your quality should increase.</p>
+    </div>
+
+  </div>
+
+  <script>
+    // State variables
+    var STATE = {
+      SETTING_NOTES: 'SETTING_NOTES',
+      TESTING_NOTES: 'TESTING_NOTES',
+      WAITING_FOR_BUTTON: 'WAITING_FOR_BUTTON',
+      TEST_FLUSHING: 'TEST_FLUSHING'
+    };
+
+    var currentState = STATE.WAITING_FOR_BUTTON;
+
+    // Variables for note tracking
+    var notesToPlay = [[], []];
+    var fingersToPlay = null;
+    var playedNotes = [[], []];  // lh, rh
+    var waitNotes = null;  // played notes transfer here while awaiting the final notes to stop playing
+    var repetitionCount = 0;
+    var successCount = 0;
+    var failCount = 0;
+    var softFailCount = 0;
+    var startTime = null;
+    var testStartTime = null;
+    var totalDuration = 0;
+    var currentHand = 'right';
+    var wrongNotePlayed = false;
+    var maxBPM = 0; // highest bpm not worrying about quality (but notes have to all be correct)
+    var bestBPM = 0;  // best bpm among high quality runs
+    var sumQBPM = [0,0,0,0];
+    var numQBPM = [0,0,0,0];
+    var noteFilterHigh = -1;
+    var noteFilterLow = 1000;
+
+    // Array of presets
+    var presets = [];
+
+// Function to handle preset selection
+function handlePresetSelection(presetIndex) {
+  if (presetIndex >= 0 && presetIndex < presets.length) {
+    var selectedPreset = presets[presetIndex];
+
+    // Update notesToPlay with the selected preset's notes
+    notesToPlay = [selectedPreset.leftHand, selectedPreset.rightHand];
+    if (selectedPreset.leftFingers !== null && selectedPreset.rightFingers !== null) {
+      fingersToPlay = [selectedPreset.leftFingers, selectedPreset.rightFingers];
+    } else {
+      fingersToPlay = null;
+    }
+
+    updateDisplayedNotesToPlay();
+
+    document.getElementById("testname").textContent = selectedPreset.name;
+  }name
+  setNoteFilters();
+}
+
+function updateDisplayedNotesToPlay() {
+  for (var h = 0; h < 2; h++) {
+    let notepr = "";
+    for (var i = 0; i < notesToPlay[h].length; i++) {
+      notepr += " <span id=ntp_"+h+"_"+i+">"+prnotenum(notesToPlay[h][i])+"</span>";
+    }
+
+    document.getElementById("notes"+(h?"RH":"LH")).innerHTML = notepr;
+  }
+}
+
+// Create presets I'm using now
+console.log("pushing new presets");
+presets.push("Scales");
+presets.push(generateScalePreset('B', 'maj', 1, 3));
+presets.push(generateScalePreset('C', 'maj', 1, 3));
+presets.push(generateScalePreset('C', 'maj', 2, 3));
+presets.push(generateScalePreset('D', 'maj', 1, 3));
+presets.push(generateScalePreset('G', 'maj', 1, 3));
+presets.push(generateScalePreset('A', 'natMin', 1, 3));
+presets.push(generateScalePreset('C', 'mixoBlues', 1, 3));
+presets.push("Arpeggios");
+presets.push(generateScalePreset('C', 'majArp', 2, 3));
+presets.push(generateScalePreset('A', 'natMinArp', 2, 3));
+presets.push(generateScalePreset('G', 'majArp', 2, 3));
+presets.push("Octaves");
+presets.push(generateScalePreset('C', 'maj', 1, 5, "RH Octave C5"));
+presets.push(generateScalePreset('C', 'maj', 1, 2, "LH Octave C2"));
+presets.push("Debugging");
+presets.push(  // a very simple pattern for debugging the software
+  {
+    name: 'TEST',
+    leftHand: [48, 50, 52, ],
+    rightHand: [60, 62, 64, ]
+  }
+);
+
+presets.push(  // a very simple pattern for debugging the software
+  {
+    name: 'SC.TEST',
+    leftHand: [48, 50, 52, 50, 48],
+    rightHand: [60, 62, 64, 62, 60]
+  }
+);
+
+// Create the preset menu
+var presetMenu = document.createElement('select');
+presetMenu.style.fontSize = "16px";
+var defaultOption = document.createElement('option');
+defaultOption.value = -1;
+defaultOption.text = 'Presets'; // Default menu item
+defaultOption.style.fontSize = "14px";
+presetMenu.appendChild(defaultOption);
+
+// Add menu options for each preset
+presets.forEach(function(preset, index) {
+  if (typeof(preset) === "string") {
+    // label for grouping presets
+   const optgroup = document.createElement('optgroup');
+   optgroup.label = preset;
+   optgroup.style.fontSize = "18px";
+   optgroup.style.color = "blue";
+   presetMenu.appendChild(optgroup);
+    return;
+  }
+  var option = document.createElement('option');
+  option.value = index;
+  option.text = preset.name;
+  option.style.fontSize = "16px";
+  presetMenu.appendChild(option);
+});
+
+// Event handler for preset menu selection
+presetMenu.addEventListener('change', function() {
+  var selectedIndex = this.value;
+  handlePresetSelection(selectedIndex);
+});
+
+// Add the preset menu to the page
+var menuContainer = document.getElementById('presetMenuContainer');
+menuContainer.appendChild(presetMenu);
+
+function resetPresetMenu() {
+  presetMenu.selectedIndex = 0; // Set the selected index to the default option
+}
+
+function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = null) {
+
+  const scaleIntervals = {
+    maj: [0, 2, 4, 5, 7, 9, 11, 12],
+    natMin: [0, 2, 3, 5, 7, 8, 10, 12],
+    harMin: [0, 2, 3, 5, 7, 8, 11], // not right
+    melMin: [0, 2, 3, 5, 7, 9, 11], // not right
+    mixoBlues: [0, 2, 3, 4, 5, 6, 7, 9, 10],
+    majArp: [0,4,7],
+    natMinArp: [0,3,7]
+  };
+
+  const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+
+  const fingerings = new Object();
+  fingerings["C maj"] =
+    fingerings["D maj"] =
+    fingerings["E maj"] =
+    fingerings["G maj"] =
+    fingerings["A maj"] =
+      fingerings["A natMin"] =
+      fingerings["C natMin"] =
+      fingerings["G natMin"] =
+      fingerings["D natMin"] =
+      fingerings["E natMin"] =
+      [
+        { start: [5,4,3,2,1], oct: [3,2,1,4,3,2,1], end: [3,2,1] },
+        { start: [1,2,3], oct: [1,2,3,4,1,2,3], end: [1,2,3,4,5] }
+      ];
+
+
+  fingerings["B maj"] =
+    fingerings["B natMin"] =
+    [
+      { start: [4,3,2,1], oct: [4,3,2,1,3,2,1], end: [4,3,2,1] },
+      { start: [1,2,3], oct: [1,2,3,4,1,2,3], end: [1,2,3,4,5] }
+    ];
+
+  fingerings["C mixoBlues"] =
+    fingerings["B natMin"] =
+    [
+      { start: [1,2,3,1,2,3], oct: [1,2,3,1,2,3,1,2,3], end: [1,2,3,4] },
+      { start: [3,2,1,3,2,1], oct: [3,2,1,3,2,1,3,2,1], end: [3,2,1,3] }
+    ];
+
+  const label = name?name:`${noteName} ${scaleType} Scale (${numOctaves} Oct)`;
+
+  let fingers = fingerings[noteName+" "+scaleType];
+  if (typeof fingers === "undefined") {
+    fingers = null;
+  }
+
+  const preset = {
+    name: label,
+    leftHand: [],
+    rightHand: [],
+    leftFingers: null,
+    rightFingers: null
+  };
+
+  const arpmode = scaleType.includes("Arp");
+  console.log("arpmode="+arpmode);
+
+  // Get the index of the starting note in the noteNames array
+  const startNoteIndex = noteNames.indexOf(noteName);
+
+  // Generate the scale notes for the specified number of octaves
+
+  // first, ascending
+  for (let octave = lhOctave; octave <= lhOctave + numOctaves - 1; octave++) {
+    for (let i = ((arpmode||(octave===lhOctave))?0:1); i < scaleIntervals[scaleType].length; i++) {
+      const noteIndex = (startNoteIndex + scaleIntervals[scaleType][i]);
+      const noteNumber = (octave+1) * 12 + noteIndex;
+      preset.leftHand.push(noteNumber);
+      preset.rightHand.push(noteNumber+12);
+    }
+  }
+
+  if (arpmode) {
+    // arpeggios usually play the tonic one beyond the top octave
+    const noteIndex = (startNoteIndex + scaleIntervals[scaleType][0]);
+    const noteNumber = (lhOctave+numOctaves+1) * 12 + noteIndex;
+    preset.leftHand.push(noteNumber);
+    preset.rightHand.push(noteNumber+12);
+  }
+
+  // then, descending. In arpeggio mode do not include the very last note
+  // because arpeggios are typically practiced by 'cycling' which does not
+  // repeat the first note after the end note is played
+  for (let octave = lhOctave+numOctaves-1; octave >= lhOctave; octave--) {
+    for (let i = scaleIntervals[scaleType].length-(arpmode?1:2); i >= 0; i--) {
+      if (arpmode && octave === lhOctave && i === 0) {
+        break; // arpeggios "cycle"
+      }
+      const noteIndex = (startNoteIndex + scaleIntervals[scaleType][i]);
+      const noteNumber = (octave+1) * 12 + noteIndex;
+      preset.leftHand.push(noteNumber);
+      preset.rightHand.push(noteNumber+12);
+    }
+  }
+
+  if (fingers) {
+    preset.leftFingers = [];
+    preset.rightFingers = [];
+
+    // ASCENDING
+
+    // start sequences
+    for (var i = 0; i < fingers[0].start.length; i++) {
+      preset.leftFingers.push(fingers[0].start[i]);
+    }
+    for (var i = 0; i < fingers[1].start.length; i++) {
+      preset.rightFingers.push(fingers[1].start[i]);
+    }
+
+    // extra octaves
+    for (var oct = numOctaves-1; oct > 0; oct--) {
+      for (var i = 0; i < fingers[0].oct.length; i++) {
+        preset.leftFingers.push(fingers[0].oct[i]);
+      }
+      for (var i = 0; i < fingers[1].oct.length; i++) {
+        preset.rightFingers.push(fingers[1].oct[i]);
+      }
+    }
+
+    // end sequences
+    for (var i = 0; i < fingers[0].end.length; i++) {
+      preset.leftFingers.push(fingers[0].end[i]);
+    }
+    for (var i = 0; i < fingers[1].end.length; i++) {
+      preset.rightFingers.push(fingers[1].end[i]);
+    }
+
+    // DESCENDING
+
+    // end sequences
+    for (var i = fingers[0].end.length-2; i >= 0; i--) {
+      preset.leftFingers.push(fingers[0].end[i]);
+    }
+    for (var i = fingers[1].end.length-2; i >= 0; i--) {
+      preset.rightFingers.push(fingers[1].end[i]);
+    }
+
+    // extra octaves
+    for (var oct = numOctaves-1; oct > 0; oct--) {
+      for (var i = fingers[0].oct.length-1; i >= 0; i--) {
+        preset.leftFingers.push(fingers[0].oct[i]);
+      }
+      for (var i = fingers[1].oct.length-1; i >= 0; i--) {
+        preset.rightFingers.push(fingers[1].oct[i]);
+      }
+    }
+
+    // start sequences
+    for (var i = fingers[0].start.length-1; i >= 0; i--) {
+      preset.leftFingers.push(fingers[0].start[i]);
+    }
+    for (var i = fingers[1].start.length-1; i >= 0; i--) {
+      preset.rightFingers.push(fingers[1].start[i]);
+    }
+
+  }
+  return preset;
+}
+
+
+
+    // Function to set the notes to be played
+    function setNotes() {
+      currentState = STATE.SETTING_NOTES;
+      console.log("State: setting notes");
+      notesToPlay = [[], []]; // reset
+
+      resetPresetMenu();
+
+      updateSelectableOptions(true, true, false);
+      changeSelectedHand('right');
+
+      // Prompt the user to play notes
+      message('Play notes for later test');
+
+      // Disable setNotes button and enable doneButton
+      document.getElementById('setNotesButton').disabled = true;
+      document.getElementById('testNotesButton').disabled = true;
+      document.getElementById('doneButton').disabled = false;
+
+      // Clear the notesToPlay on gameScreen
+      clearNotesToPlay();
+
+      // Clear the displayed played notes to start new test
+      clearPlayedNotes();
+
+      // Reset the wrongNotePlayed flag
+      wrongNotePlayed = false;
+      currentHand = 'left';
+    }
+
+    // Function to test the notes repetition
+    function testNotes() {
+      var button = document.getElementById('testNotesButton');
+
+      if (currentState === STATE.TESTING_NOTES || currentState === STATE.TEST_FLUSHING) {
+        currentState = STATE.WAITING_FOR_BUTTON;
+
+        // Enable setNotes button and disable doneButton
+        document.getElementById('setNotesButton').disabled = false;
+        document.getElementById('doneButton').disabled = true;
+        endTest(); // stop the timer
+        button.textContent = "START";
+        scrollToDataTop(false);
+        return;
+      }
+
+      // if we get here we need to start a test sequence.
+      clearStats();
+      setNoteFilters();
+
+      if (notesToPlay[0].length === 0 && notesToPlay[1].length === 0) {
+        message("There are no notes to test, use the SET NOTES button first");
+        return;
+      }
+      currentState = STATE.TESTING_NOTES;
+      console.log("State: testing");
+
+      // Disable the "Test Notes" button
+
+      button.textContent = "STOP";
+      document.getElementById('setNotesButton').disabled = true;
+      // enable both hands mode
+      updateSelectableOptions(true, true, true);
+
+      // Clear the displayed played notes during the test phase
+      clearPlayedNotes();
+
+      startTest();
+
+      scrollToDataTop(true);
+
+    }
+
+    // Function to handle the "Done" button click
+    function done() {
+      if (currentState === STATE.SETTING_NOTES) {
+        currentState = STATE.WAITING_FOR_BUTTON;
+
+        // Enable the "Set Notes" button and disable the "Done" button
+        document.getElementById('setNotesButton').disabled = false;
+        document.getElementById('testNotesButton').disabled = false;
+        document.getElementById('doneButton').disabled = true;
+
+        // create a string to make it easy to create presets
+        var preset = "{name: 'new', leftHand: [";
+        for (var i = 0; i < notesToPlay[0].length; i++) {
+          preset += notesToPlay[0][i] + ", ";
+        }
+        preset += "], rightHand: [";
+        for (var i = 0; i < notesToPlay[1].length; i++) {
+          preset += notesToPlay[1][i] + ", ";
+        }
+        preset += "]};";
+        message(preset);
+
+        if (notesToPlay[0].length && notesToPlay[1].length) {
+            changeSelectedHand('both');
+        } else if (notesToPlay[0].length) {
+            changeSelectedHand('left');
+        } else {
+            changeSelectedHand('right');
+        }
+
+        setNoteFilters();
+
+      }
+    }
+
+    // Function to display a message in the console
+    function message(text) {
+      var consoleDiv = document.getElementById('console');
+      var messageP = document.createElement('p');
+      messageP.textContent = text;
+      consoleDiv.appendChild(messageP);
+      consoleDiv.scrollTop = consoleDiv.scrollHeight;
+    }
+
+
+    // Function to display a warning message in the console
+    function warning(text) {
+      var consoleDiv = document.getElementById('console');
+      var messageP = document.createElement('p');
+      messageP.style.color = 'red';
+      messageP.textContent = text;
+      consoleDiv.appendChild(messageP);
+      consoleDiv.scrollTop = consoleDiv.scrollHeight;
+    }
+
+    // Function to display a message in the console
+    function messageStats(text) {
+      var statsDiv = document.getElementById('statsDiv');
+      statsDiv.innerHTML = text;
+    }
+
+    function errorStats(error) {
+      var statsDiv = document.getElementById('statsDiv');
+      var consoleDiv = document.getElementById('console');
+
+      if (error) {
+        document.body.style.backgroundColor = "yellow";
+      } else {
+        document.body.style.backgroundColor = "white";
+      }
+    }
+
+    // Function to get the selected hand from the pulldown menu
+    function getSelectedHand() {
+      var handSelect = document.getElementById('handSelect');
+      return handSelect.value;
+    }
+
+    // Function to change the selected hand in the pulldown menu
+    function changeSelectedHand(hand) {
+      var handSelect = document.getElementById('handSelect');
+      handSelect.value = hand;
+    }
+
+
+    // Function to update the availability of selectable options in the pulldown menu
+    // Function to update the availability of selectable options in the pulldown menu
+    function updateSelectableOptions(leftAvailable, rightAvailable, bothAvailable) {
+      var handSelect = document.getElementById('handSelect');
+      var options = handSelect.options;
+
+      for (var i = 0; i < options.length; i++) {
+        var option = options[i];
+        var value = option.value;
+
+        if ((value === 'left' && leftAvailable !== null) ||
+            (value === 'right' && rightAvailable !== null) ||
+            (value === 'both' && bothAvailable !== null)) {
+          option.disabled = !(value === 'left' && leftAvailable) &&
+                            !(value === 'right' && rightAvailable) &&
+                            !(value === 'both' && bothAvailable);
+        }
+      }
+
+      // Enable the pulldown menu
+      handSelect.disabled = false;
+    }
+
+
+    function displayTestStats(notes) {
+      var alerts = []; // alert structures for graph annotations
+
+      // Increment the repetition count
+      repetitionCount++;
+
+      // Calculate average BPM
+      var duration = 1;
+
+      if (!wrongNotePlayed) {
+        let stime = 0;
+        let etime = 0;
+        const hand = getSelectedHand();
+        if (hand === 'both') {
+          stime = Math.min(notes[0][0].sTime, notes[1][0].sTime);
+          etime = Math.max(notes[0][notes[0].length-1].eTime, notes[1][notes[1].length-1].eTime);
+        } else if (hand === 'left') {
+          stime = notes[0][0].sTime;
+          etime = notes[0][notes[0].length-1].eTime;
+        } else {
+          stime = notes[1][0].sTime;
+          etime = notes[1][notes[1].length-1].eTime;
+        }
+        duration = etime - stime;
+        totalDuration += duration;
+      }
+
+      // Calculate average BPM for successful repetitions
+      // pick the hand with the largest number of notes as the number played.
+
+      var noteCount = Math.max(notesToPlay[0].length, notesToPlay[1].length);
+
+      var averageBPM = Math.trunc((noteCount) * successCount / (totalDuration / 60000));
+      var currentBPM = 0;
+      if (!wrongNotePlayed) { // don't update currentBPM if we're in error state
+        currentBPM = Math.trunc((noteCount) / (duration / 60000));
+        if (currentBPM >= maxBPM) {
+          maxBPM = currentBPM;
+        }
+      } else {
+        currentBPM = 0;
+      }
+
+      // Print repetition and BPM details
+      let stats = "<table><tr style='border-bottom:1px solid black'>";
+      stats += '<td style=vertical-align:top;border:none;padding-right:10px>REPS:<br><span class=bigstat style="color:green">' +
+        successCount +
+        '</span>&nbsp;(' + Math.trunc(100 * successCount / (successCount + failCount)) + '%) </td>';
+
+      stats += '<td style=vertical-align:top;border:none>NoteFail<br><span class=smallstat style="color:red">' +
+        failCount + '</span></td>';
+      stats += '<td style=vertical-align:top;border:none>QFail<br><span class="smallstat" style="color:red">' +
+        softFailCount + '</span></td>';
+
+      stats += '<td style=vertical-align:top;border:none;padding-right:10px>BPM:<br><span class=bigstat>' +
+        (currentBPM?Math.trunc(currentBPM):"&nbsp;") + '</span></td>';
+      stats += '<td style=vertical-align:top;border:none;padding-right:10px>Avg:<br><span class=smallstat>' +
+        Math.trunc(averageBPM) + "</span></td>";
+      stats += '<td style=vertical-align:top;border:none;padding-right:10px;padding-right:10px;padding-right:10px>Max:<br><span class=smallstat>' +
+        Math.trunc(maxBPM) + "</span></td>";
+      stats += '<td style=vertical-align:top;border:none;padding-right:10px;>Best:<br><span class=smallstat>' +
+          Math.trunc(bestBPM) + "</span></td>";
+      stats += '<td style=vertical-align:top;border:none;padding-right:10px>AvgHQ:<br><span class=smallstat>' +
+          (numQBPM[0]?Math.trunc(sumQBPM[0]/numQBPM[0]):0) + "</span> <span style=font-size:small>("+numQBPM[0]+")</span></td>";
+      stats += '<td style=vertical-align:top;border:none;padding-right:10px>AvgMQ:<br><span class=smallstat>' +
+          (numQBPM[1]?Math.trunc(sumQBPM[1]/numQBPM[1]):0) + "</span> <span style=font-size:small>("+numQBPM[1]+")</span></td>";
+      stats += '<td style=vertical-align:top;border:none;padding-right:10px>AvgLQ:<br><span class=smallstat>' +
+              ((numQBPM[2]+numQBPM[3])?Math.trunc((sumQBPM[2]+sumQBPM[3])/(numQBPM[2]+numQBPM[3])):0) +
+              "</span> <span style=font-size:small>("+(numQBPM[2]+numQBPM[3])+")</span></td></tr>";
+
+      // compute quality metrics, hands togetherness
+      // but only compute this if testing in hands together mode, and if
+      // both sets of notes are the same length
+
+      var strikes = 0; // three strikes gets you a slow down message
+
+      stats += "<tr style='border:none'>";
+      if (!wrongNotePlayed && getSelectedHand() === 'both' &&
+          notes[0].length === notes[1].length) {
+
+        var together = 0;
+        var apart = 0;
+        var htStat = new StatTracker();
+
+        for (var i = 0; i < notes[0].length; i++) {
+          apart += Math.abs(notes[0][i].sTime - notes[1][i].sTime);
+          apart += Math.abs(notes[0][i].eTime - notes[0][i].eTime);
+
+          var overlap = Math.min(notes[0][i].eTime, notes[0][i].eTime)
+                - Math.max(notes[0][i].sTime, notes[1][i].sTime);
+          htStat.addDataPoint(Math.trunc(100*overlap/(apart+overlap)));
+
+          if (overlap < 0) overlap = 0;
+          together += overlap;
+        }
+
+        const htqmerit = Math.trunc(100*(together/(together+apart)));
+        stats += "<td style=vertical-align:top;border:none>HTQ:<br><span class=bigstat style='color:" +
+          colorcode(htqmerit) + "''>" + htqmerit + "</span></td>";
+
+          strikes += strikeScore(htqmerit);
+          console.log("htq strikes="+strikes);
+
+      } else {
+        stats += "<td style=vertical-align:top;border:none>HTQ:<br><span class=bigstat style='color:black'>&nbsp;</span></td>";
+      }
+
+      if (!wrongNotePlayed) {
+        // Metric quality: were notes played for roughly the same length of time?
+        // Could track for left and right independently to find trouble spots.
+
+        var metStat = new StatTracker();
+
+        for (var h = 0; h < 2; h++) {
+          for (var i = 0; i < notes[h].length; i++) {
+            if (notes[h][i].eTime === null) {
+              continue; // don't count notes that are not yet released.
+            }
+            metStat.addDataPoint(notes[h][i].eTime - notes[h][i].sTime, [h,i]);
+          }
+        }
+        const metmean = metStat.calculateMean();
+        const metsd = metStat.calculateStandardDeviation();
+        var metmerit = metmean?Math.trunc(100*(1 - (metsd/metmean))):0;
+        if (metmerit < 0) metmerit = 0;
+        stats += "<td style=vertical-align:top;border:none;padding-right:15px>MetQ:<br><span class=bigstat style='color:" +
+          colorcode(metmerit) + "'>" + metmerit + "</span>" +
+          "<br>("+Math.trunc(metmean)+"&plusmn;"+Math.trunc(metsd)+")</td>";
+
+        metStat.findOutliers("SHORT", "LONG", alerts);
+
+        strikes += strikeScore(metmerit);
+        console.log("metq strikes="+strikes);
+
+        // Dynamic quality: were notes played at approximately the same loudness?
+        // Could track this separately for left and right hands as well to see if one is overpowering
+
+        var dynStat = new StatTracker();
+        var minVelocity = 1000;
+        var maxVelocity = 0;
+        var noteMinVelocity = -1;
+        var noteMaxVelocity = -1;
+
+        for (var h = 0; h < 2; h++) {
+          for (var i = 0; i < notes[h].length; i++) {
+            const v = 100*notes[h][i].velocity;
+            dynStat.addDataPoint(v, [h,i]);
+            if (v > maxVelocity) {
+              maxVelocity = v;
+              noteMaxVelocity = [h,i];
+            }
+            if (v < minVelocity) {
+              minVelocity = v;
+              noteMinVelocity = [h,i];
+            }
+          }
+        }
+        const dynmean = dynStat.calculateMean();
+        const dynsd = dynStat.calculateStandardDeviation();
+        var dynmerit = Math.trunc(100*(1 - (dynsd/dynmean)));
+        if (dynmerit < 0) dynmerit = 0;
+
+        if (minVelocity < dynmean*0.6) {
+          alerts.push({
+            name: "QUIET",
+            note: noteMinVelocity
+          })
+        }
+
+        if (maxVelocity > dynmean*1.4) {
+          alerts.push({
+            name: "LOUD",
+            note: noteMaxVelocity
+          })
+        }
+
+        strikes += strikeScore(dynmerit);
+        console.log("dynq strikes="+strikes);
+
+        stats += "<td style=vertical-align:top;border:none;padding-right:15px>DynQ:<br><span class=bigstat style='color:" +
+          colorcode(dynmerit) + "'>" + dynmerit + "</span>" +
+          "<br>("+Math.trunc(dynmean)+"&plusmn;"+Math.trunc(dynsd)+")</td>";
+
+
+        // Legato quality: were consecutive notes in the same hand played with
+        // little or no gap and little or no overlap?
+        // Could track this separately for left and right hands as well to see
+        // if one is better or worse
+
+
+        var legSum = 0; // sum of all note durations
+        var legError = 0; // sum of end/start gap or overlap errors
+        var legNum = 0; // number of data points
+        var gap = 0;
+        var overlap = 0;
+        var numgap = 0;
+        var numoverlap = 0;
+        var staccattoSum = 0;
+        var noteMaxOverlap = -1;
+        var maxOverlap = 0;
+
+        for (var h = 0; h < 2; h++) {
+          for (var i = 0; i < notes[h].length-1; i++) {
+            // we will consider perfect to be 0 gap and 0 overlap, so take the absolute value
+            // of the end of first note minus start of the next and accumulate this.
+            legNum++;
+            const notedur = notes[h][i].eTime - notes[h][i].sTime;
+            legSum += notedur;
+            const diff = notes[h][i].eTime - notes[h][i+1].sTime;
+            if (diff > 0) {
+              overlap += diff;
+              numoverlap++;
+              if (diff > maxOverlap) {
+                maxOverlap = diff;
+                noteMaxOverlap = [h,i];
+              }
+              // add nothing to staccatto sum
+              //console.log("Zero stacSum");
+            } else if (diff < 0) {
+              gap -= diff;
+              numgap++;
+
+              if ((1-diff) > notedur) {
+                staccattoSum += 100;
+              } else {
+                staccattoSum += 100*(-diff/notedur);
+              }
+            }
+            legError += Math.abs(diff);
+          }
+        }
+        var legMerit = legSum?Math.trunc(100 - 100*(legError/legSum)):0;
+        if (legMerit < 0) legMerit = 0;
+
+        const avggap = numgap?Math.trunc(gap/numgap):0;
+        const avgoverlap = numoverlap?Math.trunc(overlap/numoverlap):0;
+
+        console.log("maxOverlap="+maxOverlap+" avgoverlap="+avgoverlap+" avgdur="+duration/noteCount);
+        if (noteMaxOverlap != -1 && maxOverlap > avgoverlap*2 &&
+          maxOverlap > (0.1*(duration/noteCount))) {
+            // we will always allow up to 10% of average note duration for overlap
+            // because some teachers say that lagato has some overlap
+          alerts.push( {
+            name: "OVLP "+Math.trunc(100*maxOverlap/avgoverlap)+"%",
+            note: noteMaxOverlap
+          });
+          console.log("Pushed alert");
+        }
+
+        stats += "<td style=vertical-align:top;border:none;padding-right:15px>LegQ:<br><span class=bigstat style='color:" +
+          colorcode(legMerit) + "'>" + legMerit + "</span>" + "<br>(g:" + avggap + " o:" + avgoverlap + ")" + "</td>";
+
+        // staccatto quality
+        // staccatto quality will be considered 100% for a note that has a gap after it plays
+        // that is greater than the notes duration. if gap is less than that, then quality is 100*gap/duration
+        // if this is negative (i.e. overlap) then it's also 0 quality. The average quality of all notes is
+        // then computed.
+        const stacMerit = legNum?Math.trunc(staccattoSum/legNum):0;
+        stats += "<td style=vertical-align:top;border:none>StaQ:<br><span class=bigstat style='color:" +
+          colorcode(stacMerit) + "'>" + stacMerit + "</span>" + "</td>";
+        stats += "</tr>";
+      } else {
+        // no stats due to error
+        stats += "<td style=vertical-align:top;border:none;padding-right:15px>MetQ:<br><span class=bigstat style='color:black'>&nbsp;</span>" +
+          "<br>(na)</td>"
+        stats += "<td style=vertical-align:top;border:none;padding-right:15px>DynQ:<br><span class=bigstat style='color:black'>&nbsp;</span>" +
+            "<br>(na)</td>"
+        stats += "<td style=vertical-align:top;border:none>LegQ:<br><span class=bigstat style='color:black'>&nbsp;</span>" + "</td>";
+
+        stats += "<td style=vertical-align:top;border:none>StaQ:<br><span class=bigstat style='color:black'>&nbsp;</span>" + "</td>";
+        stats += "</tr>";
+      }
+
+      if (strikes > 2) { // sloppy play! warn user
+        softFailCount++;
+      }
+      stats += "</table>";
+
+      if (strikes > 3) {
+        strikes = 3;
+      }
+      console.log("Final Strikes="+strikes);
+
+      // keep track of high, medium, and low quality runs
+      // high quality is 0 strikes, medium is 1 strike, low is
+      // 2 or 3 strikes
+      if (currentBPM > 0 && !wrongNotePlayed) {
+        sumQBPM[strikes] += currentBPM;
+        numQBPM[strikes]++;
+
+        if (strikes === 0 && !wrongNotePlayed && currentBPM > bestBPM) {
+            bestBPM = currentBPM;
+        }
+      }
+
+      messageStats(stats);
+
+      if (!wrongNotePlayed) {
+        drawNoteBarGraph(notes, strikes, alerts);
+      }
+    }
+
+    function setNoteFilters() {
+      let hand = getSelectedHand();
+
+      if (hand === 'both') {
+        noteFilterHigh = Math.max(...notesToPlay.flat()) + 3;
+        noteFilterLow = Math.min(...notesToPlay.flat()) - 3;
+      } else if (hand === 'left') {
+        noteFilterHigh = Math.max(...notesToPlay[0]) + 3;
+        noteFilterLow = Math.min(...notesToPlay[0]) - 3;
+      } else {
+        noteFilterHigh = Math.max(...notesToPlay[1]) + 3;
+        noteFilterLow = Math.min(...notesToPlay[1]) - 3;
+      }
+    }
+
+    function colorcode(merit) {
+      if (merit > 84) {
+        return "green";
+      } else if (merit > 69) {
+        return "orange";
+      } else {
+        return "red";
+      }
+    }
+
+    function strikeScore(merit) {
+      if (merit > 84) {
+        return 0;
+      } else if (merit > 69) {
+        return 1;
+      } else if (merit > 50) {
+        return 2;
+      } else {
+        return 3;
+      }
+    }
+
+    function StatTracker() {
+      // Internal variables
+      var data = [];
+      var notes = [];
+      var sum = 0;
+      var squaredSum = 0;
+
+      // Function to reset the statistics
+      this.reset = function() {
+        data = [];
+        sum = 0;
+        squaredSum = 0;
+        notes = [];
+      };
+
+      // Function to add a data point
+      this.addDataPoint = function(value, note) {
+        data.push(value);
+        notes.push(note);
+        sum += value;
+        squaredSum += value * value;
+      };
+
+      // Function to calculate the mean
+      this.calculateMean = function() {
+        if (data.length === 0) {
+          return 0;
+        }
+        return sum / data.length;
+      };
+
+      // Function to calculate the standard deviation
+      this.calculateStandardDeviation = function() {
+        if (data.length <= 1) {
+          return 0;
+        }
+        var mean = this.calculateMean();
+        var variance = squaredSum / data.length - mean * mean;
+        return Math.sqrt(variance);
+      };
+
+      // Function to find outliers using IQR method
+        this.findOutliers = function(messagelow, messagehigh, alerts) {
+          if (data.length === 0) {
+            return { outliers: [], outlierNotes: [] };
+          }
+
+          // Step 1: Create an array of objects containing value and note information
+          var dataWithNotes = data.map((value, index) => ({ value, note: notes[index] }));
+
+          // Step 2: Sort the dataWithNotes array based on values in ascending order
+          dataWithNotes.sort((a, b) => a.value - b.value);
+
+          // Step 3: Calculate Q1 and Q3
+          const q1Index = Math.floor(dataWithNotes.length * 0.25);
+          const q3Index = Math.floor(dataWithNotes.length * 0.75);
+          const q1 = dataWithNotes[q1Index].value;
+          const q3 = dataWithNotes[q3Index].value;
+
+          // Step 4: Calculate IQR
+          const iqr = q3 - q1;
+
+          // Step 5: Define lower and upper bounds for outliers
+          const lowerBound = q1 - 1.5 * iqr;
+          const upperBound = q3 + 1.5 * iqr;
+
+          // Step 6: Identify outliers and their corresponding notes
+          const outliers = [];
+          const outlierNotes = [];
+          dataWithNotes.forEach((dataPoint) => {
+            if (dataPoint.value < lowerBound || dataPoint.value > upperBound) {
+              outliers.push(dataPoint.value);
+              outlierNotes.push(dataPoint.note);
+            }
+          });
+
+          for (let i = 0; i < outlierNotes.length; i++) {
+            alerts.push({
+              name: ((outliers[i]<lowerBound) ? messagelow : messagehigh),
+              data: outliers[i],
+              note: outlierNotes[i]
+            })
+          }
+
+          return { outliers, outlierNotes };
+        };
+
+    }
+
+
+    function clearStats() {
+      currentBPM = 0;
+      averageBPM = 0;
+      maxBPM = 0;
+      bestBPM = 0;
+      successCount = 0;
+      failCount = 0;
+      softFailCount = 0;
+      repetitionCount = 0;
+      totalDuration = 0;
+      startTime = null;
+      wrongNotePlayed = false;
+      numQBPM = [0,0,0,0];
+      sumQBPM = [0,0,0,0];
+      messageStats("");
+    }
+
+    var patternCanvas = null;
+    var stripePattern = null;
+
+    function createPattern() {
+      // Create a pattern for the diagonal stripes
+      patternCanvas = document.createElement('canvas');
+      var patternCtx = patternCanvas.getContext('2d');
+      patternCanvas.width = 10;
+      patternCanvas.height = 10;
+
+      patternCtx.clearRect(0, 0, patternCanvas.width, patternCanvas.height);
+
+      patternCtx.strokeStyle = 'white';
+      patternCtx.lineWidth = 2;
+      patternCtx.beginPath();
+      patternCtx.moveTo(0, patternCanvas.height);
+      patternCtx.lineTo(patternCanvas.width, 0);
+      patternCtx.stroke();
+    }
+
+
+    function drawNoteBarGraph(notes, strikes, alerts) {
+      //console.log("Drawing graph notes="+notes);
+      const canvas = document.getElementById('graphCanvas');
+      const s = getComputedStyle(canvas);
+      canvas.width = parseInt(s.width);
+      canvas.height = parseInt(s.height);
+
+      if (canvas === null) {
+        warning("Canvas null");
+        return;
+      }
+
+      const ctx = canvas.getContext('2d');
+
+      if (patternCanvas === null) {
+        createPattern();
+        // Create the fill pattern from the patternCanvas
+        stripePattern = ctx.createPattern(patternCanvas, 'repeat');
+      }
+
+      console.log("Stripepattern="+stripePattern+" patcanv="+patternCanvas);
+
+      // Clear the canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Define the bar dimensions
+      const hand = getSelectedHand();
+      var numnotes = 0;
+      if (hand === 'both') {
+        numnotes = 2*Math.max(notes[0].length,notes[1].length);
+      } else if (hand === 'right') {
+        numnotes = 2*notes[1].length;
+      } else {
+        numnotes = 2*notes[0].length;
+      }
+      const barSpacing = 0;
+      const barHeight = Math.trunc(canvas.height/(numnotes+barSpacing));
+      const noteSpacing = (2*barHeight+barSpacing);
+
+      // Compute the scaling factor for the horizontal axis
+      var lastNote;
+      var earlySTime;
+      var lateETime;
+
+      if (hand === 'left') {
+        lastNote = notes[0].length - 1;
+        earlySTime = notes[0][0].sTime;
+        lateETime = notes[0][lastNote].eTime;
+      } else if (hand === 'right') {
+        lastNote = notes[1].length - 1;
+        earlySTime = notes[1][0].sTime;
+        lateETime = notes[1][lastNote].eTime;
+      } else {
+        //warning("Graph Finding last note");
+        lastNote = Math.min(notes[0].length-1, notes[1].length-1);
+        earlySTime = Math.min(notes[1][0].sTime, notes[0][0].sTime);
+        lateETime = Math.max(notes[1][lastNote].eTime, notes[0][lastNote].eTime);
+      }
+
+      const maxDuration = lateETime - earlySTime;
+      const scaleFactor = maxDuration === 0 ? 1 : canvas.width / maxDuration;
+
+      // Draw scale
+      const scaleMarkerWidth = 10; // Width of the scale marker line
+      const scaleMarkerHeight = 5; // Height of the scale marker line
+
+      ctx.fillStyle = "black";
+      ctx.font = "12px Arial";
+      let fontHeight = 12;
+      ctx.textAlign = "left";
+      ctx.textBaseline = "bottom";
+
+      // Calculate the length of the scale marker line
+      const scaleMarkerLength = 100 * scaleFactor; // 100ms scaled to the current scaleFactor
+
+      const scaleX = canvas.width-scaleMarkerLength-40;
+      const scaleY = 20;
+      ctx.fillText("100 ms", scaleX, scaleY-5); // Draw the scale label above the marker
+
+      // Draw the scale marker line
+      ctx.beginPath();
+      ctx.moveTo(scaleX, scaleY); // Move to the starting position of the scale marker
+      ctx.lineTo(scaleX + scaleMarkerLength, scaleY); // Draw the line
+      ctx.stroke();
+
+      // Draw the two vertical ticks at the ends of the scale marker line
+      ctx.beginPath();
+      ctx.moveTo(scaleX, scaleY-5); // Top vertical tick
+      ctx.lineTo(scaleX, scaleY+5);
+      ctx.moveTo(scaleX + scaleMarkerLength, scaleY-5); // Bottom vertical tick
+      ctx.lineTo(scaleX + scaleMarkerLength, scaleY+5);
+      ctx.stroke();
+
+      // Draw the note bars
+      const barcolors = ["rgba(0,0,255,255)", "rgba(255,0,0,255)"];
+
+      for (let i = 0; i <= lastNote; i++) {
+        for (let h = 0; h < 2; h++) {
+          //console.log("graphing hand:"+h);
+          if ((h === 0 && hand === 'right') || (h === 1 && hand === 'left')) {
+            console.log("skipping");
+            continue;
+          }
+          //console.log("graphing note:"+i);
+          const n = notes[h][i];
+          const sTime = n.sTime - earlySTime;
+          const eTime = n.eTime - earlySTime;
+          const w = (eTime - sTime) * scaleFactor;
+
+          // Draw bar
+
+          const x = sTime * scaleFactor;
+          const y = i * noteSpacing + h*(barHeight+barSpacing);
+
+          // Draw rectangular outline with 100% opacity
+          ctx.strokeStyle = `rgba(${h === 0 ? 0 : 255}, 0, ${h === 1 ? 0 : 255}, 1)`;
+          ctx.strokeRect(x, y, w, barHeight);
+
+          // fill in the rectangle proportional to square of loudness (works better if squared)
+          const speed = Math.trunc(100*notes[h][i].velocity);
+          // Set opacity based on velocity (loudness)
+          ctx.fillStyle = `rgba(${h === 0 ? 0 : 255}, 0, ${h === 1 ? 0 : 255}, ${(speed/100)*(speed/100)})`;
+
+          // Fill the bar with adjusted opacity
+          //console.log("graphing rect at:x"+x+" y"+y+" w"+w+" h"+barHeight);
+          ctx.fillRect(x, y, w, barHeight);
+
+          // see if there is an alert for this note
+          let numalertsfound = 0;
+          for (let a = 0; a < alerts.length; a++) {
+            console.log("Alerts["+a+"]="+alerts[a].name+" n="+alerts[a].note);
+            if (alerts[a].note && alerts[a].note[0] === h && alerts[a].note[1] === i) {
+              // found an alert for this note, highlight it
+              console.log("Found an alert on note:"+alerts[a].note);
+              ctx.setLineDash([4,4]);
+              ctx.strokeRect(x,y-barHeight*3,w,barHeight*7);
+              ctx.textAlign = "left";
+              ctx.textBaseline = "bottom";
+              ctx.fillStyle = barcolors[h];
+              ctx.fillText(alerts[a].name, x+3, y-barHeight*(3)-1-numalertsfound*fontHeight);
+              ctx.textBaseline = "top";
+              ctx.fillText(alerts[a].name, x+3, y+barHeight*(4)+1+numalertsfound*fontHeight);
+
+              if (alerts[a].name.startsWith("OVLP")) {
+                // draw a vertical line illustrating the overlap
+                const nextstart = notes[h][i+1].sTime - earlySTime;
+                const x2 = nextstart * scaleFactor;
+                ctx.strokeRect(x2,y,w-(x2-x),barHeight*3);
+                ctx.setLineDash([]);  // turn of dashes
+                ctx.fillStyle = stripePattern;
+                ctx.fillRect(x2,y,w-(x2-x),barHeight*3);
+              }
+
+              ctx.setLineDash([]);  // turn of dashes
+
+              numalertsfound++;
+            }
+          }
+
+          if (barHeight < 10) {
+            ctx.font = "italic 8px Arial";
+            fontHeight = 8;
+          } else if (barHeight > 14) {
+            ctx.font = "italic 12px Arial";
+            fontHeight = 12;
+          } else {
+            ctx.font = "italic " + (barHeight-2) + "px Arial";
+            fontHeight = barHeight-2;
+          }
+
+          // find finger, if any available
+          let finger = "";
+          if (fingersToPlay !== null && typeof(fingersToPlay) !== "undefined" &&
+                typeof(fingersToPlay[h]) !== "undefined" &&
+                fingersToPlay[h] !== null) {
+            finger = "."+fingersToPlay[h][i];
+          }
+
+          // draw the note name to left of bar
+          ctx.fillStyle = barcolors[h];
+          ctx.textAlign = "right";
+          ctx.textBaseline = "top";
+          ctx.fillText(prnote(notes[h][i].note)+finger, x-3, y);
+
+          // Show velocity
+          if (speed < 70) {
+            ctx.fillStyle = "black"; // easier to see if low opacity
+          } else {
+            ctx.fillStyle = "white";
+          }
+          if (barHeight < 10) {
+            ctx.font = "italic 8px Arial";
+            fontHeight = 8;
+          } else if (barHeight > 14) {
+            ctx.font = "italic 12px Arial";
+            fontHeight = 12;
+          } else {
+            ctx.font = "italic " + (barHeight-2) + "px Arial";
+            fontHeight = barHeight-2;
+          }
+          ctx.textAlign = "left";
+          ctx.textBaseline = "bottom";
+
+          var speednotation = "";
+          if (speed < 25) {
+            speednotation = "ppp";
+          } else if (speed < 33) {
+            speednotation = "pp";
+          } else if (speed < 42) {
+            speednotation = "p";
+          } else if (speed < 51) {
+            speednotation = "mp";
+          } else if (speed < 63) {
+            speednotation = "mf";
+          } else if (speed < 75) {
+            speednotation = "f";
+          } else if (speed < 88 ) {
+            speednotation = "ff";
+          } else {
+            speednotation = "fff";
+          }
+
+          ctx.fillText(" "+speed+" "+speednotation, x, y+barHeight+1);
+      }
+    }
+
+    if (strikes >= 2) {
+      ctx.font = "48px Arial";
+      ctx.fillStyle = "red";
+      ctx.textBaseline = "bottom";
+      ctx.textAlign = "left";
+      ctx.fillText("SLOW DOWN!", 10, canvas.height-25);
+    } else if (strikes === 1) {
+      ctx.font = "48px Arial";
+      ctx.fillStyle = "orange";
+      ctx.textBaseline = "bottom";
+      ctx.textAlign = "left";
+      ctx.fillText("PASSABLE", 10, canvas.height-25);
+    } else {
+      ctx.font = "48px Arial";
+      ctx.fillStyle = "green";
+      ctx.textBaseline = "bottom";
+      ctx.textAlign = "left";
+      ctx.fillText("EXCELLENT", 10, canvas.height-25);
+    }
+  }
+
+
+    function clearPlayedNotes() {
+      playedNotes = [[], []];
+      wrongNotePlayed = false;
+
+      for (let h = 0; h < 2; h++) {
+        for (let i = 0; i < notesToPlay[h].length; i++) {
+          let ntp = document.getElementById("ntp_"+h+"_"+i);
+          if (ntp !== null) {
+            ntp.style.color = "black";
+            ntp.style.fontWeight = "normal";
+          }
+        }
+      }
+    }
+
+
+    function clearNotesToPlay() {
+      notesToPlay = [[], []];
+      var notesDiv = document.getElementById('notesLH');
+      notesDiv.innerHTML = '';
+      notesDiv = document.getElementById('notesRH');
+      notesDiv.innerHTML = '';
+      wrongNotePlayed = false;
+      errorStats(wrongNotePlayed);
+    }
+
+    function prnotenum(note) {
+      const octave = Math.floor(note / 12) - 1;
+      const noteNames = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+
+      return noteNames[note % 12] + octave;
+    }
+
+    function prnote(note) {
+      return prnotenum(note.number);
+    }
+
+    if (typeof WebMidi !== 'undefined' && WebMidi !== null) {
+      // Check if Web MIDI is supported
+      if (WebMidi.supported) {
+        WebMidi.enable(function (err) {
+          if (err) {
+            console.error('WebMidi could not be enabled:', err);
+          } else { // initialize
+            // Retrieve the first available MIDI input device
+            var input;
+            if (WebMidi.inputs.length > 0) {
+              input = WebMidi.inputs[0]; // Remove 'var' keyword here
+              message("Connected to WebMidi input port 0:" + WebMidi.inputs[0].name + " " + WebMidi.inputs[0].manufacturer);
+            } else {
+              warning('No MIDI input devices found. Connect a device then refresh.');
+            }
+
+            input.addListener('noteoff', 'all', function (e) {
+              if (currentState !== STATE.SETTING_NOTES &&
+                (e.note.number > noteFilterHigh || e.note.number < noteFilterLow)) {
+                console.log("ignoring note out of range");
+                return;
+              }
+              const all = [waitNotes, playedNotes];  // the ending note could be in either
+
+              for (let d = 0; d < 2; d++) {
+                if (all[d] === null) {
+                  continue; // waitNotes can be null if processing was previously completed
+                }
+                for (let hand = 0; hand < 2; hand++) {
+                  // go backwards since most recent notes are likely the ones that have just finished playing
+                  //console.log("Finding note in: d="+d+" hand=" + hand);
+                  for (let n = all[d][hand].length-1; n >= 0; n--) {
+                      if (all[d][hand][n].note.number === e.note.number && all[d][hand][n].eTime === null) {
+                        all[d][hand][n].eTime = e.timestamp;
+                        //console.log("found ending note");
+                        if (d === 0) {  // if the note was found in the waitNotes array
+                          // we found the noteoff in the waitNotes array so it might now
+                          // be complete. see if it has any eTime === null
+                          for (h2 = 0; h2 < 2; h2++) {
+                            for (n2 = 0; n2 < waitNotes[h2].length; n2++) {
+                              if (waitNotes[h2][n2].eTime === null) {
+                                //console.log("waitNotes is still incomplete");
+                                return; // no we're still waiting for at least 1 note
+                              }
+                            }
+                          }
+
+                          // if we get here then waitNotes is now full so we can compute stats and
+                          // clear it out.
+                          // to avoid blocking here, we spin it off async using a 0 second timeout.
+                          // to avoid race conditions, we send it a copy of the waitNotes array.
+
+                          setTimeout(function() {displayTestStats(waitNotes.slice());}, 0);
+                        }
+                        return;
+                      }
+                    }
+                }
+              }
+              //console.log("Could not find ending note");
+              //debugWindow();
+            });
+
+            // Add event listener for "noteon" events
+            input.addListener('noteon', 'all', function (e) {
+
+              // we ignore notes that are significantly out of range
+              // of the current hand.
+              if (currentState !== STATE.SETTING_NOTES &&
+                (e.note.number > noteFilterHigh || e.note.number < noteFilterLow)) {
+                console.log("ignoring note out of range");
+                return;
+              }
+              currentHand = getSelectedHand();
+
+              // store stats (further down in the code)
+              const notestruct = {
+                  note:   e.note,
+                  velocity: e.velocity,
+                  sTime:  e.timestamp,
+                  eTime:  null
+              };
+
+              if (currentState === STATE.SETTING_NOTES) {
+                var note = e.note.number;
+                if (currentHand === 'left') {
+                  notesToPlay[0].push(note);
+                  // Display the human-readable note name on the main screen
+                  var noteName = prnote(e.note);
+                  var notesDiv = document.getElementById('notesLH');
+                  notesDiv.textContent = notesDiv.textContent + " " + noteName;
+                }
+                if (currentHand === 'right' || currentHand === 'both') {
+                  notesToPlay[1].push(note);
+                  // Display the human-readable note name on the main screen
+                  var noteName = prnote(e.note);
+                  var notesDiv = document.getElementById('notesRH');
+                  notesDiv.textContent = notesDiv.textContent + " " + noteName;
+                }
+                updateDisplayedNotesToPlay();
+
+              } else if (currentState === STATE.TESTING_NOTES) {
+                //debugWindow();
+                // Check if the played note matches the expected note
+                var playedNote = e.note.number;
+
+                var matchhand = 0;
+                if (currentHand === 'left') {
+                  playedNotes[0].push(notestruct);
+                } else if (currentHand === 'right') {
+                  playedNotes[1].push(notestruct);
+                  matchhand = 1;
+                } else {
+                  // take a peek and see if it matches expected left hand
+                  if (playedNote === notesToPlay[0][playedNotes[0].length]) {
+                    playedNotes[0].push(notestruct);
+                  } else {
+                    playedNotes[1].push(notestruct);
+                    matchhand = 1;
+                  }
+                }
+
+                const expectedNote = notesToPlay[matchhand][playedNotes[matchhand].length - 1]; // note number
+
+                // if this is the first note for the matching hand, and
+                // there is no data in the other hand, then this is the very
+                // first note of the new test cycle so start the timer.
+                if (playedNotes[matchhand].length === 1 && playedNotes[1-matchhand].length === 0) {
+                  startTime = performance.now(); // we always start when the first note starts
+                }
+
+                //console.log("Test: Expected: " + expectedNote + " got: " + playedNote + " start=" + notestruct.sTime);
+
+                if (playedNote === expectedNote) {
+                  showNote(e.note, matchhand, playedNotes[matchhand].length - 1, true);
+                  wrongNotePlayed = false;
+                  errorStats(wrongNotePlayed);
+                } else if (
+                  (currentHand === 'both' && (playedNote === notesToPlay[0][0] || playedNote === notesToPlay[1][0]))
+                   ||
+                  (currentHand === 'right' && (playedNote === notesToPlay[1][0]))
+                    ||
+                  (currentHand === 'left' && (playedNote === notesToPlay[0][0]))
+                ) {
+                    // This could, rarely, result in a false good run, but it is necessary to
+                    // avoid false fails. Basically, at any time the user can restart the current run
+                    // without penalty as long as they haven't hit a wrong note.
+                    // Without this code, with scales and arpeggios the starting and ending notes
+                    // of each hand are the same, so if a user hits a wrong note and doesn't notice
+                    // and continues playing, the ending notes will be falsely detected as the
+                    // starting note, which will cause failures to stack up even though no mistakes
+                    // are being made.
+                    playedNotes = [[],[]];
+                    clearPlayedNotes();
+                    if (playedNote === notesToPlay[0][0]) {
+                      matchhand = 0;
+                    } else {
+                      matchhand = 1;
+                    }
+                    playedNotes[matchhand].push(notestruct);
+                    showNote(e.note, matchhand, 0, true);
+                    wrongNotePlayed = false;
+                    startTime = performance.now();
+                    errorStats(wrongNotePlayed);
+                } else { // missed the note
+                  showNote(e.note, matchhand, -1, false);
+                  wrongNotePlayed = true;
+                  errorStats(wrongNotePlayed);
+                  failCount++; // we do this here, but not again in the flushing state
+                  displayTestStats(null);
+                  currentState = STATE.TEST_FLUSHING;
+                  console.log("State=flushing, failcount=" + failCount);
+                }
+
+                // See if we have played the last note required, thus ending this
+                // test cycle.
+                //warning("Test cycle check. ch="+currentHand+" ntp0len="+notesToPlay[0].length+" ntp1len="+notesToPlay[1].length+" pn0len="+playedNotes[0].length+" pn1len="+playedNotes[1].length)
+                if ( (!wrongNotePlayed) &&
+                  (
+                    (currentHand === 'right' && notesToPlay[1].length === playedNotes[1].length) ||
+                    (currentHand === 'left' && notesToPlay[0].length === playedNotes[0].length) ||
+                    (currentHand === 'both' && notesToPlay[0].length === playedNotes[0].length &&
+                      notesToPlay[1].length === playedNotes[1].length)
+                  )
+                ) {
+                  // we've come to the end of a successful test cycle.
+                  //message("Completed Test Cycle");
+                  successCount++;
+                  //displayTestStats();
+                  waitNotes = playedNotes.slice(); // copy of array
+                  playedNotes = [[], []];
+                  clearPlayedNotes();
+                }
+              } else if (currentState === STATE.TEST_FLUSHING) {
+                // continue testing when we see either the first LH or first RH
+
+                var playedNote = e.note.number;
+
+                if (
+                    ( currentHand === 'right' && playedNote === notesToPlay[1][0] ) ||
+                    (currentHand === 'left' && playedNote === notesToPlay[0][0]) ||
+                    (currentHand === 'both' &&
+                      (playedNote === notesToPlay[0][0] || playedNote === notesToPlay[1][0])
+                    )
+                  ) {
+                  wrongNotePlayed = false;
+                  clearPlayedNotes();
+                  if (currentHand === 'left') {
+                    playedNotes[0].push(notestruct);
+                    showNote(e.note, 0, playedNotes[0].length-1, true);
+                  } else if (currentHand === 'right') {
+                    playedNotes[1].push(notestruct);
+                    showNote(e.note, 1, playedNotes[1].length-1, true);
+                  } else if (playedNote === notesToPlay[0][0]) {
+                    playedNotes[0].push(notestruct);
+                    showNote(e.note, 0, playedNotes[0].length-1, true);
+                  } else {
+                    playedNotes[1].push(notestruct);
+                    showNote(e.note, 1, playedNotes[1].length-1, true);
+                  }
+                  startTime = performance.now();
+                  //console.log("While Flushing, got start note: going back into state testing");
+                  currentState = STATE.TESTING_NOTES;
+                } else {
+                  wrongNotePlayed = true;
+                  currentState = STATE.TEST_FLUSHING;
+                  //console.log("In state flushing, note still wrong, still flushing failed=" + failCount);
+                }
+              }
+            }); // end of input add listener
+          } // end of initialize
+        }); // end of webmidi.enable
+      } else { // end of if webmidi supported
+        console.error('Web MIDI is not supported in this browser.');
+      }
+    } else {
+      console.error('Web MIDI is null--is not supported in this browser.');
+    }
+
+    // Function to start the test and initialize the start time
+    function startTest() {
+      testStartTime = Date.now();
+      updateElapsedTime(); // Update elapsed time starts a timer to keep it up to date
+    }
+
+    function showNote(note, hand, index, correct) {
+      // Display the played note during the test phase, highlighting in green or red
+      const divname = 'playedNotes'+(hand?'RH':'LH');
+
+      const ntp = document.getElementById("ntp_"+hand+"_"+index);
+      if (ntp !== null) {
+        ntp.style.color = "green";
+        ntp.style.fontWeight = "bold";
+      }
+    }
+
+    // Function to update the elapsed time display
+    function updateElapsedTime() {
+      if (testStartTime) {
+        var currentTime = Date.now();
+        var elapsedTime = currentTime - testStartTime;
+        var elapsedSeconds = Math.floor(elapsedTime / 1000); // Convert milliseconds to seconds
+
+        // Update the element with the elapsed time
+        var elapsedTimeElement = document.getElementById('elapsedTime');
+        elapsedTimeElement.textContent = formatTime(elapsedSeconds);
+        // Schedule the next update in 1 second
+        setTimeout(updateElapsedTime, 1000);
+      }
+    }
+
+    // Function to format the elapsed time in MM:SS format
+    function formatTime(seconds) {
+      var minutes = Math.floor(seconds / 60);
+      var remainingSeconds = seconds % 60;
+
+      // Pad single-digit seconds with leading zero
+      var secondsString = remainingSeconds < 10 ? '0' + remainingSeconds : remainingSeconds;
+
+      return minutes + ':' + secondsString;
+    }
+
+    // Function to end the test and reset the start time
+    function endTest() {
+      testStartTime = null;
+    }
+
+// Create an AudioContext instance
+var audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+// Function to generate and play a tone
+function playTone(frequency, duration) {
+  // Create an OscillatorNode
+  var oscillator = audioContext.createOscillator();
+
+  // Set the frequency of the oscillator
+  oscillator.frequency.value = frequency;
+
+  // Connect the oscillator to the destination (speakers)
+  oscillator.connect(audioContext.destination);
+
+  // Start the oscillator
+  oscillator.start();
+
+  // Stop the oscillator after the specified duration
+  setTimeout(function() {
+    oscillator.stop();
+  }, duration);
+}
+
+function errorBeep() {
+  //playTone(100,250);
+}
+
+function chirp() {
+  //playTone(2000,50);
+}
+
+function debugWindow() {
+
+  var d = "<p>Notes list:";
+
+  for (var hand = 0; hand < 2; hand++) {
+    for (var n = 0; n < playedNotes[hand].length; n++) {
+      if (playedNotes[hand][n].sTime !== null && playedNotes[hand][n].eTime !== null) {
+        //continue; // this note was finished
+      }
+      d += "H"+hand+"N"+n+
+        "(" + prnote(playedNotes[hand][n].note) + ") s=" +
+        Math.trunc(playedNotes[hand][n].sTime) + " e="+
+        (playedNotes[hand][n].eTime !==null?Math.trunc(playedNotes[hand][n].eTime):"NULL") + "</br>";
+    }
+  }
+  d+="</p>";
+
+  document.getElementById("debugDiv").innerHTML = d;
+}
+
+
+
+function scrollToDataTop(godata) {
+
+  if (godata) {
+    const dataTable = document.getElementById('data');
+    if (dataTable) {
+      const dataTableRect = dataTable.getBoundingClientRect();
+      const dataTableTop = dataTableRect.top + window.scrollY - 3;
+      window.scrollTo({
+        top: dataTableTop,
+        behavior: 'smooth'
+      });
+    }
+  } else {
+    const uitop = document.getElementById('uitop');
+    if (top) {
+      const rect = uitop.getBoundingClientRect();
+      const top = rect.top + window.scrollY - 3;
+      window.scrollTo({
+        top: top,
+        behavior: 'smooth'
+      });
+    }
+  }
+}
+
+
+  </script>
+</body>
+</html>
