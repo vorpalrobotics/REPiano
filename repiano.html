@@ -29,39 +29,141 @@
     .smallstat {
       font-size: 18px;
     }
+
+    body {
+      margin: 2px;
+      padding: 0px;
+    }
+
+    .container {
+      position: relative;
+      right:0;
+      top:0;
+    }
+
+    .gear-button {
+      position: fixed;
+      top: 30px;
+      right: -25px;
+      width: 40px;
+      height: 40px;
+      background-color: transparent;
+      border: none;
+      cursor: pointer;
+    }
+
+    .gear-icon {
+      fill: #808080; /* Gray color for the gear icon */
+    }
+
+    .mode-container {
+      display: inline;
+    }
+
+.mode-box {
+  display:inline;
+  text-align: center;
+  margin-right: 5px;
+  padding: 2px;
+  padding-left:10px;
+  padding-right:10px;
+  margin-right:15px;
+  background-color: white;
+  color: lightgrey;
+  font-weight: normal;
+  cursor: pointer;
+  border: 1px solid black;
+}
+
+.selected {
+  background-color: lightgreen;
+  color: black;
+  font-weight: bold;
+}
+#popup-container {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: auto;
+  height: auto;
+  background-color: rgba(0, 0, 0, 0.5);
+  justify-content: center;
+  align-items: center;
+}
+
+#popup-form {
+  background-color: white;
+  padding: 20px;
+  border-radius: 5px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+#popup-form select, #popup-form button {
+  margin: 5px 0;
+}
+
+
   </style>
   <script src="https://cdn.jsdelivr.net/npm/webmidi@next/dist/iife/webmidi.iife.js"></script>
 </head>
 <body>
-  <div><span id=uitop style="font-size:18px"><strong>REP<em>iano</em></strong>&nbsp;&nbsp;</span>
-    <div id="presetMenuContainer" style="margin:10px;font-size:16px;display:inline;"></div>
-    <button id="setNotesButton" onclick="setNotes()">Manual Set</button>
-    <button id="doneButton" onclick="done()" style=display:inline disabled>DONE</button></span>
+  <div class="container">
+    <button class="gear-button" id="gearButton" onclick="showPrefs(true)">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M24 13.616v-3.232c-1.651-.587-2.694-.752-3.219-2.019v-.001c-.527-1.271.1-2.134.847-3.707l-2.285-2.285c-1.561.742-2.433 1.375-3.707.847h-.001c-1.269-.526-1.435-1.576-2.019-3.219h-3.232c-.582 1.635-.749 2.692-2.019 3.219h-.001c-1.271.528-2.132-.098-3.707-.847l-2.285 2.285c.745 1.568 1.375 2.434.847 3.707-.527 1.271-1.584 1.438-3.219 2.02v3.232c1.632.58 2.692.749 3.219 2.019.53 1.282-.114 2.166-.847 3.707l2.285 2.286c1.562-.743 2.434-1.375 3.707-.847h.001c1.27.526 1.436 1.579 2.019 3.219h3.232c.582-1.636.75-2.69 2.027-3.222h.001c1.262-.524 2.12.101 3.698.851l2.285-2.286c-.744-1.563-1.375-2.433-.848-3.706.527-1.271 1.588-1.44 3.221-2.021zm-12 2.384c-2.209 0-4-1.791-4-4s1.791-4 4-4 4 1.791 4 4-1.791 4-4 4z"/> </svg>
+     </button>
+</div>
+      <button id="fullscreenButton" onclick="fullscreen()"
+        style="position:fixed;right:-15px;top:2px;background:lightblue;">Full Screen</button>
+  <div>
+    <span id=uitop style="font-size:18px"><strong>REP<em>iano</em></strong>&nbsp;&nbsp;</span>
+    <button id="generateNotesButton" onclick="showTestGenerateForm();">Scales/Arps</button>
+    <button id="setNotesButton" onclick="setNotes()">Set Custom Notes</button>
+    <button id="doneButton" onclick="done()" style=display:inline disabled>DONE</button>
+    <button id="historyButton">History</button>
   </div>
-</body>
 
   <div style="max-height:90vh; padding-top:10px;">
     <table id=data style="border-collapse:collapse; border: 1px solid black;width:100%">
       <tr style="border-bottom:1px solid black;vertical-align: top;">
-        <td style='width:20%;vertical-align:top;'><div style='width:100%;height:100%;text-align:center;vertical-align:top;'>
-          <span id="testname" style=display:block;width:100%>&nbsp;</span>
-          <select id="handSelect" onchange="setNoteFilters();" style="width:100%">
-            <option value="left">Left Hand</option>
-            <option value="right">Right Hand</option>
-            <option value="both" selected>Both Hands</option>
-          </select>
-          <div id="elapsedTime" style="font-size:50px;text-align:center;width:100%">0:00</div>
-          <button id="testNotesButton" onclick="testNotes()" style=width:100%>START</button></div>
+        <td style='width:20%;vertical-align:top;'>
+          <div style='width:100%;height:100%;text-align:center;vertical-align:top;'>
+          <div id="elapsedTime" style="font-size:60px;text-align:center;width:100%">0:00</div>
+          <div style="display:inline-block;width:100%;">
+          <button id="testNotesButton" onclick="testNotes()" style=font-size:24px;display:inline;margin-right:5px;>START</button>
+          <button id="pauseButton" onclick="pauseTest()" style=margin-right:0;display:none;font-size:24px;font-weight:bold;border:none;background-color:white>&#x23F8;</button>
+        </div>
+        </div>
         </td>
         <td colspan=4><div id="statsDiv" style="font-size:12px">&nbsp;<br>&nbsp;</div></td></tr>
         <tr><td colspan=2 style="border-bottom:1px solid black;position:relative;">
-          <div style="width:100%"><canvas id=graphCanvas style="width:100%;height:70vh;position:relative;"></canvas></div>
-          <div style="position:absolute;bottom:0;left:0;">
+          <div style="width:100%">
+              <canvas id=graphCanvas style="width:100%;height:70vh;position:relative;"></canvas>
+          </div>
+          <div style="position:absolute;bottom:0;left:0;max-width:95vw;overflow-x:auto;white-space:nowrap;">
             <strong>LH:</strong>
             <div id="notesLH" style="display:inline-block"></div><br>
             <strong>RH:</strong>
             <div id="notesRH" style="display:inline-block"></div>
+          </div>
+          <div style="position:absolute;top:0;left:25%;text-align:right">
+            <canvas id="keyboardCanvas" style="width:60vw;height:4vw" ontap="playVoice(event);" onclick="playVoice(event)"></canvas>
+            <br>
+            <div style=display:inline;width:30%>&nbsp;</div>
+
+            <div id="presetMenuContainer" style="font-size:24px;display:inline;width:30%;text-align:center;"></div>
+            <div class="mode-container">
+              <div class="mode-box" id="lh" onclick="changeSelectedHand('left')" title="play only left hand">LH</div>
+              <div class="mode-box" id="rh" onclick="changeSelectedHand('right')" title="play only right hand">RH</div>
+              <div class="mode-box" id="ht" onclick="changeSelectedHand('both')" title="play hands together">HT</div>
+            </div>
+            <div id=pedalSymbolDiv style=display:inline-block;width:4em;>&nbsp;</div>
+          </div>
           </td></tr>
+      <tr>
+        <div id=runSummary style="">
+        </div>
+      </tr>
       <tr>
         <td colspan=2 style="vertical-align: top;">
           <strong>Console:</strong>
@@ -69,7 +171,157 @@
         </td>
       </tr>
     </table>
-    <div style=max-width:80vw>
+    <!-- Preferences Screen -->
+  <div id="prefsScreen" class="prefs-screen" style="display:none;position:fixed;top:60px;right:10px;background-color:lightgrey;padding:10px;">
+    <div style="max-height:70vh;overflow-y:auto;">
+    <h2 style=margin-top:2px;padding-top:2px;>Preferences</h2>
+    <label>
+      <input id='autoFullscreenStartToggle' type="checkbox" onchange="togglePref('autoFullscreenStart')" checked />
+      Auto Full Screen on START
+    </label><br>
+    <label>
+      <input id='autoExitFullscreenStopToggle' type="checkbox" onchange="togglePref('autoExitFullscreenStop')" checked />
+      Auto Exit Full Screen on STOP
+    </label><br>
+    <label>
+      <input id='qualFailRepSuccessToggle' type="checkbox" onchange="togglePref('qualFailRepSuccess')" checked />
+      QFail Still Counts as a REP
+    </label><br>
+    <label>
+      <input id='showKeyboardToggle' type="checkbox" onchange="togglePref('showKeyboard')" checked />
+      Show Keyboard
+    </label><br><br>
+    <label>
+      BPM=quarter, played=
+      <select id=bpmNoteValueMenu onchange="setPref('bpmNoteValue', this.value)">
+        <option value="whole">whole</option>
+        <option value="quarter" selected>quarter</option>
+        <option value="eighth">eighth</option>
+        <option value="sixteenth">sixteenth</option>
+      </select>
+    </label><br>
+    <label>
+      Ignore outrange notes, semitones:
+      <select id=noteFilterMenu onchange="setPref('noteFilter', this.value)">
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3" selected>3</option>
+        <option value="-1">don't ignore</option>
+      </select>
+    </label>
+    <hr>
+    <h4 style=margin-top:3px;margin-bottom:3px;max-width:70vw;>
+      Score "strikes" on these metrics:
+    </h4>
+    <label>
+      <input id='scoreHTQToggle' type="checkbox" onchange="togglePref('scoreHTQ')" checked />
+      Score HT Quality
+    </label><br>
+    <label>
+      <input id='scoreMetQToggle' type="checkbox" onchange="togglePref('scoreMetQ')" checked />
+      Score Metric Quality
+    </label><br>
+    <label>
+      <input id='scoreDynQToggle' type="checkbox" onchange="togglePref('scoreDynQ')" checked />
+      Score Dynamic Quality (loudness)
+    </label><br>
+    <label>
+      <input id='scoreLegQToggle' type="checkbox" onchange="togglePref('scoreLegQ')" checked />
+      Score Legato Quality
+    </label><br>
+    <label>
+      <input id='scoreStaQToggle' type="checkbox" onchange="togglePref('scoreStaQ')" checked />
+      Score Staccato Quality
+    </label><br>
+    <hr>
+    <h4 style=margin-top:3px;margin-bottom:3px;max-width:70vw;>
+      Play tones based on run results:
+    </h4>
+    <label>
+      <input id='enableTonesToggle' type="checkbox" onchange="togglePref('enableTones')" checked />
+      Enable result tones
+    </label><br>
+    <label>
+      <span style=width:10em;display:inline-block>Tone on Note Fail:</span>
+      <select id=toneOnNoteFailMenu onchange="setPref('toneOnNoteFail', this.value)">
+        <option value="none">none</option>
+        <option value="C2" selected>C2</option>
+        <option value="D2">D2</option>
+        <option value="E2">E2</option>
+        <option value="F2">F2</option>
+        <option value="G2">G2</option>
+      </select>
+    </label><br>
+    <label>
+      <span style=width:10em;display:inline-block>Tone on QFail:</span>
+      <select id=toneOnQFailMenu onchange="setPref('toneOnQFail', this.value)">
+        <option value="none">none</option>
+        <option value="C2">C2</option>
+        <option value="D2">D2</option>
+        <option value="E2">E2</option>
+        <option value="F2">F2</option>
+        <option value="G2" selected>G2</option>
+      </select>
+    </label><br>
+    <label>
+      <span style=width:10em;display:inline-block>Tone on Passing:</span>
+      <select id=toneOnPassingMenu onchange="setPref('toneOnPassing', this.value)">
+        <option value="none">none</option>
+        <option value="C5" selected>C5</option>
+        <option value="D5">D5</option>
+        <option value="E5">E5</option>
+        <option value="F5">F5</option>
+        <option value="G5">G5</option>
+      </select>
+    </label><br>
+    <label>
+      <span style=width:10em;display:inline-block>Tone on Good:</span>
+      <select id=toneOnGoodMenu onchange="setPref('toneOnGood', this.value)">
+        <option value="none">none</option>
+        <option value="C5">C5</option>
+        <option value="D5">D5</option>
+        <option value="E5" selected>E5</option>
+        <option value="F5">F5</option>
+        <option value="G5">G5</option>
+      </select>
+    </label><br>
+    <label>
+      <span style=width:10em;display:inline-block>Tone on Excellent:</span>
+      <select id=toneOnExcellentMenu onchange="setPref('toneOnExcellent', this.value)">
+        <option value="none">whole</option>
+        <option value="C5">C5+</option>
+        <option value="D5">D5+</option>
+        <option value="E5">E5+</option>
+        <option value="F5">F5+</option>
+        <option value="G5" selected>G5+</option>
+      </select>
+    </label><br>
+    <label>
+      <span style=width:10em;display:inline-block>Tone Duration:</span>
+      <select id=toneDurationMenu onchange="setPref('toneDuration', this.value)">
+        <option value="100">100 ms</option>
+        <option value="200" selected>200 ms</option>
+        <option value="300">300 ms</option>
+        <option value="400">400 ms</option>
+        <option value="500">500 ms</option>
+      </select>
+    </label><br>
+    <label>
+      <span style=width:10em;display:inline-block>Tone Velocity:</span>
+      <select id=toneVelocityMenu onchange="setPref('toneVelocity', this.value)">
+        <option value="10">10</option>
+        <option value="30">30</option>
+        <option value="60">60</option>
+        <option value="80">80</option>
+        <option value="100" selected>100</option>
+        <option value="127">127 (max)</option>
+      </select>
+    </label><br>
+  </div>
+      <hr>
+      <div style=text-align:center><button onclick="showPrefs(false);">DONE</button></div>
+  </div>
+    <div id=helpDiv style=max-width:80vw;display:none>
     <h2>Explanations:</h2>
     <h3>Top line statistics</h3>
     <dl>
@@ -104,7 +356,7 @@
       last note finishes every single time, this measure will be 100%. A very small overlap is not penalized because some teachers instruct that legato has
       a small overlap. A gap or a larger overlap is penalized. Underneath this stat there is a display of the amount of average gap in milliseconds (when there was a gap), and the amount of average overlap (when there was an overlap).
       If you are purposely playing one hand legato and one hand staccatto you can just bear in mind that this figure would only be 50% at most (i.e. half the notes are perfect legato).</dd>
-    <dt>StaQ</dt><dd>Staccatto Quality, like Legato Quality, measures how closely you are playing Staccatto. It also doesn't cause strikes for the same reason as
+    <dt>StaQ</dt><dd>Staccato Quality, like Legato Quality, measures how closely you are playing Staccato. It also doesn't cause strikes for the same reason as
       Legato Quality doesn't. A perfect score of 100% would occur if every note has a gap afterwards of at least the duration of the note. We do not attempt to distinguish different kinds of staccatto.</dd>
     </dl>
     <p>Strikes occur on a run with no note failures when one or more quality metrics (not counting LegQ or StaQ) are below certain values.
@@ -127,6 +379,139 @@
     </div>
 
   </div>
+
+  <div id="popup-container">
+  <div id="popup-form">
+    <h2>Scale/Arpeggio Wizard</h2>
+    <label for="test-type">Type:</label>
+    <select id="test-type">
+      <option value="Scale">Scale</option>
+      <option value="Arpeggio">Arpeggio</option>
+    </select><br>
+
+    <label for="tonic">Tonic:</label>
+    <select id="tonic">
+      <option value="C">C</option>
+      <option value="C#">C#</option>
+      <option value="D">D</option>
+      <option value="D#">D# / Eb</option>
+      <option value="E">E</option>
+      <option value="F">F</option>
+      <option value="F#">F# / Gb</option>
+      <option value="G">G</option>
+      <option value="G#">G# / Ab</option>
+      <option value="A">A</option>
+      <option value="A#">A# / Bb</option>
+      <option value="B">B</option>
+    </select><br>
+
+    <label for="mode">Mode:</label>
+    <select id="mode">
+      <option value="maj">Major</option>
+      <option value="natMin">Minor</option>
+      <option value="harMin">Harmonic Minor</option>
+      <option value="melMin">Melodic Minor (Classical)</option>
+      <option value="melMinJ">Melodic Minor (Jazz)</option>
+      <option value="blues">Pentatonic Blues</option>
+      <option value="mixoBlues">Mixo-Blues</option>
+      <option value="majPent">Major Pentatonic</option>
+      <option value="minPent">Minor Pentatonic</option>
+      <option value="dor">Dorian Mode</option>
+      <option value="phryg">Phrygian Mode</option>
+      <option value="lyd">Lydian Mode</option>
+      <option value="mixo">Mixolydian Mode</option>
+      <option value="aeo">Aeolian Mode</option>
+      <option value="loc">Locrian Mode</option>
+    </select><br>
+
+    <label for="octaves">Octaves:</label>
+    <select id="octaves">
+      <option value="1">1</option>
+      <option value="2">2</option>
+      <option value="3">3</option>
+      <option value="4">4</option>
+    </select><br>
+
+    <label for="lh-start-octave">LH Start Octave:</label>
+    <select id="lh-start-octave">
+      <option value="1">1</option>
+      <option value="2">2</option>
+      <option value="3" selected>3</option>
+      <option value="4">4</option>
+    </select><br>
+
+    <button onclick="generateTest()">GENERATE</button>
+    <button onclick="dismissForm()">CANCEL</button>
+  </div>
+</div>
+
+<div id="historyTableContainer" style="display:none;border:1px solid black;margin:5px;padding:10px;background-color:#EEE;max-width:90vw;height:95vh;position:fixed;top:0;left:0">
+<div style=text-align:center;>
+      <button onclick="document.getElementById('importExportContainer').style.display='block';document.getElementById('importExportTextarea').value=JSON.stringify(runHistory);">Import/Export History</button>
+  <button onclick="document.getElementById('historyTableContainer').style.display='none';" style=margin-bottom:10px>Dismiss History</button><div>
+  <div id="filtersContainer" style=padding-bottom:10px>
+    <label for="dateRangeSelect">Date Range:</label>
+    <select id="dateRangeSelect">
+        <option value="all">ALL</option>
+        <option value="1Month">1 Month</option>
+        <option value="3Months">3 Months</option>
+        <option value="1Year">1 Year</option>
+    </select>
+
+    <label for="testNameSelect">Test Name:</label>
+    <select id="testNameSelect">
+        <!-- Options for test names will be populated dynamically using JavaScript -->
+    </select>
+
+    <label for="handSelect">Hand:</label>
+    <select id="handSelect">
+        <option value="any">ANY</option>
+        <option value="left">Left</option>
+        <option value="right">Right</option>
+        <option value="both">Both</option>
+    </select>
+    <button onclick="filterAndDisplayHistory();">FILTER</button>
+</div>
+    <div style=height:35vh;overflow:auto;font-size:12px>
+    <table id="historyTable" border="1" style=height:35vh;overflow:auto>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Name</th>
+                <th>Hand</th>
+                <th>REPS</th>
+                <th>NoteFail</th>
+                <th>Elapsed</th>
+                <th>Avg BPM</th>
+                <th>Max BPM</th>
+                <th>Best BPM</th>
+                <th>Avg Strikes</th>
+            </tr>
+        </thead>
+        <tbody id="historyTableBody">
+            <!-- Run data will be inserted here -->
+        </tbody>
+    </table>
+  </div>
+    <canvas id="historyGraph" style="width:100%;height:50vh;"></canvas>
+</div>
+
+<!-- History Import/Export screen -->
+<div id="importExportContainer" style="padding:10px;background-color:#DED;border:1px black solid;display:none;position:fixed;top:10px;left:30px;">
+    <p style=text-align:left>This is a JSON encoding of your entire practice history. You can back it up by copying this text to a file, email, sms, etc.
+      To restore a prior backup, erase the data below, paste in the backup data, then click RESTORE.</p>
+      <p style=text-align:left>NOTES:<br>(1) Restoring will erase all prior data, so you might
+      want to do a backup first just in case.<br>(2) Practice data is stored between sessions in browser local storage. Clearing your browser history or cache will probably wipe it out, and other
+    system issues can also wipe it out, so it's a good idea to make backups of your data often.</p>
+
+    </p>
+    <textarea id="importExportTextarea" placeholder="Paste JSON here or copy JSON to export" rows=10 style=scrollY:auto;width:100%></textarea>
+    <br>
+    <button id="copyToClipboardButton" onclick="document.getElementById('importExportTextarea').select();document.execCommand('copy');">Copy To Clipboard</button>
+    <button id="restoreButton">Restore</button>
+    <button id="eraseButton" onclick="document.getElementById('importExportTextarea').value='';">Erase</button>
+    <button id="eraseButton" onclick="document.getElementById('importExportContainer').style.display='none';">Done</button>
+</div>
 
   <script>
     // State variables
@@ -159,18 +544,175 @@
     var numQBPM = [0,0,0,0];
     var noteFilterHigh = -1;
     var noteFilterLow = 1000;
+    var flushRight = false;
+    var midiOutput = null;
+
+    var runHistory = null;
+    var curPresetName = "";
+    var pedalSymbol = null;
 
     // Array of presets
     var presets = [];
+
+    var keyboardOptions = {
+      canvasId: 'keyboardCanvas',
+      numOctaves: 5,
+      startingOctave: 2,
+      notesOn: []
+    };
+
+    // Global object to store preferences
+const preferences = {
+  autoFullscreenStart: true,
+  autoExitFullscreenStop: true,
+
+  enableTones: true,
+  toneOnNoteFail: "C2",
+  toneOnQFail: "G2",
+  toneOnPassing: "C5",
+  toneOnGood: "E5",
+  toneOnExcellent: "G5", // also this gets doubled
+  toneDuration: "200",  // milliseconds
+  toneVelocity: "100", // pretty loud
+  toneFailVoice: "11", // vibraphone on Yamaha P-121
+  toneSuccessVoice: "52", // choir on Yamaha P-121
+  noteFilter: 3,
+  scoreHTQ: true,
+  scoreMetQ: true,
+  scoreDynQ: true,
+  scoreLegQ: true,
+  scoreStaQ: true,
+  showKeyboard: true,
+  bpmNoteValue: "quarter",
+};
+
+// Function to show preferences screen
+function showPrefs(show) {
+  const prefsScreen = document.getElementById("prefsScreen");
+  prefsScreen.style.display = show?"block":"none";
+}
+
+// Function to close preferences screen
+function closePrefs() {
+  const prefsScreen = document.getElementById("prefsScreen");
+  prefsScreen.style.display = "none";
+}
+
+// Function to toggle preference values (boolean)
+function togglePref(prefName, forcevalue = null) {
+
+  if (forcevalue !== null) {
+    preferences[prefName] = forcevalue;
+  } else {
+    preferences[prefName] = !preferences[prefName]; // Toggle the boolean value
+  }
+  //warning("Toggled "+prefName+" now="+preferences[prefName]);
+
+  if (forcevalue === null) {
+    localStorage.setItem(prefName, preferences[prefName]); // Save to localStorage
+    warning("Saved "+prefName+"="+preferences[prefName]);
+  }
+
+  let td = document.getElementById("td"+prefName);
+  if (td !== null) {
+    td.style.backgroundColor = preferences[prefName]?"white":"lightgray";
+    td.style.opacity = preferences[prefName]?"1":"0.3";
+    //warning("Toggled pref "+prefName+" to "+td.style.backgroundColor);
+  }
+
+  if (forcevalue === null)
+    loadPrefs(); // keep it in sync with saved values
+}
+
+// Function to set preference values (string) and save to localStorage
+function setPref(prefName, value) {
+  preferences[prefName] = value;
+  localStorage.setItem(prefName, value);
+  warning("Set pref "+prefName+"="+value);
+}
+
+var summary = null;
+
+// Function to load preferences from localStorage
+function loadPrefs() {
+
+  if (typeof localStorage === "undefined" || localStorage === null) {
+    warning("No local storage found");
+    return;
+  } else {
+    //warning("Found local storage");
+  }
+  for (const prefName in preferences) {
+    if (localStorage.hasOwnProperty(prefName)) {
+      const value = localStorage.getItem(prefName);
+      //warning("Loadprefs: found prefname="+prefName+" value="+value);
+      if (prefName === 'bpmNoteValue' || prefName.startsWith('tone') || prefName === "noteFilter") {
+        // For the menu item, directly set the value as a string
+        preferences[prefName] = value;
+        // Update the menu display
+        const menu = document.getElementById(prefName+'Menu');
+        if (menu === null) {
+          warning("Could not find menu with name "+prefName+'Menu');
+        } else {
+          menu.value = value;
+        }
+      } else {
+        // For boolean preferences, convert the stored value to a boolean
+        preferences[prefName] = value === 'true';
+        // Update the toggle display
+        const toggle = document.getElementById(prefName + 'Toggle');
+        if (toggle === null) {
+          warning("Could not find a toggle named "+prefName+'Toggle');
+        } else {
+          toggle.checked = preferences[prefName];
+        }
+      }
+    }
+  }
+  //warning("Completed LoadPrefs");
+}
+
+
+document.addEventListener('DOMContentLoaded', function () {
+
+  setInterval(function() {
+    drawPianoKeyboard(keyboardOptions);
+  }, 50);
+  summary = document.getElementById("runSummary");
+  summary.innerHTML="";
+  changeSelectedHand('both');
+
+  // JavaScript code for restoring
+const restoreButton = document.getElementById("restoreButton");
+
+restoreButton.addEventListener("click", function() {
+    const importedJSON = importExportTextarea.value;
+    try {
+        const importedData = JSON.parse(importedJSON);
+        // Replace the existing runHistory with importedData
+        runHistory = importedData;
+        localStorage.setItem("runHistory", JSON.stringify(runHistory));
+        alert("Data restored successfully!");
+    } catch (error) {
+        alert("Invalid JSON format. Please check and try again.");
+    }
+  });
+});
 
 // Function to handle preset selection
 function handlePresetSelection(presetIndex) {
   if (presetIndex >= 0 && presetIndex < presets.length) {
     var selectedPreset = presets[presetIndex];
 
+    curPresetName = presets[presetIndex].name;
+
     // Update notesToPlay with the selected preset's notes
     notesToPlay = [selectedPreset.leftHand, selectedPreset.rightHand];
-    if (selectedPreset.leftFingers !== null && selectedPreset.rightFingers !== null) {
+
+    if (typeof selectedPreset.leftFingers !== "undefined" &&
+        typeof selectedPreset.rightFingers !== "undefined" &&
+        selectedPreset.leftFingers !== null &&
+        selectedPreset.rightFingers !== null) {
       fingersToPlay = [selectedPreset.leftFingers, selectedPreset.rightFingers];
     } else {
       fingersToPlay = null;
@@ -178,8 +720,21 @@ function handlePresetSelection(presetIndex) {
 
     updateDisplayedNotesToPlay();
 
-    document.getElementById("testname").textContent = selectedPreset.name;
-  }name
+    // this preset has custom metrics settings
+    if (typeof selectedPreset.metrics !== 'undefined' && selectedPreset.metrics !== null) {
+      const mets = ['HTQ', 'MetQ', 'DynQ', 'LegQ', 'StaQ'];
+      const custmets = selectedPreset.metrics;
+
+      for (let i = 0; i < mets.length; i++) {
+        if (typeof custmets[mets[i]] !== 'undefined' && custmets[mets[i]] !== null) {
+          togglePref('score'+mets[i], custmets[mets[i]]);
+          console.log("Set custom metric:"+mets[i]+"="+custmets[mets[i]]);
+        }
+      }
+    }
+
+    //document.getElementById("testname").innerHTML = selectedPreset.name;
+  }
   setNoteFilters();
 }
 
@@ -187,54 +742,163 @@ function updateDisplayedNotesToPlay() {
   for (var h = 0; h < 2; h++) {
     let notepr = "";
     for (var i = 0; i < notesToPlay[h].length; i++) {
-      notepr += " <span id=ntp_"+h+"_"+i+">"+prnotenum(notesToPlay[h][i])+"</span>";
+      notepr += " <span id=ntp_"+h+"_"+i+">"+prnotenum(notesToPlay[h][i]);
+      if (fingersToPlay !== null) {
+        notepr += '<sub>'+fingersToPlay[h][i]+'</sub>';
+      }
+      notepr+="</span>";
     }
 
     document.getElementById("notes"+(h?"RH":"LH")).innerHTML = notepr;
   }
 }
 
-// Create presets I'm using now
+// Create presets
 console.log("pushing new presets");
-presets.push("Scales");
-presets.push(generateScalePreset('B', 'maj', 1, 3));
-presets.push(generateScalePreset('C', 'maj', 1, 3));
-presets.push(generateScalePreset('C', 'maj', 2, 3));
-presets.push(generateScalePreset('D', 'maj', 1, 3));
+
+const scalemetrics = {HTQ: true, MetQ: true, DynQ: true, LegQ: true, StaQ: false};
+// blues scales use "swung eighths" so metrical quality won't show correct score.
+const bluesscalemetrics = {HTQ: true, MetQ: false, DynQ: true, LegQ: true, StaQ: false};
+
+presets.push("Scales, Major");
+presets.push(generateScalePreset('C', 'maj', 1, 3, null, scalemetrics));
+presets.push(generateScalePreset('C', 'maj', 2, 3, null, scalemetrics));
+presets.push(generateScalePreset('D', 'maj', 1, 3, null, scalemetrics));
+presets.push(generateScalePreset('E', 'maj', 1, 3, null, scalemetrics));
+presets.push(generateScalePreset('F', 'maj', 1, 3, null, scalemetrics));
 presets.push(generateScalePreset('G', 'maj', 1, 3));
-presets.push(generateScalePreset('A', 'natMin', 1, 3));
-presets.push(generateScalePreset('C', 'mixoBlues', 1, 3));
+presets.push(generateScalePreset('G', 'maj', 2, 3, null, scalemetrics));
+presets.push(generateScalePreset('A', 'maj', 1, 2, null, scalemetrics));
+presets.push(generateScalePreset('B', 'maj', 1, 2, null, scalemetrics));
+presets.push("Scales, Other");
+presets.push(generateScalePreset('A', 'natMin', 1, 3, null, scalemetrics));
+presets.push(generateScalePreset('A', 'natMin', 2, 3, null, scalemetrics));
+presets.push(generateScalePreset('C', 'blues', 1, 3, null, bluesscalemetrics));
+presets.push(generateScalePreset('C', 'blues', 2, 3, null, bluesscalemetrics));
+presets.push(generateScalePreset('D', 'chroma', 1, 3, null, scalemetrics));
+//presets.push(generateScalePreset('C', 'mixoBlues', 1, 3));
 presets.push("Arpeggios");
-presets.push(generateScalePreset('C', 'majArp', 2, 3));
-presets.push(generateScalePreset('A', 'natMinArp', 2, 3));
-presets.push(generateScalePreset('G', 'majArp', 2, 3));
+presets.push(generateScalePreset('C', 'majArp', 2, 3, null, scalemetrics));
+presets.push(generateScalePreset('F', 'majArp', 2, 3, null, scalemetrics));
+presets.push(generateScalePreset('G', 'majArp', 2, 3, null, scalemetrics));
+presets.push(generateScalePreset('A', 'natMinArp', 2, 3, null, scalemetrics));
+
 presets.push("Octaves");
-presets.push(generateScalePreset('C', 'maj', 1, 5, "RH Octave C5"));
-presets.push(generateScalePreset('C', 'maj', 1, 2, "LH Octave C2"));
+
+const octmetrics = {HTQ: false, MetQ: true, DynQ: true, LegQ: false, StaQ: true};
+presets.push(generateScalePreset('C', 'maj', 1, 5, "RH Octave C5", octmetrics));
+presets.push(generateScalePreset('C', 'maj', 1, 2, "LH Octave C2", octmetrics));
+presets.push(generateScalePreset('G', 'maj', 1, 5, "RH Octave G5", octmetrics));
+presets.push(generateScalePreset('G', 'maj', 1, 2, "LH Octave G2", octmetrics));
+
+presets.push("Runs");
+presets.push({name: 'Pitter-patter', leftHand: [],
+  rightHand: [48, 50, 52, 55, 60, 62, 64, 67, 72, 74, 76, 79, 84, 86, 88, 91, 96, 91, 88,
+    86, 84, 79, 76, 74, 72, 67, 64, 62, 60, 55, 52, 50, 48, ],
+  metrics: {HTQ: false, MetQ: false, DynQ: true, LegQ: false, StaQ: false}
+});
+
+presets.push("Song Drills");
+presets.push({
+  name: 'F&uuml;r Elise RH B1-8',
+  leftHand: [],
+  rightHand: [76, 75, 76, 75, 76, 71, 74, 72, 69, 60, 64, 69, 71, 64, 68, 71, 72, 64, 76, 75, 76, 75, 76, 71, 74, 72, 69, 60, 64, 69, 71, 62, 72, 71, 69],
+  leftFingers: null,
+  rightFingers: null,
+  metrics: {HTQ: false, MetQ: false, DynQ: true, LegQ: true, StaQ: false}
+});
+
+presets.push({
+  name: 'F&uuml;r Elise RH B9-14', leftHand: [],
+  rightHand: [76, 75, 76, 75, 76, 71, 74, 72, 69, 60, 64, 69, 71, 62, 72, 71, 69, 71, 72, 74, 76, 67, 77, 76, 74, 65, 76, 74, 72, 64, 74, 72, 71],
+  leftFingers: null,
+  rightFingers: null,
+  metrics: {HTQ: false, MetQ: false, DynQ: true, LegQ: true, StaQ: false}
+});
+
+presets.push({
+  name: 'F&uuml;r Elise LH Arps',
+  leftHand: [45, 52, 57, 40, 52, 56, 48, 55, 60, 43, 55, 59, 45, 52, 57, 40, 52, 64,],
+  rightHand: [],
+  leftFingers: null,
+  rightFingers: null,
+  metrics: {HTQ: false, MetQ: true, DynQ: true, LegQ: false, StaQ: false}
+});
+
+presets.push({
+  name: 'C.S.A B1',
+  leftHand: [60, 67, 64, 67, 64, 67, 60, 67, //C arp
+           ],
+  rightHand: [76, 86, 84, 76,
+            ],
+  leftFingers: null,
+  rightFingers: null,
+  metrics: {HTQ: true, MetQ: false, DynQ: true, LegQ: false, StaQ: false}
+});
+
+presets.push({
+  name: 'C.S.A B1-2',
+  leftHand: [60, 67, 64, 67, 64, 67, 60, 67, //C arp
+             62, 69, 65, 69, 65, 69, 62, 69, // Dm arp
+           ],
+  rightHand: [76, 86, 84, 76,
+              77, 86, 84, 77,
+            ],
+  leftFingers: null,
+  rightFingers: null,
+  metrics: {HTQ: true, MetQ: false, DynQ: true, LegQ: false, StaQ: false}
+});
+
+presets.push({
+  name: 'C.S.A B1-5',
+  leftHand: [60, 67, 64, 67, 64, 67, 60, 67, //C arp
+             62, 69, 65, 69, 65, 69, 62, 69, // Dm arp
+             64, 71, 67, 71, 67, 71, 64, 71, // Em arp
+             62, 69, 65, 69, 65, 69, 62, 69, // Dm arp
+             60, 67, 64, 67, 64, 67, 60, 67, //C arp
+           ],
+  rightHand: [76, 86, 84, 76,
+              77, 86, 84, 77,
+              79, 86, 84, 79,
+              77, 86, 84,  84, 83, 81, 83,  84
+            ],
+  leftFingers: null,
+  rightFingers: null,
+  metrics: {HTQ: false, MetQ: false, DynQ: true, LegQ: false, StaQ: false}
+});
+
 presets.push("Debugging");
 presets.push(  // a very simple pattern for debugging the software
   {
     name: 'TEST',
     leftHand: [48, 50, 52, ],
-    rightHand: [60, 62, 64, ]
+    rightHand: [60, 62, 64, ],
+    leftFingers: [5,4,3],
+    rightFingers: [1,2,3],
+    metrics: {HTQ: false, MetQ: false, DynQ: false, LegQ: false, StaQ: false}
   }
 );
+handlePresetSelection(presets.length-1); // default, makes it easier for me to test
 
 presets.push(  // a very simple pattern for debugging the software
   {
     name: 'SC.TEST',
     leftHand: [48, 50, 52, 50, 48],
-    rightHand: [60, 62, 64, 62, 60]
+    rightHand: [60, 62, 64, 62, 60],
+    leftFingers: [5,4,3,4,5],
+    rightFingers: [1,2,3,2,1],
+    metrics: {HTQ: true, MetQ: true, DynQ: true, LegQ: true, StaQ: true}
   }
 );
 
 // Create the preset menu
 var presetMenu = document.createElement('select');
-presetMenu.style.fontSize = "16px";
+presetMenu.style.fontSize = "20px";
+presetMenu.style.maxHeight = "90vh";
 var defaultOption = document.createElement('option');
 defaultOption.value = -1;
 defaultOption.text = 'Presets'; // Default menu item
-defaultOption.style.fontSize = "14px";
+defaultOption.style.fontSize = "18px";
 presetMenu.appendChild(defaultOption);
 
 // Add menu options for each preset
@@ -243,14 +907,14 @@ presets.forEach(function(preset, index) {
     // label for grouping presets
    const optgroup = document.createElement('optgroup');
    optgroup.label = preset;
-   optgroup.style.fontSize = "18px";
+   optgroup.style.fontSize = "16px";
    optgroup.style.color = "blue";
    presetMenu.appendChild(optgroup);
     return;
   }
   var option = document.createElement('option');
   option.value = index;
-  option.text = preset.name;
+  option.innerHTML = preset.name;
   option.style.fontSize = "16px";
   presetMenu.appendChild(option);
 });
@@ -269,31 +933,49 @@ function resetPresetMenu() {
   presetMenu.selectedIndex = 0; // Set the selected index to the default option
 }
 
-function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = null) {
+function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = null, metrics = null) {
 
   const scaleIntervals = {
     maj: [0, 2, 4, 5, 7, 9, 11, 12],
     natMin: [0, 2, 3, 5, 7, 8, 10, 12],
-    harMin: [0, 2, 3, 5, 7, 8, 11], // not right
-    melMin: [0, 2, 3, 5, 7, 9, 11], // not right
-    mixoBlues: [0, 2, 3, 4, 5, 6, 7, 9, 10],
+    harMin: [0, 2, 3, 5, 7, 8, 11, 12],
+    melMin: [0, 2, 3, 5, 7, 9, 11, 12], // we have to hack the fact that descending goes back to natMin
+    melMinJ: [0, 2, 3, 5, 7, 9, 11, 12], // Jazz version of melodic minor doesn't change on descending
+    chroma: [0,1,2,3,4,5,6,7,8,9,10,11,12],
+    mixoBlues: [0, 2, 3, 4, 5, 6, 7, 9, 10, 12],
     majArp: [0,4,7],
-    natMinArp: [0,3,7]
+    natMinArp: [0,3,7],
+    blues: [0,3,5,6,7,10,12],
+    dor: [0, 2, 3, 5, 7, 9, 10, 12],
+    lyd: [0, 2, 4, 6, 7, 9, 11, 12],
+    mixolyd: [0, 2, 4, 5, 7, 9, 10, 12],
+    phryg: [0, 1, 3, 5, 7, 8, 10, 12],
+    loc: [0, 1, 3, 5, 6, 8, 10, 12],
+    aeo: [0, 2, 3, 5, 7, 8, 10, 12],
+    majPent: [0, 2, 4, 7, 9, 12],
+    minPent: [0, 3, 5, 7, 10, 12],
   };
 
   const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
   const fingerings = new Object();
+
+  // The "standard" fingering applies to many different scales
   fingerings["C maj"] =
     fingerings["D maj"] =
     fingerings["E maj"] =
     fingerings["G maj"] =
     fingerings["A maj"] =
-      fingerings["A natMin"] =
-      fingerings["C natMin"] =
-      fingerings["G natMin"] =
-      fingerings["D natMin"] =
-      fingerings["E natMin"] =
+    fingerings["A natMin"] =
+    fingerings["C natMin"] =
+    fingerings["G natMin"] =
+    fingerings["D natMin"] =
+    fingerings["E natMin"] =
+    fingerings["A harMin"] =
+    fingerings["E harMin"] =
+    fingerings["D harMin"] =
+    fingerings["C harMin"] =
+    fingerings["G harMin"] =
       [
         { start: [5,4,3,2,1], oct: [3,2,1,4,3,2,1], end: [3,2,1] },
         { start: [1,2,3], oct: [1,2,3,4,1,2,3], end: [1,2,3,4,5] }
@@ -314,6 +996,12 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
       { start: [3,2,1,3,2,1], oct: [3,2,1,3,2,1,3,2,1], end: [3,2,1,3] }
     ];
 
+    fingerings["C blues"] =
+    [
+      {start:[1,1,1,1,1,1], oct:[], end:[]},
+      { start: [1,3,1,3,1,3], oct:[1,3,1,3,1,3], end:[4] }
+    ]
+
   const label = name?name:`${noteName} ${scaleType} Scale (${numOctaves} Oct)`;
 
   let fingers = fingerings[noteName+" "+scaleType];
@@ -326,14 +1014,24 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
     leftHand: [],
     rightHand: [],
     leftFingers: null,
-    rightFingers: null
+    rightFingers: null,
+    metrics: {HTQ: true, MetQ: true, DynQ: true, LegQ: true, StaQ: false}
   };
+
+  if (metrics !== null) {
+    preset.metrics = metrics;
+  }
 
   const arpmode = scaleType.includes("Arp");
   console.log("arpmode="+arpmode);
 
   // Get the index of the starting note in the noteNames array
   const startNoteIndex = noteNames.indexOf(noteName);
+
+  if (typeof scaleIntervals[scaleType] === "undefined" || scaleIntervals[scaleType] === null) {
+    warning("No intervals found for scale type="+scaleType);
+    return null;
+  }
 
   // Generate the scale notes for the specified number of octaves
 
@@ -358,6 +1056,13 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
   // then, descending. In arpeggio mode do not include the very last note
   // because arpeggios are typically practiced by 'cycling' which does not
   // repeat the first note after the end note is played
+
+  // Also, if this is a melodic minor scale, descending substitutes the
+  // natural minor. If you don't want that, use melMinJ (Jazz version)
+
+  if (scaleType === 'melMin') {
+    scaleType = 'natMin';
+  }
   for (let octave = lhOctave+numOctaves-1; octave >= lhOctave; octave--) {
     for (let i = scaleIntervals[scaleType].length-(arpmode?1:2); i >= 0; i--) {
       if (arpmode && octave === lhOctave && i === 0) {
@@ -442,6 +1147,8 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
       console.log("State: setting notes");
       notesToPlay = [[], []]; // reset
 
+      //document.getElementById("testname").textContent = "Custom Notes";
+
       resetPresetMenu();
 
       updateSelectableOptions(true, true, false);
@@ -469,9 +1176,12 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
     // Function to test the notes repetition
     function testNotes() {
       var button = document.getElementById('testNotesButton');
+      document.body.style.backgroundColor = "white";
 
       if (currentState === STATE.TESTING_NOTES || currentState === STATE.TEST_FLUSHING) {
         currentState = STATE.WAITING_FOR_BUTTON;
+
+        // This is really the STOP button, end the test.
 
         // Enable setNotes button and disable doneButton
         document.getElementById('setNotesButton').disabled = false;
@@ -479,6 +1189,10 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
         endTest(); // stop the timer
         button.textContent = "START";
         scrollToDataTop(false);
+
+        if (preferences.autoExitFullscreenStop) {
+          exitFullscreen();
+        }
         return;
       }
 
@@ -507,6 +1221,63 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
 
       scrollToDataTop(true);
 
+      if (preferences['autoFullscreenStart']) {
+        console.log("Full Screen auto on start");
+          setTimeout(function() {fullscreen(true);}, 300);
+      }
+    }
+
+    function logOneRun(elapsed, notefail, strikes, bpm) {
+      const runName = todayDate() + "|" + curPresetName + "|" + getSelectedHand();
+      if (runHistory === null) {
+        // hasn't been read yet
+        runHistory = localStorage.getItem("runHistory");
+
+        if (runHistory === null) {
+          runHistory = {};
+        } else {
+          // Parse 'runHistory' from JSON if it exists
+          runHistory = JSON.parse(runHistory);
+        }
+      }
+      if (typeof runHistory[runName] === "undefined") {
+        runHistory[runName] = {};
+        runHistory[runName].count = 0;
+        runHistory[runName].elapsed = 0;
+        runHistory[runName].sumBPM = 0;
+        runHistory[runName].notefail = 0;
+        runHistory[runName].success = 0;
+        runHistory[runName].maxBPM = 0;
+        runHistory[runName].bestBPM = 0;
+        runHistory[runName].sumStrikes = 0;
+      }
+      runHistory[runName].count++;
+      runHistory[runName].elapsed += elapsed;
+      if (notefail) {
+        runHistory[runName].notefail++;
+      } else {
+        runHistory[runName].success++;
+        runHistory[runName].sumStrikes += strikes;
+        runHistory[runName].sumBPM += bpm;
+        if (bpm > runHistory[runName].maxBPM) {
+          runHistory[runName].maxBPM = bpm;
+        }
+        if (strikes === 0 && bpm > runHistory[runName].bestBPM) {
+          runHistory[runName].bestBPM = bpm;
+        }
+      }
+
+      localStorage.setItem("runHistory", JSON.stringify(runHistory));
+    }
+
+    // get the current date in yyyy-mm-dd format
+    function todayDate() {
+      const currentDate = new Date();
+      const year = currentDate.getFullYear();
+      const month = String(currentDate.getMonth() + 1).padStart(2, '0'); // Month is zero-based, so we add 1 and pad with '0' if needed.
+      const day = String(currentDate.getDate()).padStart(2, '0');
+
+      return `${year}-${month}-${day}`;
     }
 
     // Function to handle the "Done" button click
@@ -530,6 +1301,8 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
         }
         preset += "]};";
         message(preset);
+        message("(Copied to clipboard)");
+        copyToClipboard(preset);
 
         if (notesToPlay[0].length && notesToPlay[1].length) {
             changeSelectedHand('both');
@@ -542,6 +1315,42 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
         setNoteFilters();
 
       }
+    }
+
+    document.addEventListener('fullscreenchange', function() {
+      document.getElementById("fullscreenButton").textContent = document.fullscreenElement ? "Exit Full" : "Full Screen";
+    });
+
+    function exitFullscreen() {
+      document.exitFullscreen ? document.exitFullscreen() : document.webkitExitFullscreen();
+      document.getElementById("fullscreenButton").textContent = "Full Screen";
+    }
+
+    function fullscreen(force=false) {
+
+      if (document.fullscreenElement && !force) {
+        // already full screen so exit
+        // because we were already full screen we know one of the two apis below are in effect
+        document.exitFullscreen ? document.exitFullscreen() : document.webkitExitFullscreen();
+        document.getElementById("fullscreenButton").textContent = "Full Screen";
+        return;
+      }
+
+      // if we get here the browser was not already full screen
+      console.log("fullscreen() is going into fullscreen mode");
+      // Check if the browser supports the Fullscreen API
+      if (document.documentElement.requestFullscreen) {
+        // Request full-screen mode on the document element
+        document.documentElement.requestFullscreen();
+      } else if (document.documentElement.webkitRequestFullscreen) {
+        // For older versions of Chrome, use the webkitRequestFullscreen method
+        document.documentElement.webkitRequestFullscreen();
+      } else {
+        // Full-screen API is not supported
+        alert('Fullscreen mode is not supported in this browser.');
+        return;
+      }
+      document.getElementById("fullscreenButton").textContent = "Exit Full Screen";
     }
 
     // Function to display a message in the console
@@ -581,24 +1390,50 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
       }
     }
 
+
+    const handmodes = ['lh', 'rh', 'ht'];
+    const selmodes = {lh:'left', rh:'right', ht:'both'};
+    const modesels = {left:'lh', right:'rh', both:'ht'};
+
     // Function to get the selected hand from the pulldown menu
     function getSelectedHand() {
-      var handSelect = document.getElementById('handSelect');
-      return handSelect.value;
+      const handmodes = ['lh', 'rh', 'ht'];
+      const selmodes = {lh:'left', rh:'right', ht:'both'};
+      const modesels = {left:'lh', right:'rh', both:'ht'};
+      for (const mode of handmodes) {
+        if (document.getElementById(mode).classList.contains('selected')) {
+          return selmodes[mode];
+        }
+      }
+      return null; // No mode selected
     }
 
     // Function to change the selected hand in the pulldown menu
     function changeSelectedHand(hand) {
-      var handSelect = document.getElementById('handSelect');
-      handSelect.value = hand;
+      const handmodes = ['lh', 'rh', 'ht'];
+      const selmodes = {lh:'left', rh:'right', ht:'both'};
+      const modesels = {left:'lh', right:'rh', both:'ht'};
+
+      handmodes.forEach(m => {
+        const modeBox = document.getElementById(m);
+        if (m === modesels[hand]) {
+          modeBox.classList.add('selected');
+        } else {
+          modeBox.classList.remove('selected');
+        }
+      });
+
+      setNoteFilters(); // when hand changes this needs to be updated immediately
     }
 
 
     // Function to update the availability of selectable options in the pulldown menu
-    // Function to update the availability of selectable options in the pulldown menu
     function updateSelectableOptions(leftAvailable, rightAvailable, bothAvailable) {
-      var handSelect = document.getElementById('handSelect');
-      var options = handSelect.options;
+
+      return;  // for now do nothing
+      var selHT = document.getElementById('ht');
+      var selLH = document.getElementById('lh');
+      var selRH = document.getElementById('rh');
 
       for (var i = 0; i < options.length; i++) {
         var option = options[i];
@@ -617,9 +1452,73 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
       handSelect.disabled = false;
     }
 
+    const quarterNote=`<svg xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" version="1.0"
+    width="10" height="11" viewBox="0 0 30 50" style=transform:translateY(2px)>  <g transform="translate(-434,-6)" id="g11065"> <path d="M 451.09297,49.38984 C 454.48881,47.56987 456.29825,44.27529 455.18519,41.79688 C 453.99793,39.15324 449.91818,38.40716 446.07861,40.13151 C 442.23905,41.85587 440.08645,45.40091 441.27371,48.04454 C 442.46098,50.68818 446.54072,51.43426 450.38029,49.70991 C 450.62026,49.60214 450.86657,49.51117 451.09297,49.38984 z "  style="opacity:0.9;fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:0.2;stroke-miterlimit:4;stroke-dashoffset:0;stroke-opacity:1" id="path11056" /> <path d="M 454.72547,43.05645 L 454.72547,9.46888" style="fill:none;fill-opacity:0.75;fill-rule:evenodd;stroke:#000000;stroke-width:1.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" id="path11058" /> </g> </svg>`;
+
+    const halfNote=`<svg xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" version="1.0"
+          x="0.0000000" y="0.0000000" width="12.000000" height="7.0000000" id="svg1361"> <defs id="defs1363" /> <g
+          style="fill:#000000;fill-opacity:1.0000000" id="layer1"> <g transform="translate(-199.3990,-536.4730)"
+          style="fill:#000000;fill-opacity:1.0000000" id="g2912"> <path
+           d="M 206.04921,542.89329 C 204.33221,542.80244 202.99047,541.27833 202.45208,539.70226 C 202.12589,538.77722 202.30505,537.38950 203.39174,537.12966 C 204.96615,536.86226 206.27260,538.19967 207.00481,539.47953 C 207.52641,540.42880 207.81478,541.92368 206.83679,542.67615 C 206.60458,542.83188 206.32387,542.89434 206.04921,542.89329 z M 208.78446,537.49000 C 206.85001,536.31510 204.40641,536.22358 202.28813,536.88110 C 200.94630,537.35025 199.41169,538.34823 199.39900,539.97250 C 199.39807,541.56396 200.87900,542.55675 202.18949,543.02959 C 204.26418,543.70824 206.65796,543.64856 208.59501,542.56669 C 209.69149,541.98333 210.66334,540.77535 210.33379,539.43643 C 210.15258,538.57546 209.49304,537.93123 208.78446,537.49000 z "
+           style="fill:#000000;fill-opacity:1.0000000" id="path2918" /> </g> </g> </svg>`;
+
+    const eighthNote=`<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox=[0 0 500 500]>
+<path fill="none" stroke-width="9" stroke="#000" d="M66,165V35l70,-20V145M66,44l70,-20"/>
+<path fill="#000" d="M70,164a25,15 0 1,0 0,1M140,144a25,15 0 1,0 0,1"/>
+</svg>`;
+
+  const sixteenthNote=`<svg
+   xmlns="http://www.w3.org/2000/svg"
+   height="13" width="20" viewBox="0 0 250 150" style=transform:translateY(2px);
+   version="1.1"
+   id="svg15612" > <g style="stroke:#000000;stroke-width:3" id="g16563">
+    <path d="m 50.8,44.75 0,84" id="path16482" />
+    <path id="path16524" d="m 115.5,34.25 0,84" />
+    <path d="m 181,26.75 0,80" id="path16522" />
+    <path id="path16520" d="m 246.2,17.8 0,75" />
+  </g>
+  <g style="fill:#000000" id="g16590">
+    <g id="g3" transform="matrix(0.816,-0.578,0.616,0.788,0,0)">
+      <ellipse id="path16453" cx="-55.3" cy="130.4" rx="18.8" ry="12.2" />
+      <ellipse
+         id="path16453-5"
+         cx="3.3"
+         cy="157.8"
+         rx="18.8"
+         ry="12.2" />
+      <ellipse
+         id="path16453-3"
+         cx="63.6"
+         cy="184.6"
+         rx="18.8"
+         ry="12.2" />
+      <ellipse
+         id="path16453-56"
+         cx="122.5"
+         cy="212"
+         rx="18.8"
+         ry="12.2" />
+    </g>
+      <path
+         d="M 247.7,16.5 49.3,42.6 49.3,55.5 247.7,29.3 Z"
+         id="path16526" />
+      <path
+         id="path16530"
+         d="M 247.7,37.4 49.3,63.5 49.3,76.4 247.7,50.2 Z" />
+  </g>
+</svg></div>`;
+
+
+    var currentBPMNote = quarterNote;
 
     function displayTestStats(notes) {
       var alerts = []; // alert structures for graph annotations
+
+      if (wrongNotePlayed && preferences['enableTones'] && preferences['toneOnNoteFail'] !== 'none') {
+        playMIDINote(preferences['toneOnNoteFail'],
+          preferences['toneDuration']*2, preferences['toneVelocity'],
+          preferences['toneFailVoice']);
+      }
 
       // Increment the repetition count
       repetitionCount++;
@@ -627,7 +1526,7 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
       // Calculate average BPM
       var duration = 1;
 
-      if (!wrongNotePlayed) {
+      if (notes !== null && !wrongNotePlayed) {
         let stime = 0;
         let etime = 0;
         const hand = getSelectedHand();
@@ -650,9 +1549,9 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
 
       var noteCount = Math.max(notesToPlay[0].length, notesToPlay[1].length);
 
-      var averageBPM = Math.trunc((noteCount) * successCount / (totalDuration / 60000));
+      var averageBPM = totalDuration === 0 ? 0 : Math.trunc((noteCount) * successCount / (totalDuration / 60000));
       var currentBPM = 0;
-      if (!wrongNotePlayed) { // don't update currentBPM if we're in error state
+      if (notes !== null && !wrongNotePlayed) { // don't update currentBPM if we're in error state
         currentBPM = Math.trunc((noteCount) / (duration / 60000));
         if (currentBPM >= maxBPM) {
           maxBPM = currentBPM;
@@ -665,18 +1564,18 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
       let stats = "<table><tr style='border-bottom:1px solid black'>";
       stats += '<td style=vertical-align:top;border:none;padding-right:10px>REPS:<br><span class=bigstat style="color:green">' +
         successCount +
-        '</span>&nbsp;(' + Math.trunc(100 * successCount / (successCount + failCount)) + '%) </td>';
+        '</span>&nbsp;(' + Math.trunc(100 * successCount / ((successCount + failCount)?(successCount+failCount):1)) + '%) </td>';
 
       stats += '<td style=vertical-align:top;border:none>NoteFail<br><span class=smallstat style="color:red">' +
         failCount + '</span></td>';
       stats += '<td style=vertical-align:top;border:none>QFail<br><span class="smallstat" style="color:red">' +
         softFailCount + '</span></td>';
 
-      stats += '<td style=vertical-align:top;border:none;padding-right:10px>BPM:<br><span class=bigstat>' +
+      stats += '<td style=vertical-align:top;border:none;padding-right:10px>BPM: '+currentBPMNote+'<br><span class=bigstat>' +
         (currentBPM?Math.trunc(currentBPM):"&nbsp;") + '</span></td>';
       stats += '<td style=vertical-align:top;border:none;padding-right:10px>Avg:<br><span class=smallstat>' +
         Math.trunc(averageBPM) + "</span></td>";
-      stats += '<td style=vertical-align:top;border:none;padding-right:10px;padding-right:10px;padding-right:10px>Max:<br><span class=smallstat>' +
+      stats += '<td style=vertical-align:top;border:none;padding-right:10px>Max:<br><span class=smallstat>' +
         Math.trunc(maxBPM) + "</span></td>";
       stats += '<td style=vertical-align:top;border:none;padding-right:10px;>Best:<br><span class=smallstat>' +
           Math.trunc(bestBPM) + "</span></td>";
@@ -685,9 +1584,11 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
       stats += '<td style=vertical-align:top;border:none;padding-right:10px>AvgMQ:<br><span class=smallstat>' +
           (numQBPM[1]?Math.trunc(sumQBPM[1]/numQBPM[1]):0) + "</span> <span style=font-size:small>("+numQBPM[1]+")</span></td>";
       stats += '<td style=vertical-align:top;border:none;padding-right:10px>AvgLQ:<br><span class=smallstat>' +
-              ((numQBPM[2]+numQBPM[3])?Math.trunc((sumQBPM[2]+sumQBPM[3])/(numQBPM[2]+numQBPM[3])):0) +
-              "</span> <span style=font-size:small>("+(numQBPM[2]+numQBPM[3])+")</span></td></tr>";
-
+              ((numQBPM[2])?Math.trunc((sumQBPM[2])/(numQBPM[2])):0) +
+              "</span> <span style=font-size:small>("+(numQBPM[2])+")</span></td>";
+      stats += '<td style=vertical-align:top;border:none;padding-right:10px>AvgQF:<br><span class=smallstat>' +
+              ((numQBPM[3])?Math.trunc((sumQBPM[3])/(numQBPM[3])):0) +
+              "</span> <span style=font-size:small>("+(numQBPM[3])+")</span></td></tr>";
       // compute quality metrics, hands togetherness
       // but only compute this if testing in hands together mode, and if
       // both sets of notes are the same length
@@ -695,7 +1596,7 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
       var strikes = 0; // three strikes gets you a slow down message
 
       stats += "<tr style='border:none'>";
-      if (!wrongNotePlayed && getSelectedHand() === 'both' &&
+      if (notes !== null && !wrongNotePlayed && getSelectedHand() === 'both' &&
           notes[0].length === notes[1].length) {
 
         var together = 0;
@@ -715,17 +1616,17 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
         }
 
         const htqmerit = Math.trunc(100*(together/(together+apart)));
-        stats += "<td style=vertical-align:top;border:none>HTQ:<br><span class=bigstat style='color:" +
-          colorcode(htqmerit) + "''>" + htqmerit + "</span></td>";
+        stats += tdPreferenceDisplay("scoreHTQ", "HTQ", htqmerit, "");
 
+        if (preferences['scoreHTQ']) {
           strikes += strikeScore(htqmerit);
-          console.log("htq strikes="+strikes);
+        }
 
       } else {
-        stats += "<td style=vertical-align:top;border:none>HTQ:<br><span class=bigstat style='color:black'>&nbsp;</span></td>";
+        stats += tdPreferenceDisplay("scoreHTQ", "HTQ", 0, "");
       }
 
-      if (!wrongNotePlayed) {
+      if (notes !== null && !wrongNotePlayed) {
         // Metric quality: were notes played for roughly the same length of time?
         // Could track for left and right independently to find trouble spots.
 
@@ -743,14 +1644,14 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
         const metsd = metStat.calculateStandardDeviation();
         var metmerit = metmean?Math.trunc(100*(1 - (metsd/metmean))):0;
         if (metmerit < 0) metmerit = 0;
-        stats += "<td style=vertical-align:top;border:none;padding-right:15px>MetQ:<br><span class=bigstat style='color:" +
-          colorcode(metmerit) + "'>" + metmerit + "</span>" +
-          "<br>("+Math.trunc(metmean)+"&plusmn;"+Math.trunc(metsd)+")</td>";
+        //console.log("Generating MetQ, prefs="+preferences['scoreMetQ']);
+        stats += tdPreferenceDisplay('scoreMetQ', "MetQ", metmerit, "("+Math.trunc(metmean)+"&plusmn;"+Math.trunc(metsd)+")");
 
         metStat.findOutliers("SHORT", "LONG", alerts);
 
-        strikes += strikeScore(metmerit);
-        console.log("metq strikes="+strikes);
+        if (preferences['scoreMetQ']) {
+          strikes += strikeScore(metmerit);
+        }
 
         // Dynamic quality: were notes played at approximately the same loudness?
         // Could track this separately for left and right hands as well to see if one is overpowering
@@ -794,13 +1695,10 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
           })
         }
 
-        strikes += strikeScore(dynmerit);
-        console.log("dynq strikes="+strikes);
-
-        stats += "<td style=vertical-align:top;border:none;padding-right:15px>DynQ:<br><span class=bigstat style='color:" +
-          colorcode(dynmerit) + "'>" + dynmerit + "</span>" +
-          "<br>("+Math.trunc(dynmean)+"&plusmn;"+Math.trunc(dynsd)+")</td>";
-
+        if (preferences['scoreDynQ']) {
+          strikes += strikeScore(dynmerit);
+        }
+        stats += tdPreferenceDisplay('scoreDynQ', "DynQ", dynmerit, "("+Math.trunc(dynmean)+"&plusmn;"+Math.trunc(dynsd)+")");
 
         // Legato quality: were consecutive notes in the same hand played with
         // little or no gap and little or no overlap?
@@ -855,7 +1753,7 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
         const avggap = numgap?Math.trunc(gap/numgap):0;
         const avgoverlap = numoverlap?Math.trunc(overlap/numoverlap):0;
 
-        console.log("maxOverlap="+maxOverlap+" avgoverlap="+avgoverlap+" avgdur="+duration/noteCount);
+        //console.log("maxOverlap="+maxOverlap+" avgoverlap="+avgoverlap+" avgdur="+duration/noteCount);
         if (noteMaxOverlap != -1 && maxOverlap > avgoverlap*2 &&
           maxOverlap > (0.1*(duration/noteCount))) {
             // we will always allow up to 10% of average note duration for overlap
@@ -864,11 +1762,13 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
             name: "OVLP "+Math.trunc(100*maxOverlap/avgoverlap)+"%",
             note: noteMaxOverlap
           });
-          console.log("Pushed alert");
+          //console.log("Pushed alert");
         }
+        stats += tdPreferenceDisplay('scoreLegQ', "LegQ", legMerit, "(g:" + avggap + " o:" + avgoverlap + ")");
 
-        stats += "<td style=vertical-align:top;border:none;padding-right:15px>LegQ:<br><span class=bigstat style='color:" +
-          colorcode(legMerit) + "'>" + legMerit + "</span>" + "<br>(g:" + avggap + " o:" + avgoverlap + ")" + "</td>";
+        if (preferences['scoreLegQ']) {
+            strikes += strikeScore(legMerit);
+        }
 
         // staccatto quality
         // staccatto quality will be considered 100% for a note that has a gap after it plays
@@ -876,20 +1776,37 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
         // if this is negative (i.e. overlap) then it's also 0 quality. The average quality of all notes is
         // then computed.
         const stacMerit = legNum?Math.trunc(staccattoSum/legNum):0;
-        stats += "<td style=vertical-align:top;border:none>StaQ:<br><span class=bigstat style='color:" +
-          colorcode(stacMerit) + "'>" + stacMerit + "</span>" + "</td>";
-        stats += "</tr>";
+
+        stats += tdPreferenceDisplay('scoreStaQ', "StaQ", stacMerit, "");
+
+        if (preferences['scoreStaQ']) {
+            strikes += strikeScore(stacMerit);
+        }
+
       } else {
         // no stats due to error
-        stats += "<td style=vertical-align:top;border:none;padding-right:15px>MetQ:<br><span class=bigstat style='color:black'>&nbsp;</span>" +
-          "<br>(na)</td>"
-        stats += "<td style=vertical-align:top;border:none;padding-right:15px>DynQ:<br><span class=bigstat style='color:black'>&nbsp;</span>" +
-            "<br>(na)</td>"
-        stats += "<td style=vertical-align:top;border:none>LegQ:<br><span class=bigstat style='color:black'>&nbsp;</span>" + "</td>";
-
-        stats += "<td style=vertical-align:top;border:none>StaQ:<br><span class=bigstat style='color:black'>&nbsp;</span>" + "</td>";
-        stats += "</tr>";
+        stats += tdPreferenceDisplay('scoreMetQ', "MetQ", 0, "(na)");
+        stats += tdPreferenceDisplay('scoreDynQ', "DynQ", 0, "(na)");
+        stats += tdPreferenceDisplay('scoreLegQ', "LegQ", 0, "(na)");
+        stats += tdPreferenceDisplay('scoreStaQ', "StaQ", 0, "(na)");
       }
+
+      // draw simple graph of number of runs with hq, mq, lq result.
+      stats += "<td style=border:none></td><td style=border:none></td>";
+      var totqbpm = numQBPM[0]+numQBPM[1]+numQBPM[2]+numQBPM[3];
+      if (totqbpm === 0) totqbpm = 1; // avoid div by 0 errors
+
+      // draw a simple bargraph showing relative number of high, medium, low, qfail runs
+      stats += "<td style=border:none><div style=position:relative;width:100%;height:50px;><div style='background-color:green;position:absolute;bottom:0;left:20%;right:20%;height:" +
+        100*numQBPM[0]/totqbpm + "%'></div></td>";
+      stats += "<td style=border:none><div style=position:relative;width:100%;height:50px;><div style='background-color:blue;position:absolute;bottom:0;left:20%;right:20%;height:" +
+        100*numQBPM[1]/totqbpm + "%'></div></td>";
+      stats += "<td style=border:none><div style=position:relative;width:100%;height:50px;><div style='background-color:yellow;position:absolute;bottom:0;left:20%;right:20%;height:" +
+        100*numQBPM[2]/totqbpm + "%'></div></td>";
+      stats += "<td style=border:none><div style=position:relative;width:100%;height:50px;display:block><div style='background-color:red;position:absolute;bottom:0;left:20%;right:20%;height:" +
+        100*numQBPM[3]/totqbpm + "%'></div></td>";
+
+      stats += "</tr>";
 
       if (strikes > 2) { // sloppy play! warn user
         softFailCount++;
@@ -917,21 +1834,43 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
 
       if (!wrongNotePlayed) {
         drawNoteBarGraph(notes, strikes, alerts);
+        logOneRun(duration, false, strikes, currentBPM);
+      } else {
+        logOneRun(0, true, 0, 0);
+      }
+
+      function tdPreferenceDisplay(pref, tag, score, details) {
+        //console.log("Generating td for pref:/"+pref+"/ val="+preferences[pref]+" tag="+tag+" score="+score+" deets="+details);
+        return "<td id=td"+pref+" style='vertical-align:top;border:none;padding-right:15px;" +
+        "background-color:" + (preferences[pref]?"white":"rgb(220,220,220)") +
+        ";opacity:" + (preferences[pref]?"1":"0.3") + "' " +
+        "ontap=\"togglePref('" +pref+ "');\" onclick=\"togglePref('" + pref + "');\" " +
+        ">"+ tag +
+        ":<br><span class=bigstat style='color:" + colorcode(score) + "'>" + score + "</span>" +
+        "<br>"+details+"</td>";
+        ;
       }
     }
 
     function setNoteFilters() {
       let hand = getSelectedHand();
 
+      if (preferences['noteFilter'] === -1) {
+        // do not use notefilters
+        noteFilterHigh = -1;
+        noteFilterLow = 1000;
+        return;
+      }
+      let f = parseInt(preferences['noteFilter']);
       if (hand === 'both') {
-        noteFilterHigh = Math.max(...notesToPlay.flat()) + 3;
-        noteFilterLow = Math.min(...notesToPlay.flat()) - 3;
+        noteFilterHigh = Math.max(...notesToPlay.flat()) + f;
+        noteFilterLow = Math.min(...notesToPlay.flat()) - f;
       } else if (hand === 'left') {
-        noteFilterHigh = Math.max(...notesToPlay[0]) + 3;
-        noteFilterLow = Math.min(...notesToPlay[0]) - 3;
+        noteFilterHigh = Math.max(...notesToPlay[0]) + f;
+        noteFilterLow = Math.min(...notesToPlay[0]) - f;
       } else {
-        noteFilterHigh = Math.max(...notesToPlay[1]) + 3;
-        noteFilterLow = Math.min(...notesToPlay[1]) - 3;
+        noteFilterHigh = Math.max(...notesToPlay[1]) + f;
+        noteFilterLow = Math.min(...notesToPlay[1]) - f;
       }
     }
 
@@ -1061,7 +2000,7 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
       wrongNotePlayed = false;
       numQBPM = [0,0,0,0];
       sumQBPM = [0,0,0,0];
-      messageStats("");
+      displayTestStats(null);
     }
 
     var patternCanvas = null;
@@ -1084,8 +2023,23 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
       patternCtx.stroke();
     }
 
+    var priorOptions = null;
+
+    function redrawNoteBarGraph() {
+      if (priorOptions !== null) {
+        drawNoteBarGraph(priorOptions[0].slice(), priorOptions[1], priorOptions[2].slice());
+      } else {
+        console.log("No prior options, not redrawing graph");
+      }
+    }
 
     function drawNoteBarGraph(notes, strikes, alerts) {
+      if (notes === null) {
+        return;
+      }
+
+      priorOptions = [notes.slice(), strikes, (alerts!==null)?alerts.slice():null];
+
       //console.log("Drawing graph notes="+notes);
       const canvas = document.getElementById('graphCanvas');
       const s = getComputedStyle(canvas);
@@ -1104,8 +2058,6 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
         // Create the fill pattern from the patternCanvas
         stripePattern = ctx.createPattern(patternCanvas, 'repeat');
       }
-
-      console.log("Stripepattern="+stripePattern+" patcanv="+patternCanvas);
 
       // Clear the canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -1195,8 +2147,8 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
           const w = (eTime - sTime) * scaleFactor;
 
           // Draw bar
-
-          const x = sTime * scaleFactor;
+//console.log("Drawing bar, flushright="+flushRight);
+          const x = (!flushRight)?(sTime * scaleFactor):40;
           const y = i * noteSpacing + h*(barHeight+barSpacing);
 
           // Draw rectangular outline with 100% opacity
@@ -1215,18 +2167,18 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
           // see if there is an alert for this note
           let numalertsfound = 0;
           for (let a = 0; a < alerts.length; a++) {
-            console.log("Alerts["+a+"]="+alerts[a].name+" n="+alerts[a].note);
+            //console.log("Alerts["+a+"]="+alerts[a].name+" n="+alerts[a].note);
             if (alerts[a].note && alerts[a].note[0] === h && alerts[a].note[1] === i) {
               // found an alert for this note, highlight it
-              console.log("Found an alert on note:"+alerts[a].note);
+              //console.log("Found an alert on note:"+alerts[a].note);
               ctx.setLineDash([4,4]);
               ctx.strokeRect(x,y-barHeight*3,w,barHeight*7);
-              ctx.textAlign = "left";
+              ctx.textAlign = "right";
               ctx.textBaseline = "bottom";
               ctx.fillStyle = barcolors[h];
-              ctx.fillText(alerts[a].name, x+3, y-barHeight*(3)-1-numalertsfound*fontHeight);
+              ctx.fillText(alerts[a].name, x+w-2, y-barHeight*(3)-1-numalertsfound*fontHeight);
               ctx.textBaseline = "top";
-              ctx.fillText(alerts[a].name, x+3, y+barHeight*(4)+1+numalertsfound*fontHeight);
+              ctx.fillText(alerts[a].name, x+w-2, y+barHeight*(4)+1+numalertsfound*fontHeight);
 
               if (alerts[a].name.startsWith("OVLP")) {
                 // draw a vertical line illustrating the overlap
@@ -1245,13 +2197,13 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
           }
 
           if (barHeight < 10) {
-            ctx.font = "italic 8px Arial";
-            fontHeight = 8;
+            ctx.font = "italic 9px Arial";
+            fontHeight = 9;
           } else if (barHeight > 14) {
-            ctx.font = "italic 12px Arial";
-            fontHeight = 12;
+            ctx.font = "italic 14px Arial";
+            fontHeight = 14;
           } else {
-            ctx.font = "italic " + (barHeight-2) + "px Arial";
+            ctx.font = "italic " + (barHeight) + "px Arial";
             fontHeight = barHeight-2;
           }
 
@@ -1311,26 +2263,150 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
       }
     }
 
-    if (strikes >= 2) {
-      ctx.font = "48px Arial";
-      ctx.fillStyle = "red";
-      ctx.textBaseline = "bottom";
-      ctx.textAlign = "left";
-      ctx.fillText("SLOW DOWN!", 10, canvas.height-25);
-    } else if (strikes === 1) {
-      ctx.font = "48px Arial";
-      ctx.fillStyle = "orange";
-      ctx.textBaseline = "bottom";
-      ctx.textAlign = "left";
-      ctx.fillText("PASSABLE", 10, canvas.height-25);
-    } else {
-      ctx.font = "48px Arial";
-      ctx.fillStyle = "green";
-      ctx.textBaseline = "bottom";
-      ctx.textAlign = "left";
-      ctx.fillText("EXCELLENT", 10, canvas.height-25);
+    if (!flushRight) {
+      if (strikes > 2) {
+        ctx.font = "48px Arial";
+        ctx.fillStyle = "red";
+        ctx.textBaseline = "bottom";
+        ctx.textAlign = "left";
+        ctx.fillText("SLOW DOWN!", 10, canvas.height-40);
+      } else if (strikes === 2) {
+        ctx.font = "48px Arial";
+        ctx.fillStyle = "orange";
+        ctx.textBaseline = "bottom";
+        ctx.textAlign = "left";
+        ctx.fillText("PASSING", 10, canvas.height-40);
+      } else if (strikes === 1) {
+        ctx.font = "48px Arial";
+        ctx.fillStyle = "blue";
+        ctx.textBaseline = "bottom";
+        ctx.textAlign = "left";
+        ctx.fillText("GOOD", 10, canvas.height-40);
+      } else {
+        ctx.font = "48px Arial";
+        ctx.fillStyle = "green";
+        ctx.textBaseline = "bottom";
+        ctx.textAlign = "left";
+        ctx.fillText("EXCELLENT", 10, canvas.height-40);
+      }
+    }
+
+    var delay = 300; // used to schedule various tones out into the future
+    if (!wrongNotePlayed && preferences['enableTones']) {
+      if (strikes > 2) {
+        if (preferences['toneOnQFail'] !== 'none') {
+          playMIDINote(preferences['toneOnQFail'],
+            preferences['toneDuration'], preferences['toneVelocity'],
+            preferences['toneFailVoice']);
+            delay = preferences['toneDuration'];
+        }
+      } else if (strikes === 2) {
+        if (preferences['toneOnPassing'] !== 'none') {
+          playMIDINote(preferences['toneOnPassing'],
+            preferences['toneDuration'], preferences['toneVelocity'],
+            preferences['toneSuccessVoice']);
+            delay = preferences['toneDuration'];
+        }
+      } else if (strikes == 1) {
+        // play both the passing and good tones one after the other
+        if (preferences['toneOnGood'] !== 'none') {
+          playMIDINote(preferences['toneOnPassing'],
+            preferences['toneDuration'], preferences['toneVelocity'],
+            preferences['toneSuccessVoice']);
+          setTimeout( function() {
+            playMIDINote(preferences['toneOnGood'],
+            preferences['toneDuration'], preferences['toneVelocity'],
+            preferences['toneSuccessVoice']);
+          }, 1.2*preferences['toneDuration']);
+
+          delay = 2.5*preferences['toneDuration'];
+        }
+      } else {
+        // play passing, good, and excellent tones
+        if (preferences['toneOnExcellent'] !== 'none') {
+          playMIDINote(preferences['toneOnPassing'],
+            preferences['toneDuration'], preferences['toneVelocity'],
+            preferences['toneSuccessVoice']);
+          setTimeout( function() {
+            playMIDINote(preferences['toneOnGood'],
+              preferences['toneDuration'], preferences['toneVelocity'],
+              preferences['toneSuccessVoice']);
+          }, 1.2*preferences['toneDuration']);
+          setTimeout(function() {
+            playMIDINote(preferences['toneOnExcellent'],
+              preferences['toneDuration'], preferences['toneVelocity'],
+              preferences['toneSuccessVoice']);
+          }, 2.4*preferences['toneDuration'])
+
+          delay = 3.5*preferences['toneDuration'];
+        }
+      }
+
+      // play an indication if reps is a multiple of 10
+      if (successCount > 0 && (successCount%10) === 0) {
+        var sc = successCount;
+        // first a lower tone if multiples of 50
+        for (let i = 0; Math.trunc(sc/50) > 0; i++) {
+          setTimeout(function() {
+              playMIDINote("C6", 120, 127, preferences['toneFailVoice']);
+          }, delay + i*200);
+          sc -= 50;
+          delay += 250;
+        }
+        for (let i = 0; i < sc/10; i++) {
+          setTimeout(function() {
+              playMIDINote("C7", 120, 127, preferences['toneFailVoice']);
+          }, delay + i*200);
+        }
+      }
     }
   }
+
+  function graphTap(event) {
+    const canvas = document.getElementById('graphCanvas');
+    const rect = canvas.getBoundingClientRect();
+    const tapX = event.clientX - rect.left; // X-coordinate of the tap relative to the canvas
+    const tapY = event.clientY - rect.top;
+
+    // Calculate the center of the canvas
+    const centerX = canvas.width / 2;
+    const oneThirdY = canvas.height / 3;
+
+    // Set flushRight based on the tap position
+    if (tapY > oneThirdY) {
+          // don't count it close to the top of the canvas because there are other controls there and the user's
+          // finger could touch the top of the canvas sometimes.
+          flushRight = tapX < centerX;
+    }
+
+    redrawNoteBarGraph();
+  }
+
+// Attach the graphTap function to the onload event of the window
+window.addEventListener('load', function () {
+
+  //warning("redirecting console");
+
+  redirectConsole();
+
+  // Attach event listeners to the canvas for tap and click events
+  const canvas = document.getElementById('graphCanvas');
+  canvas.addEventListener('click', graphTap);
+  canvas.addEventListener('touchend', graphTap);
+  //warning("loading prefs");
+  loadPrefs();
+  //warning("displaying empty results");
+  displayTestStats(null);
+  //warning("calling setPedalSymbol");
+  setPedalSymbol();
+
+  document.getElementById('pedalSymbolDiv').innerHTML = pedalSymbol?pedalSymbol:"PEDAL";
+  setTimeout(function() {
+    document.getElementById('pedalSymbolDiv').innerHTML = "";
+  }, 2000);
+
+  //showTestGenerateForm();
+});
 
 
     function clearPlayedNotes() {
@@ -1377,6 +2453,26 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
           if (err) {
             console.error('WebMidi could not be enabled:', err);
           } else { // initialize
+
+            var outputs = WebMidi.outputs;
+            if (outputs.length > 0) {
+              for (let i = 0; i < outputs.length; i++) {
+                message("Output["+i+"]="+outputs[i].type+"/"+outputs[i].manufacturer+"/"+outputs[i].name);
+              }
+              midiOutput = outputs[0];
+              setTimeout(function () {
+                playMIDINote("C1", 300, 80, 52);
+              },1000);
+              setTimeout(function () {
+                playMIDINote("C2", 300, 100, 52);
+              },1400);
+              setTimeout(function () {
+                playMIDINote("C3", 300, 127, 52);
+              },1800);
+            } else {
+              warning('No MIDI output devices found.');
+            }
+
             // Retrieve the first available MIDI input device
             var input;
             if (WebMidi.inputs.length > 0) {
@@ -1384,9 +2480,24 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
               message("Connected to WebMidi input port 0:" + WebMidi.inputs[0].name + " " + WebMidi.inputs[0].manufacturer);
             } else {
               warning('No MIDI input devices found. Connect a device then refresh.');
+              return;
             }
 
+            input.addListener('controlchange', "all", (event) => {
+              if (event.controller.name === 'holdpedal') {
+                if (event.value) {
+                  document.getElementById('pedalSymbolDiv').innerHTML = pedalSymbol?pedalSymbol:"PEDAL";
+                } else {
+                  document.getElementById('pedalSymbolDiv').innerHTML = "<div style=width:4em;>&nbsp;</div>";
+                }
+              }
+            });
+
             input.addListener('noteoff', 'all', function (e) {
+
+              // remove from list of notes showing on mini keyboard canvas
+              keyboardOptions.notesOn = keyboardOptions.notesOn.filter((element) => element !== e.note.number);
+
               if (currentState !== STATE.SETTING_NOTES &&
                 (e.note.number > noteFilterHigh || e.note.number < noteFilterLow)) {
                 console.log("ignoring note out of range");
@@ -1435,6 +2546,8 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
 
             // Add event listener for "noteon" events
             input.addListener('noteon', 'all', function (e) {
+
+              keyboardOptions.notesOn.push(e.note.number);
 
               // we ignore notes that are significantly out of range
               // of the current hand.
@@ -1626,6 +2739,59 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
       }
     }
 
+    function replay(notes, hand, speedMultiplier) {
+      if (midiOutput === null || notes === null) {
+        warning("No MIDI output device available for replay.");
+        return;
+      }
+
+      var startTime;
+
+      if (hand === 'left') {
+        startTime = notes[0][0].sTime;
+      } else if (hand === 'right') {
+        startTime = notes[1][0].sTime;
+      } else {
+        startTime = math.Min(notes[0][0].sTime, notes[0][1].sTime);
+      }
+
+      for (let i = 0; i < notes.length; i++) {
+        if (hand === 'both' || hand === 'left') {
+
+        }
+        if (hand === 'both' || hand === 'right') {
+
+        }
+      }
+    }
+
+    // Function to play a MIDI note for a specific duration
+    function playMIDINote(noteNumber, dur, vel, voice) {
+      if (midiOutput === null)
+        return;
+
+      dur = (typeof dur === 'string') ? parseInt(dur) : dur;
+      vel = (typeof vel === 'string') ? parseInt(vel) : vel;
+      voice = (typeof voice === 'string') ? parseInt(voice) : voice;
+
+      let n = new Note(noteNumber);
+      n.duration = dur;
+      n.rawAttack = vel;
+      n.rawRelease = 127;
+
+      console.log("Playing note "+n+" num:"+noteNumber+" att:"+vel+" dur:"+dur+" voice:"+voice);
+
+      midiOutput.channels[1].sendProgramChange(voice);
+
+      setTimeout(function() {
+        midiOutput.channels[1].playNote(n);
+
+        setTimeout(function() { // for some reason automatic noteoff not always working
+          midiOutput.channels[1].sendNoteOff(noteNumber);
+        }, dur);
+      }, 20);
+    }
+
     // Function to update the elapsed time display
     function updateElapsedTime() {
       if (testStartTime) {
@@ -1653,7 +2819,10 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
     }
 
     // Function to end the test and reset the start time
+    var run = 0;
+
     function endTest() {
+
       testStartTime = null;
     }
 
@@ -1735,6 +2904,693 @@ function scrollToDataTop(godata) {
   }
 }
 
+function drawPianoKeyboard(options) {
+  const canvas = document.getElementById(options.canvasId);
+  const ctx = canvas.getContext('2d');
+  const s = getComputedStyle(canvas);
+  canvas.width = parseInt(s.width);
+  canvas.height = parseInt(s.height);
+
+  const numOctaves = options.numOctaves || 5;
+  const startingOctave = options.startingOctave || 1;
+  const canvasWidth = canvas.width;
+  const canvasHeight = canvas.height;
+
+  const whiteKeyWidth = canvasWidth / (1 + numOctaves * 7); // we will tack on one extra "C" at the end
+  const whiteKeyHeight = canvasHeight;
+  const blackKeyWidth = whiteKeyWidth * 0.6;
+  const blackKeyHeight = whiteKeyHeight * 0.6;
+
+  const noteNames = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+
+  ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+  if (preferences.showKeyboard === false) {
+    return;
+  }
+
+  const whiteKeyOffsets = [0,2,4,5,7,9,11]; // offset within an octave of white key numbers
+
+  // Draw white keys
+  for (let o = 0; o <= numOctaves; o++) {
+    for (let i = 0; i < 7; i++) {
+      const x = o * 7 * whiteKeyWidth + i * whiteKeyWidth;
+      ctx.fillStyle = 'white';
+      ctx.fillRect(x, 0, whiteKeyWidth, whiteKeyHeight);
+      ctx.strokeStyle = 'black';
+      ctx.strokeRect(x, 0, whiteKeyWidth, whiteKeyHeight);
+
+      // Check if the current note should be highlighted
+      const noteNumber = (startingOctave+o+1) * 12 + whiteKeyOffsets[i];
+
+      if (noteNumber === 60) {
+        ctx.font = "9px Arial";
+        ctx.textAlign = "left";
+        ctx.textBaseline = "bottom";
+        ctx.fillStyle = "black";
+        ctx.fillText("C4", x+1, whiteKeyHeight-2);
+      }
+
+      if (options.notesOn && options.notesOn.includes(noteNumber)) {
+        ctx.fillStyle = 'blue';
+        ctx.fillRect(x+1, 1, whiteKeyWidth-3, whiteKeyHeight-2);
+        ctx.fillStyle = 'white';
+        ctx.font = "9px Arial";
+        ctx.textAlign = "left";
+        ctx.textBaseline = "bottom";
+        ctx.fillText(prnotenum(noteNumber), x+1, whiteKeyHeight-2)
+      }
+
+      if (o === numOctaves) {
+        break;  // this is just one more C to end the keyboard.
+      }
+    }
+  }
+
+  // Draw black keys
+  ctx.fillStyle = 'black';
+  const blackKeyIndices = [1, 2, 4, 5, 6];
+  const blackKeyOffsets = [1,3,6,8,10];
+  for (let o = 0; o < numOctaves; o++) {
+    let keynum = 0;
+    for (const keyIndex of blackKeyIndices) {
+      const x = o * 7 * whiteKeyWidth + keyIndex * whiteKeyWidth - blackKeyWidth / 2;
+      ctx.fillRect(x, 0, blackKeyWidth, blackKeyHeight);
+      // Check if the current note should be highlighted
+      const noteNumber = (startingOctave+o+1) * 12 + blackKeyOffsets[keynum];
+      if (options.notesOn && options.notesOn.includes(noteNumber)) {
+        ctx.fillStyle = 'blue';
+        ctx.fillRect(x+1, 1, blackKeyWidth-2, blackKeyHeight-2);
+        ctx.fillStyle = 'white';
+        ctx.textAlign = "left";
+        ctx.textBaseline = "bottom";
+        ctx.save();
+        ctx.translate(x-1,5);
+        ctx.rotate(Math.PI/2);
+        ctx.font = "10px Arial";
+        ctx.fillText(prnotenum(noteNumber), 0, 0);
+        ctx.restore();
+        ctx.fillStyle = 'black';
+      }
+      keynum++;
+    }
+  }
+}
+
+function copyToClipboard(text) {
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  document.body.appendChild(textarea);
+  textarea.select();
+  document.execCommand('copy');
+  document.body.removeChild(textarea);
+}
+
+function setPedalSymbol() {
+  //warning("In setPedalSymbol");
+pedalSymbol = `<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   version="1.1"
+   width="40"
+   height="24"
+   viewBox="0 0 900 200"
+   id="svg2"
+   inkscape:version="0.48.2 r9819"
+   sodipodi:docname="drawing.svg">
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1101"
+     inkscape:window-height="669"
+     id="namedview6"
+     showgrid="false"
+     inkscape:zoom="1.3382627"
+     inkscape:cx="390.07092"
+     inkscape:cy="173.04965"
+     inkscape:window-x="303"
+     inkscape:window-y="114"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="svg2" />
+  <defs
+     id="defs4" />
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <path
+     d="m 191.83899,376.55107 c -12.08671,-12.08668 0.85681,-32.19829 35.87229,-55.73824 51.89748,-34.88925 54.64344,-50.12343 18.11794,-100.51554 -21.79047,-30.06304 -21.7183,-28.63003 -3.36491,-66.81394 8.95412,-18.6289 17.23297,-37.95588 18.39744,-42.94885 l 2.11722,-9.07813 c -54.76123,2.67437 -97.98801,41.03093 -99.74983,76.73616 0,33.64054 33.87143,32.84904 41.29825,-0.96504 1.52652,-6.95019 2.16313,-10.50169 2.16313,-10.50169 l 13.58161,0.75331 -1.86775,18.09676 c -5.84923,56.67358 -64.07626,75.48118 -81.23961,26.2408 -19.85018,-56.94868 50.38082,-117.417852 131.77015,-121.88431 21.00753,-1.152844 31.70905,1.405987 50.16855,10.81996 55.89177,28.50367 74.834,91.75497 30.77933,106.29432 -22.84358,6.38638 -34.23149,-2.63725 -43.05423,-11.50787 -9.3371,-8.9089 -19.5014,-38.45725 -19.5014,-38.45725 l 16.22818,3.88326 c 0,0 3.66772,7.43221 6.59511,9.86923 9.61774,7.6053 23.50155,4.60482 28.40087,-4.03123 10.2698,-19.18929 -8.47869,-47.29367 -39.22342,-58.79675 -11.00032,-4.11575 -21.14642,-4.8323 -21.14642,-4.8323 0,0 -6.35087,12.25962 -12.58985,28.43785 l -10.3089,26.73189 c 4.08341,13.72735 12.06889,26.72998 19.7047,36.94276 28.28953,37.46923 29.28835,46.52942 9.04546,82.0511 l -14.54283,25.51934 8.76584,2.04482 c 4.82121,1.12463 20.21202,8.14219 34.20178,15.59457 l 25.43594,13.54978 9.22599,-6.9691 c 6.0645,-4.58095 9.0229,-9.64731 8.6333,-14.78477 -3.46502,-45.69179 25.37756,-91.99468 57.30447,-91.99468 40.01014,0 38.52898,42.52258 -2.62404,75.33543 -10.47199,8.34971 -20.54094,18.95418 -20.54094,18.95418 0,0 2.33422,7.42981 6.10101,14.71398 10.57603,20.45176 35.35232,23.50281 54.60423,1.03851 l 9.4438,-11.01961 c -9.35474,-26.22478 12.63978,-69.08124 31.5462,-85.18103 14.3329,-12.21447 23.47727,-18.03898 23.47727,-18.03898 0,0 -5.80525,-9.79565 -16.72564,-21.59097 -20.27501,-21.89944 -50.70582,-39.69563 -83.44038,-48.79664 -15.3592,-4.27025 -22.09683,-7.05824 -22.09683,-7.05824 l 1.50662,-10.37336 12.37926,1.86411 c 94.95257,14.29827 172.00624,80.10498 178.03791,152.05097 6.80939,81.22216 -71.95414,129.83327 -110.88949,68.43857 l -9.18908,-14.48964 -28.90653,21.30362 c -38.14513,28.11231 -48.37446,26.75188 -66.40595,-8.83153 l -8.24935,-16.27936 -26.33286,22.382 c -31.9336,27.14241 -31.29734,27.10035 -41.20479,2.7236 -4.39437,-10.81211 -12.96481,-24.63341 -19.04543,-30.71403 l -11.05567,-11.05567 -20.41072,24.67533 c -24.33352,29.41775 -44.04405,43.35551 -51.197,36.20254 z m 345.58849,-28.3703 c 13.15618,-17.69878 10.8849,-65.04688 -4.87803,-101.68873 l -6.96572,-16.19232 c -22.00421,14.5718 -31.33482,44.5539 -33.8527,64.96717 -5.35104,47.54775 24.22655,81.79688 45.69645,52.91388 z M 407.0928,281.44206 c 14.07123,-15.26548 17.70812,-29.33208 9.66362,-37.37659 -6.61898,-6.61898 -17.99729,-4.22397 -25.50927,4.73667 -7.39513,8.82125 -10.59213,20.48406 -10.37834,30.88883 0.24692,12.01697 4.44217,20.13044 4.44217,20.13044 0,0 12.44089,-8.24563 21.78182,-18.37935 z"
+     id="path3067"
+     style="fill:#000000"
+     inkscape:connector-curvature="0"
+     sodipodi:nodetypes="sssssccsccssssccccccscsccscsscsssscsscccssccssscsscssscssssccssssscs" />
+  <path
+     sodipodi:type="arc"
+     style="fill:#000000;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+     id="path2983"
+     sodipodi:cx="609.68689"
+     sodipodi:cy="357.58929"
+     sodipodi:rx="23.340681"
+     sodipodi:ry="23.340681"
+     d="m 633.02757,357.58929 a 23.340681,23.340681 0 1 1 -46.68136,0 23.340681,23.340681 0 1 1 46.68136,0 z"
+     transform="translate(2.551844e-6,-2.1276596)" />
+</svg>`;
+
+  if (pedalSymbol === null) {
+    warning("PedalSymbol is null");
+  }
+}
+
+const voiceNumberElement = document.getElementById('voiceNumber');
+const incrementButton = document.getElementById('increment');
+const decrementButton = document.getElementById('decrement');
+
+let counterValue = 0;
+
+function updateCounterDisplay() {
+  if (voiceNumberElement !== null) voiceNumberElement.textContent = counterValue;
+}
+
+function incrementCounter() {
+  if (counterValue < 100) {
+    counterValue++;
+    updateCounterDisplay();
+  }
+}
+
+function decrementCounter() {
+  if (counterValue > 1) {
+    counterValue--;
+    updateCounterDisplay();
+  }
+}
+
+if (incrementButton !== null) incrementButton.addEventListener('click', incrementCounter);
+if (decrementButton !== null) decrementButton.addEventListener('click', decrementCounter);
+
+updateCounterDisplay(); // Initialize the display with the initial value
+
+function playVoice(event) {
+  let vn = document.getElementById("voiceNumber");
+  let voice = 1;
+
+  if (vn !== null) {
+    voice = vn.textContent;
+  }
+
+  console.log("Playing voice "+voice);
+  playMIDINote("C4", 500, 100, voice);
+
+}
+
+function redirectConsole() {
+  // Override the console.log function
+  const originalConsoleError = console.error;
+  console.error = function (...args) {
+    // Call the original console.error function
+    originalConsoleError.apply(console, args);
+
+    // Create a new div element to display the message
+    warning(args.join(' ')); // Join arguments into a single string
+  };
+}
+
+function showTestGenerateForm() {
+  const popupContainer = document.getElementById('popup-container');
+  popupContainer.style.display = 'block';
+}
+
+function dismissForm() {
+  const popupContainer = document.getElementById('popup-container');
+  popupContainer.style.display = 'none';
+}
+
+function generateTest() {
+  const testType = document.getElementById('test-type').value;
+  const tonic = document.getElementById('tonic').value;
+  const mode = document.getElementById('mode').value;
+  const octaves = document.getElementById('octaves').value;
+  const lhStartOctave = document.getElementById('lh-start-octave').value;
+
+  var modename = mode;
+  if (testType === 'Arpeggio') {
+    modename += "Arp";
+  }
+  console.log("Modename:"+modename);
+
+  // Call your generateTestNotes function here with the retrieved values
+  const tmp = presets.length;
+
+  const p = generateScalePreset(tonic, modename, parseInt(octaves), parseInt(lhStartOctave));
+
+  if (p === null) {
+    // generate failed.
+    alert("Not able to generate that arpeggio yet: try Major or Minor");
+    return;
+  }
+  presets.push(p);
+  var option = document.createElement('option');
+  option.value = tmp;
+  option.innerHTML = presets[tmp].name;
+  option.style.fontSize = "16px";
+  presetMenu.appendChild(option);
+  option.selected = true;
+
+  handlePresetSelection(tmp);
+
+  dismissForm();
+}
+
+function populateTestNameOptions() {
+    const testNameSelect = document.getElementById("testNameSelect");
+    testNameSelect.innerHTML = ""; // blank it out
+
+    // add the "all" option
+    const allopt = document.createElement("option");
+    allopt.value = "all";
+    allopt.textContent = "ALL";
+    testNameSelect.appendChild(allopt);
+
+    const testNames = Object.keys(runHistory);
+    const seen = [];
+    testNames.forEach((testName) => {
+        const option = document.createElement("option");
+        const [date, preset, hand] = testName.split("|");
+        if (typeof seen[preset] !== 'undefined') {
+          return;
+        }
+        seen[preset] = true;
+        option.value = preset;
+        option.textContent = preset;
+        testNameSelect.appendChild(option);
+    });
+}
+
+// This function populates the history table with run data
+function populateHistoryTable() {
+    const historyTableBody = document.getElementById("historyTableBody");
+    historyTableBody.innerHTML = ""; // Clear the table body
+
+    if (runHistory === null) {
+      // hasn't been read yet
+      runHistory = localStorage.getItem("runHistory");
+
+      if (runHistory === null) { // still null, wasn't stored
+        runHistory = {};
+
+        alert("There is no history to display");
+      } else {
+        if (runHistory === null) {
+          runHistory = {};
+        } else {
+          // Parse 'runHistory' from JSON if it exists
+          runHistory = JSON.parse(runHistory);
+        }
+      }
+    }
+
+    populateTestNameOptions();
+
+    // Loop through the runHistory object and populate the table
+    for (const runName in runHistory) {
+        const runData = runHistory[runName];
+        const [date, preset, hand] = runName.split("|");
+
+        const newRow = document.createElement("tr");
+        newRow.innerHTML = `
+            <td>${date}</td>
+            <td>${preset}</td>
+            <td>${hand}</td>
+            <td>${runData.success}</td>
+            <td>${runData.notefail} (${Math.trunc(100*runData.notefail/(runData.count))}%)</td>
+            <td>${(runData.elapsed/1000).toFixed(2)}</td>
+            <td>${(runData.sumBPM / runData.success).toFixed(2)}</td>
+            <td>${runData.maxBPM}</td>
+            <td>${runData.bestBPM}</td>
+            <td>${(runData.sumStrikes / runData.success).toFixed(2)}</td>
+        `;
+        historyTableBody.appendChild(newRow);
+    }
+}
+
+// Function to filter and display history based on selected filters
+function filterAndDisplayHistory() {
+    const historyTableBody = document.getElementById("historyTableBody");
+    historyTableBody.innerHTML = ""; // Clear the existing rows in the table
+
+    const dateRange = document.getElementById("dateRangeSelect").value;
+    const selectedTestName = document.getElementById("testNameSelect").value;
+    const selectedHand = document.getElementById("handSelect").value;
+
+    // Initialize an object to store statistics for graphing
+    const stats = {};
+
+    let maxBPM = 0;
+    let minBPM = 10000; // higher than humanly possible
+    let firstMonth = '';
+    let lastMonth = '';
+
+    // Loop through the runHistory object and populate the table
+    for (const runName in runHistory) {
+        const runData = runHistory[runName];
+        const [date, preset, hand] = runName.split("|");
+
+        const [year, month, day] = date.split('-');
+        datedisp = year + "-" + month;
+        if (firstMonth === '') {
+          firstMonth = datedisp;
+        }
+        lastMonth = datedisp; // this will keep overwriting until it is really the last one
+        console.log("lastmonth=y-m"+datedisp);
+
+        // Date range filtering logic
+        if (dateRange === "1Month" && !isWithinLastMonths(date, 1)) continue;
+        if (dateRange === "3Months" && !isWithinLastMonths(date, 3)) continue;
+        if (dateRange === "1Year" && !isWithinLastMonths(date, 12)) continue;
+
+        // Test name filtering logic
+        if (selectedTestName !== "all" && selectedTestName !== preset) continue;
+
+        // Hand filtering logic
+        if (selectedHand !== "any" && selectedHand !== hand) continue;
+
+        // Initialize the monthly statistics if not already done
+        if (!stats[date]) {
+            stats[date] = {
+                avgBPM: 0,
+                bestBPM: 0,
+                maxBPM: 0
+            };
+        }
+
+        // Update the monthly statistics
+        stats[date].avgBPM = runData.sumBPM / (runData.success>0?runData.success:1);
+        stats[date].bestBPM = runData.bestBPM;
+        stats[date].maxBPM = runData.maxBPM;
+        stats[date].notefail = Math.trunc(100*runData.notefail/(runData.success+runData.notefail+0.1));
+
+        // Update maxBPM
+        console.log("avg="+stats[date].avgBPM+" best="+stats[date].bestBPM+" max="+stats[date].maxBPM);
+        maxBPM = Math.max(
+            maxBPM,
+            stats[date].bestBPM,
+            stats[date].maxBPM,
+            stats[date].avgBPM
+        );
+        minBPM = Math.min(
+            minBPM,
+            stats[date].bestBPM,
+            stats[date].maxBPM,
+            stats[date].avgBPM
+        );
+
+        const newRow = document.createElement("tr");
+        newRow.innerHTML = `
+            <td>${date}</td>
+            <td>${preset}</td>
+            <td>${hand}</td>
+            <td>${runData.success}</td>
+            <td>${runData.notefail} (${Math.trunc(100*runData.notefail/(runData.count))}%)</td>
+            <td>${(runData.elapsed/1000).toFixed(2)}</td>
+            <td>${(runData.sumBPM / runData.success).toFixed(2)}</td>
+            <td>${runData.maxBPM}</td>
+            <td>${runData.bestBPM}</td>
+            <td>${(runData.sumStrikes / runData.success).toFixed(2)}</td>
+        `;
+        historyTableBody.appendChild(newRow);
+    }
+
+    maxBPM = Math.ceil(maxBPM/20)*20;  // round nearest 20
+    minBPM = Math.floor(minBPM/20)*20;  // round nearest 20
+
+    // Call the graphing function with the required parameters
+    if (selectedTestName !== "all" && selectedHand !== "any") {
+      drawHistoryGraph(stats, firstMonth, lastMonth, maxBPM, minBPM);
+    }
+}
+
+function drawHistoryGraph(stats, firstMonth, lastMonth, maxBPM, minBPM) {
+
+  console.log("In Drawhist fm="+firstMonth+" lm="+lastMonth+" maxbpm="+maxBPM);
+  if (maxBPM === 0) {
+    maxBPM = 1; // avoid div by 0 errors, the graph is pathologic in this case anyway.
+  }
+  // Get the canvas context
+  const canvas = document.getElementById("historyGraph");
+  const ctx = canvas.getContext("2d");
+
+  // Set canvas dimensions from actual size as rendered in html
+  const s = getComputedStyle(canvas);
+  canvas.width = parseInt(s.width);
+  canvas.height = parseInt(s.height);
+  ctx.font = "10px Arial";
+
+  // Set up colors and styles
+  ctx.fillStyle = "#BBB"; // Background color
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = "white";
+  ctx.fillStyle = "white";
+  ctx.textAlign = "left";
+
+  const [fyear,fmonth,fday] = firstMonth.split('-');
+  let [lyear,lmonth,lday] = lastMonth.split('-');
+  lmonth++;
+  if (lmonth > 12) {
+    lyear++;
+    lmonth = 1;
+  }
+  lastMonth = lyear+'-'+lmonth;
+
+  console.log("graphhist: firstMonth="+firstMonth+" Adj lastmonth="+lastMonth);
+
+  const firstday = dateToDaysSince1970(firstMonth+"-01");
+  const lastday = dateToDaysSince1970(lastMonth+"-01");
+  const totdays = lastday-firstday;
+
+  console.log("Totdays="+totdays);
+
+  const graphAxisHorizontalMargin = 40; // pixels to leave for axis and labels
+  const graphAxisVerticalMargin = 25;
+
+  const xScale = (canvas.width-2*graphAxisHorizontalMargin) / totdays;
+  const yScale = (canvas.height-2*graphAxisVerticalMargin) / (maxBPM-minBPM);
+
+  console.log("xscale="+xScale);
+
+  // Draw horizontal and vertical axes
+
+  ctx.beginPath();
+  ctx.moveTo(graphAxisHorizontalMargin, canvas.height-graphAxisVerticalMargin);
+  ctx.lineTo(canvas.width-graphAxisHorizontalMargin, canvas.height-graphAxisVerticalMargin);
+  ctx.moveTo(graphAxisHorizontalMargin, graphAxisVerticalMargin);
+  ctx.lineTo(graphAxisHorizontalMargin, canvas.height-graphAxisVerticalMargin);
+  ctx.stroke();
+
+  ctx.lineWidth = 2;
+
+  console.log("Drawing history graph "+fyear+"."+fmonth+" "+lyear+"."+lmonth);
+
+  // Draw labels on the horizontal axis
+  for (let year = fyear, month = fmonth; year <= lyear && month <= lmonth; ) {
+    const x = graphAxisHorizontalMargin + (dateToDaysSince1970(year+'-'+month+'-01') - firstday)*xScale;
+
+    ctx.fillText(year+'-'+month, x, canvas.height - graphAxisVerticalMargin/2); // Adjust label position
+
+    console.log("***label "+year+'-'+month+" at x="+x+" y="+(canvas.height-graphAxisVerticalMargin/2));
+
+    ctx.moveTo(x, graphAxisVerticalMargin);
+    ctx.lineTo(x, canvas.height-graphAxisVerticalMargin);
+    ctx.stroke();
+
+    // increment month
+    month++;
+    if (month > 12) {
+      month = 1;
+      year++;
+    }
+  }
+  // draw labels on the left vertical axis
+  ctx.textAlign = "right";
+  ctx.strokeStyle = "#444";
+  ctx.lineWidth = "1";
+  for (let bpm = minBPM; bpm <= maxBPM; bpm += 20) {
+    const y = canvas.height - graphAxisVerticalMargin - (bpm-minBPM)*yScale;
+
+    ctx.fillText(bpm+' ', graphAxisHorizontalMargin, y);
+
+    ctx.moveTo(graphAxisHorizontalMargin, y);
+    ctx.lineTo(canvas.width-graphAxisHorizontalMargin, y);
+    ctx.stroke();
+  }
+
+  // draw labels on the right vertical axis
+  ctx.textAlign = "left";
+  ctx.strokeStyle = "#F00";
+  ctx.fillStyle = "#F00";
+  ctx.lineWidth = "1";
+  let perYScale = (canvas.height-2*graphAxisVerticalMargin) / (100);
+  for (let per = 10; per < 100; per += 10) {
+    const y = canvas.height - graphAxisVerticalMargin - per*yScale + 5;
+
+    ctx.fillText(per+'% ', canvas.width-graphAxisHorizontalMargin+3, y);
+
+    ctx.moveTo(graphAxisHorizontalMargin, y);
+    ctx.lineTo(canvas.width-graphAxisHorizontalMargin, y);
+    //ctx.stroke();
+  }
+
+  // give color code
+  ctx.font = "12px Arial";
+  ctx.textAlign = "left";
+  ctx.fillStyle = "#AAFF00";
+  ctx.fillText("BestBPM", graphAxisVerticalMargin*2, graphAxisVerticalMargin/2);
+  ctx.fillStyle = "#0096FF";
+  ctx.fillText("AvgBPM", graphAxisVerticalMargin*5, graphAxisVerticalMargin/2);
+  ctx.fillStyle = "#BF40BF";
+  ctx.fillText("MaxBPM", graphAxisVerticalMargin*8, graphAxisVerticalMargin/2);
+  ctx.fillStyle = "#FF0000";
+  ctx.fillText("NoteFail", graphAxisVerticalMargin*13, graphAxisVerticalMargin/2);
+
+  // Plot lines for Average BPM (blue), Best BPM (green), and Max BPM (purple)
+  const colors = ["#0096FF", "#AAFF00", "#BF40BF"];
+  const dataKeys = ["avgBPM", "bestBPM", "maxBPM"];
+
+  ctx.lineWidth = "3";
+
+  for (let i = 0; i < dataKeys.length; i++) {
+    ctx.strokeStyle = colors[i];
+    ctx.beginPath();
+
+    let firstkey = true;
+    for (const key in stats) {
+      if (stats.hasOwnProperty(key)) {
+          const x = graphAxisHorizontalMargin + (dateToDaysSince1970(key) - firstday) * xScale;
+          const y = canvas.height - graphAxisVerticalMargin - (stats[key][dataKeys[i]]-minBPM) * perYScale;
+          if (firstkey) {
+            ctx.moveTo(x, y);
+            firstkey = false;
+          } else {
+            ctx.lineTo(x, y);
+          }
+      }
+    }
+
+    ctx.stroke();
+
+    for (const key in stats) {
+      if (stats.hasOwnProperty(key)) {
+          const x = graphAxisHorizontalMargin + (dateToDaysSince1970(key) - firstday) * xScale;
+          const y = canvas.height - graphAxisVerticalMargin - (stats[key][dataKeys[i]]-minBPM) * perYScale;
+          ctx.fillStyle = colors[i];
+          ctx.beginPath();
+          ctx.moveTo(x, y - 4); // Move to the top point
+          ctx.lineTo(x + 4, y); // Line to the right point
+          ctx.lineTo(x, y + 4); // Line to the bottom point
+          ctx.lineTo(x - 4, y); // Line to the left point
+          ctx.closePath(); // Close the path to complete the diamond
+          ctx.fill(); // Fill the diamond
+      }
+    }
+  }
+
+  var first = true;
+  ctx.strokeStyle = "#F00";
+  ctx.beginPath();
+
+  for (const date in stats) {
+    if (!stats.hasOwnProperty(date)) {
+      continue;
+    }
+    const x = graphAxisHorizontalMargin + (dateToDaysSince1970(date) - firstday) * xScale;
+    const y = canvas.height - graphAxisVerticalMargin - (stats[date].notefail) * yScale;
+
+    console.log("Drawing nfail at x="+x+" y="+y+" val="+stats[date].notefail);
+
+    if (first) {
+      ctx.moveTo(x, y);
+      first = false;
+    } else {
+      ctx.lineTo(x, y);
+    }
+  }
+  ctx.stroke();
+
+  ctx.fillStyle = "#FF0000";
+  for (const date in stats) {
+    if (!stats.hasOwnProperty(date)) {
+      continue;
+    }
+    const x = graphAxisHorizontalMargin + (dateToDaysSince1970(date) - firstday) * xScale;
+    const y = canvas.height - graphAxisVerticalMargin - (stats[date].notefail) * yScale;
+     ctx.beginPath();
+     ctx.moveTo(x, y - 4); // Move to the top point
+     ctx.lineTo(x + 4, y); // Line to the right point
+     ctx.lineTo(x, y + 4); // Line to the bottom point
+     ctx.lineTo(x - 4, y); // Line to the left point
+     ctx.closePath(); // Close the path to complete the diamond
+     ctx.fill(); // Fill the diamond
+  }
+}
+
+
+// Function to check if a date is within the last 'n' months
+function isWithinLastMonths(dateString, n) {
+    const currentDate = new Date();
+    const date = new Date(dateString);
+    const diff = currentDate - date;
+    const monthDiff = diff / (1000 * 60 * 60 * 24 * 30.44); // Approximate average days in a month
+
+    return monthDiff <= n;
+}
+
+// Event listener for the "History" button
+const historyButton = document.getElementById("historyButton");
+const historyTableContainer = document.getElementById("historyTableContainer");
+
+historyButton.addEventListener("click", function() {
+    populateHistoryTable();
+    historyTableContainer.style.display = "block";
+});
+
+function dateToDaysSince1970(dateString) {
+    const parts = dateString.split('-');
+    if (parts.length !== 3) {
+        throw new Error("Invalid date format. Use yyyy-mm-dd.");
+    }
+
+    const year = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10) - 1; // Months are 0-indexed in JavaScript
+    const day = parseInt(parts[2], 10);
+
+    const inputDate = new Date(year, month, day);
+    const januaryFirst1970 = new Date(1970, 0, 1); // January is month 0
+
+    // Calculate the difference in milliseconds and convert to days
+    const daysDifference = Math.floor((inputDate - januaryFirst1970) / (24 * 60 * 60 * 1000));
+
+    return daysDifference;
+}
 
   </script>
 </body>
