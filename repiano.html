@@ -115,7 +115,7 @@
 </div>
       <button id="fullscreenButton" onclick="fullscreen()"
         style="position:fixed;right:-15px;top:2px;background:lightblue;">Full Screen</button>
-  <div>
+  <div style=user-select:none>
     <span id=uitop style="font-size:18px"><strong>REP<em>iano</em></strong>&nbsp;&nbsp;</span>
     <button id="generateNotesButton" onclick="showTestGenerateForm();">Scales/Arps</button>
     <button id="setNotesButton" onclick="setNotes()">Set Custom Notes</button>
@@ -128,37 +128,51 @@
       <tr style="border-bottom:1px solid black;vertical-align: top;">
         <td style='width:20%;vertical-align:top;'>
           <div style='width:100%;height:100%;text-align:center;vertical-align:top;'>
-          <div id="elapsedTime" style="font-size:60px;text-align:center;width:100%">0:00</div>
+          <div id="elapsedTime" style="font-size:60px;text-align:center;width:100%;user-select:none;">0:00</div>
           <div style="display:inline-block;width:100%;">
           <button id="testNotesButton" onclick="testNotes()" style=font-size:24px;display:inline;margin-right:5px;>START</button>
           <button id="pauseButton" onclick="pauseTest()" style=margin-right:0;display:none;font-size:24px;font-weight:bold;border:none;background-color:white>&#x23F8;</button>
         </div>
         </div>
         </td>
-        <td colspan=4><div id="statsDiv" style="font-size:12px">&nbsp;<br>&nbsp;</div></td></tr>
+        <td colspan=4><div id="statsDiv" style="font-size:12px;user-select:none;">&nbsp;<br>&nbsp;</div></td></tr>
         <tr><td colspan=2 style="border-bottom:1px solid black;position:relative;">
           <div style="width:100%">
               <canvas id=graphCanvas style="width:100%;height:70vh;position:relative;"></canvas>
           </div>
-          <div style="position:absolute;bottom:0;left:0;max-width:95vw;overflow-x:auto;white-space:nowrap;">
+          <div style="position:absolute;bottom:0;left:0;max-width:95vw;overflow-x:auto;overflow-y:hide;white-space:nowrap;user-select:none;">
             <strong>LH:</strong>
             <div id="notesLH" style="display:inline-block"></div><br>
             <strong>RH:</strong>
             <div id="notesRH" style="display:inline-block"></div>
           </div>
-          <div style="position:absolute;top:0;left:25%;text-align:right">
+          <div style="position:absolute;top:15vh;right:0;border:1px solid black;padding-left:5px;border-radius:5px;margin-right:2px;user-select:none">
+            <div id=playNotesButton style='cursor:pointer' onclick="playGraph();">
+              <svg version="1.1" id="svgPlayButton" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 24 24" style="enable-background:new 0 0 330 330;transform:translateY(4px);" xml:space="preserve" width="24" height="24"><path id="XMLID_308_" d="M2.744 23.863a1.09 1.09 0 0 0 1.107 -0.029l17.455 -10.909a1.091 1.091 0 0 0 0 -1.85L3.851 0.166A1.091 1.091 0 0 0 2.182 1.091v21.818a1.091 1.091 0 0 0 0.562 0.954z"/>
+              </svg>
+            </div><br>
+            <div onclick="magnifyScreen(1)" style=font-size:30px;font-weight:800;cursor:pointer;user-select:none>+</div><br>
+            <div onclick="magnifyScreen(-1)" style=font-size:30px;font-weight:800;cursor:pointer;user-select:none>&ndash;</div>
+          </div>
+          <div style="position:absolute;top:0;left:25%;text-align:left;user-select:none;">
             <canvas id="keyboardCanvas" style="width:60vw;height:4vw" ontap="playVoice(event);" onclick="playVoice(event)"></canvas>
             <br>
-            <div style=display:inline;width:30%>&nbsp;</div>
-
             <div id="presetMenuContainer" style="font-size:24px;display:inline;width:30%;text-align:center;"></div>
             <div class="mode-container">
-              <div class="mode-box" id="lh" onclick="changeSelectedHand('left')" title="play only left hand">LH</div>
-              <div class="mode-box" id="rh" onclick="changeSelectedHand('right')" title="play only right hand">RH</div>
-              <div class="mode-box" id="ht" onclick="changeSelectedHand('both')" title="play hands together">HT</div>
+              <div class="mode-box" id="lh" onclick="changeSelectedHand('left')" title="play only left hand" style=user-select:none;>LH</div>
+              <div class="mode-box" id="rh" onclick="changeSelectedHand('right')" title="play only right hand" style=user-select:none;>RH</div>
+              <div class="mode-box" id="ht" onclick="changeSelectedHand('both')" title="play hands together" style=user-select:none;>HT</div>
             </div>
+            <div id=meterDiv onclick="cycleMeter();" style=display:inline-block;width=2em;>1/4</div>
             <div id=pedalSymbolDiv style=display:inline-block;width:4em;>&nbsp;</div>
+            <br>
+            <div id="routineContainer" style="font-size:24px;display:inline;width:30%;text-align:center;display:none">
+              <select id="routines">
+                <option>no routine</option>
+                <option>Arp C-Am-F-G</option>
+            </div>
           </div>
+
           </td></tr>
       <tr>
         <div id=runSummary style="">
@@ -445,11 +459,11 @@
   </div>
 </div>
 
-<div id="historyTableContainer" style="display:none;border:1px solid black;margin:5px;padding:10px;background-color:#EEE;max-width:90vw;height:95vh;position:fixed;top:0;left:0">
-<div style=text-align:center;>
-      <button onclick="document.getElementById('importExportContainer').style.display='block';document.getElementById('importExportTextarea').value=JSON.stringify(runHistory);">Import/Export History</button>
-  <button onclick="document.getElementById('historyTableContainer').style.display='none';" style=margin-bottom:10px>Dismiss History</button><div>
-  <div id="filtersContainer" style=padding-bottom:10px>
+<div id="historyTableContainer" style="display:none;border:1px solid black;background-color:#EEE;width:100vw;height:100vh;position:fixed;top:0;left:0">
+<div style=text-align:right;padding:5px;>
+      <button onclick="showHistory();">Import/Export History</button>
+  <button onclick="document.getElementById('historyTableContainer').style.display='none';" style="margin-bottom:10px;border:2px solid black">Dismiss History</button><div>
+  <div id="filtersContainer" style=padding-bottom:10px;text-align:left>
     <label for="dateRangeSelect">Date Range:</label>
     <select id="dateRangeSelect">
         <option value="all">ALL</option>
@@ -458,8 +472,8 @@
         <option value="1Year">1 Year</option>
     </select>
 
-    <label for="testNameSelect">Test Name:</label>
-    <select id="testNameSelect">
+    <label for="testNameHistorySelect">Test Name:</label>
+    <select id="testNameHistorySelect">
         <!-- Options for test names will be populated dynamically using JavaScript -->
     </select>
 
@@ -472,20 +486,41 @@
     </select>
     <button onclick="filterAndDisplayHistory();">FILTER</button>
 </div>
-    <div style=height:35vh;overflow:auto;font-size:12px>
-    <table id="historyTable" border="1" style=height:35vh;overflow:auto>
-        <thead>
-            <tr>
-                <th>Date</th>
-                <th>Name</th>
-                <th>Hand</th>
-                <th>REPS</th>
-                <th>NoteFail</th>
-                <th>Elapsed</th>
-                <th>Avg BPM</th>
-                <th>Max BPM</th>
-                <th>Best BPM</th>
-                <th>Avg Strikes</th>
+    <div style=height:35vh;overflow:auto;font-size:12px;text-align:center;>
+      <style>
+      .header-overlay {
+        position: sticky;
+        top: 0;
+        background-color: #f0f0f0; /* Set background color for the overlay */
+        z-index: 999; /* Higher z-index than the table body but lower than the sticky thead */
+        height: 40px; /* Adjust the height to match your table header */
+      }
+      </style>
+    <div class=header-overlay></div>
+    <table id="historyTable" border="1" style=height:25vh;overflow:auto;border-collapse:separate;>
+        <thead id=sticky-thead style=position:sticky;top:0;background-color:rgb(220,220,220);border:2;z-index:10000>
+
+            <tr style=background-color:rgb(240,240,240);border:2>
+                <th rowspan=2>Date</th>
+                <th rowspan=2>Name</th>
+                <th rowspan=2>Hand</th>
+                <th rowspan=2>REPS</th>
+                <th rowspan=2>NFail</th>
+                <th rowspan=2>Elapsed</th>
+                <th rowspan=2>Avg.<br>Strikes</th>
+                <th rowspan=2>NNAcc</th>
+                <th rowspan=2>ErrMap</th>
+                <th rowspan=2>Streak</th>
+                <th colspan=8  style=background-color:rgb(240,240,240)>BPM</th>
+              </tr>
+              <tr style=background-color:rgb(240,240,240);border:'2px solid black'>
+                <th style=background-color:rgb(240,240,240) style=background-color:rgb(240,240,240) style=background-color:rgb(240,240,240)>Avg</th>
+                <th style=background-color:rgb(240,240,240) style=background-color:rgb(240,240,240)>Max</th>
+                <th style=background-color:rgb(240,240,240)>Bst</th>
+                <th>HQ</th>
+                <th>MQ</th>
+                <th>LQ</th>
+                <th>FQ</th>
             </tr>
         </thead>
         <tbody id="historyTableBody">
@@ -493,11 +528,11 @@
         </tbody>
     </table>
   </div>
-    <canvas id="historyGraph" style="width:100%;height:50vh;"></canvas>
+    <div style=text-align:left><canvas id="historyGraph" style="width:98%;height:50vh;"></canvas></div>
 </div>
 
 <!-- History Import/Export screen -->
-<div id="importExportContainer" style="padding:10px;background-color:#DED;border:1px black solid;display:none;position:fixed;top:10px;left:30px;">
+<div id="importExportContainer" style="z-index:20000;padding:10px;background-color:#DED;border:1px black solid;display:none;position:fixed;top:10px;left:30px;">
     <p style=text-align:left>This is a JSON encoding of your entire practice history. You can back it up by copying this text to a file, email, sms, etc.
       To restore a prior backup, erase the data below, paste in the backup data, then click RESTORE.</p>
       <p style=text-align:left>NOTES:<br>(1) Restoring will erase all prior data, so you might
@@ -507,6 +542,7 @@
     </p>
     <textarea id="importExportTextarea" placeholder="Paste JSON here or copy JSON to export" rows=10 style=scrollY:auto;width:100%></textarea>
     <br>
+    <div id="importExportSizeDiv" style=text-align:left;font-weight:bold;></div>
     <button id="copyToClipboardButton" onclick="document.getElementById('importExportTextarea').select();document.execCommand('copy');">Copy To Clipboard</button>
     <button id="restoreButton">Restore</button>
     <button id="eraseButton" onclick="document.getElementById('importExportTextarea').value='';">Erase</button>
@@ -514,7 +550,13 @@
 </div>
 
   <script>
-    // State variables
+
+    "use strict";
+
+    // global variables. Yeah there are way too many and some day I would restructure
+    // so that, for example, statistics about the current run are held in an object.
+
+    // States
     var STATE = {
       SETTING_NOTES: 'SETTING_NOTES',
       TESTING_NOTES: 'TESTING_NOTES',
@@ -522,22 +564,40 @@
       TEST_FLUSHING: 'TEST_FLUSHING'
     };
 
+    const RESTNOTE = -1;  // numerical value for a "rest" or lack of a note
+
     var currentState = STATE.WAITING_FOR_BUTTON;
 
     // Variables for note tracking
     var notesToPlay = [[], []];
     var fingersToPlay = null;
     var playedNotes = [[], []];  // lh, rh
+    var errorNotes = [[],[]];    // number of errors made at each note position
+    var noteStartBeat = [[],[]];
+    var durationsToPlay = null;
+    var beatsToPlay = [0,0]; // lh, rh number of beats in selected preset.
+    var noteScope = null;    // which notes within selected bars are to be tested
+    var beatDur = 1/4;
+    var beatsPerBar = 4;
+    var activeBars = {first:1, last:1000};
+    var swingEighths = false; // set to true or 'swung eighths' for jazz scales
+    var midiNotes = []; // for replay feature
     var waitNotes = null;  // played notes transfer here while awaiting the final notes to stop playing
-    var repetitionCount = 0;
+    var nnAccuracy = {success:0, fail:0};
+    var goodNotes = 0;  // number of good notes just in past run
+    var currentErrorNote = null; // tracks hand and index of current error note for logging
+
+    var repCount = 0;
     var successCount = 0;
     var failCount = 0;
+    var noteFailCount = 0;
     var softFailCount = 0;
     var startTime = null;
     var testStartTime = null;
     var totalDuration = 0;
     var currentHand = 'right';
     var wrongNotePlayed = false;
+    var averageBPM = 0;
     var maxBPM = 0; // highest bpm not worrying about quality (but notes have to all be correct)
     var bestBPM = 0;  // best bpm among high quality runs
     var sumQBPM = [0,0,0,0];
@@ -546,10 +606,21 @@
     var noteFilterLow = 1000;
     var flushRight = false;
     var midiOutput = null;
+    var priorFailed = false;
+
+    var curStreak = [0,0,0,0]; // indexed by high quality:0, at least medium: 1, at least low: 2
+    var maxStreak = [0,0,0,0];
+
+    var canvasLarge = null;    // buffer used for full resolution graph
+    var graphMag = 0.5;
+    var graphOffset = {x:0, y:0};
 
     var runHistory = null;
     var curPresetName = "";
     var pedalSymbol = null;
+    var keyboardStatus = 'disconnected';
+    const meterChoices = ["1/2", "1/4", "1/8", "1/8 S8", "1/16", "1/32"];
+    var meter = "1/4";
 
     // Array of presets
     var presets = [];
@@ -561,7 +632,14 @@
       notesOn: []
     };
 
-    // Global object to store preferences
+    var routines = {
+      "Arp C-Am-G-F 2Oct": {
+
+      }
+    };
+
+// Global object to store preferences
+
 const preferences = {
   autoFullscreenStart: true,
   autoExitFullscreenStop: true,
@@ -574,8 +652,8 @@ const preferences = {
   toneOnExcellent: "G5", // also this gets doubled
   toneDuration: "200",  // milliseconds
   toneVelocity: "100", // pretty loud
-  toneFailVoice: "11", // vibraphone on Yamaha P-121
-  toneSuccessVoice: "52", // choir on Yamaha P-121
+  toneFailVoice: "11", // vibraphone on most GM128 keyboards
+  toneSuccessVoice: "52", // choir on most GM128 keyboards
   noteFilter: 3,
   scoreHTQ: true,
   scoreMetQ: true,
@@ -585,6 +663,21 @@ const preferences = {
   showKeyboard: true,
   bpmNoteValue: "quarter",
 };
+
+function cycleMeter() {
+  const md = document.getElementById("meterDiv");
+
+  for (let i = 0; i < meterChoices.length; i++) {
+    if (meter === meterChoices[i]) {
+      meter = meterChoices[ (i+1)%meterChoices.length];
+      md.innerHTML = meter;
+      return;
+    }
+  }
+  // didn't find it.
+  meter = "1/4";
+  md.innerHTML = meter;
+}
 
 // Function to show preferences screen
 function showPrefs(show) {
@@ -682,7 +775,7 @@ document.addEventListener('DOMContentLoaded', function () {
   summary.innerHTML="";
   changeSelectedHand('both');
 
-  // JavaScript code for restoring
+// JavaScript code for restoring
 const restoreButton = document.getElementById("restoreButton");
 
 restoreButton.addEventListener("click", function() {
@@ -693,6 +786,10 @@ restoreButton.addEventListener("click", function() {
         runHistory = importedData;
         localStorage.setItem("runHistory", JSON.stringify(runHistory));
         alert("Data restored successfully!");
+
+        // take down the history and import screens
+        document.getElementById("historyTableContainer").style.display = "none";
+        document.getElementById("importExportContainer").style.display = "none";
     } catch (error) {
         alert("Invalid JSON format. Please check and try again.");
     }
@@ -700,83 +797,265 @@ restoreButton.addEventListener("click", function() {
 });
 
 // Function to handle preset selection
+
 function handlePresetSelection(presetIndex) {
   if (presetIndex >= 0 && presetIndex < presets.length) {
     var selectedPreset = presets[presetIndex];
 
-    curPresetName = presets[presetIndex].name;
+    curPresetName = avail(presets[presetIndex].name, "Unknown Preset");
 
     // Update notesToPlay with the selected preset's notes
     notesToPlay = [selectedPreset.leftHand, selectedPreset.rightHand];
 
-    if (typeof selectedPreset.leftFingers !== "undefined" &&
-        typeof selectedPreset.rightFingers !== "undefined" &&
-        selectedPreset.leftFingers !== null &&
-        selectedPreset.rightFingers !== null) {
-      fingersToPlay = [selectedPreset.leftFingers, selectedPreset.rightFingers];
+    // Auto-select a hand if only one is available
+
+    if (selectedPreset.leftHand === null || selectedPreset.leftHand.length === 0) {
+      updateSelectableHands(false, true, false);
+      changeSelectedHand('right');
+    } else if (selectedPreset.rightHand === null || selectedPreset.rightHand.length === 0) {
+      updateSelectableHands(true, false, false);
+      changeSelectedHand('left');
     } else {
-      fingersToPlay = null;
+      updateSelectableHands(true, true, true);
+      changeSelectedHand('both');
     }
+
+    fingersToPlay = [];
+    fingersToPlay[0] = avail(selectedPreset.leftFingers, null);
+    fingersToPlay[1] = avail(selectedPreset.rightFingers, null);
+
+    beatDur = avail(selectedPreset.beatDur, 1/4);
+
+    beatsPerBar = avail(selectedPreset.beatsPerBar, 4);
+
+    durationsToPlay = [];
+    durationsToPlay[0] = avail(selectedPreset.leftDur, [beatDur]);
+    durationsToPlay[1] = avail(selectedPreset.rightDur, [beatDur]);
+
+    swingEighths = avail(selectedPreset.swingEighths, false);
+    console.log("SW8="+swingEighths);
+
+    // compute the number of beats in the left and right hands
+    beatsToPlay = [0,0];
+
+    for (let h = 0; h < 2; h++) {
+      for (let n = 0; n < notesToPlay[h].length; n++) {
+        beatsToPlay[h] += durationsToPlay[h][n%durationsToPlay[h].length]/beatDur;
+      }
+    }
+
+    document.getElementById("meterDiv").innerHTML = durFrac(beatDur) + (swingEighths?" S8":"");
 
     updateDisplayedNotesToPlay();
 
     // this preset has custom metrics settings
-    if (typeof selectedPreset.metrics !== 'undefined' && selectedPreset.metrics !== null) {
+    if (isAvail(selectedPreset.metrics)) {
       const mets = ['HTQ', 'MetQ', 'DynQ', 'LegQ', 'StaQ'];
       const custmets = selectedPreset.metrics;
 
       for (let i = 0; i < mets.length; i++) {
-        if (typeof custmets[mets[i]] !== 'undefined' && custmets[mets[i]] !== null) {
+        if (isAvail(custmets[mets[i]])) {
           togglePref('score'+mets[i], custmets[mets[i]]);
-          console.log("Set custom metric:"+mets[i]+"="+custmets[mets[i]]);
+          //console.log("Set custom metric:"+mets[i]+"="+custmets[mets[i]]);
         }
       }
     }
-
-    //document.getElementById("testname").innerHTML = selectedPreset.name;
   }
   setNoteFilters();
 }
 
+// these helper functions make code to test if a value is defined and set to non-null
+// cleaner looking.
+function avail(item, defaultValue = null) {
+  if (typeof item !== 'undefined' && item !== null) {
+    return item;
+  }
+  return defaultValue;
+}
+
+// boolean version of avail(), useful for if statements
+function isAvail(item) {
+  if (typeof item !== 'undefined' && item !== null) {
+    return true;
+  }
+  return false;
+}
+
+var maxBar;
+var barScope = null;  // which bars should be played? if this is null, all of them.
+
 function updateDisplayedNotesToPlay() {
-  for (var h = 0; h < 2; h++) {
+
+  maxBar = 0;
+  noteStartBeat = [[],[]]; // beat number each note starts on, may be fractional
+
+  for (let h = 0; h < 2; h++) {
     let notepr = "";
+    let totbeats = 0;
     for (var i = 0; i < notesToPlay[h].length; i++) {
-      notepr += " <span id=ntp_"+h+"_"+i+">"+prnotenum(notesToPlay[h][i]);
-      if (fingersToPlay !== null) {
-        notepr += '<sub>'+fingersToPlay[h][i]+'</sub>';
+      if ( (totbeats % beatsPerBar) === 0 ) {
+        const barnum = 1+Math.trunc(totbeats/beatsPerBar);
+        notepr += "&nbsp;<span id=bar_"+h+"_"+barnum+" onclick='toggleBarScope(event);' style=user-select:none;display:inline-block><sup>"+barnum+"</sup>|&nbsp;";
+      }
+
+      noteStartBeat[h][i] = totbeats; // this will be used for HTQ and graph display
+
+      notepr += " <span id=ntp_"+h+"_"+i+" style=display:inline-block>";
+      notepr+=prnotenum(notesToPlay[h][i]);
+      if (isAvail(fingersToPlay)) {
+        if (isAvail(fingersToPlay[h]) && isAvail(fingersToPlay[h][i])) {
+            notepr += '<sub>'+fingersToPlay[h][i]+prDur(h,i)+'</sub>';
+          }
+      }
+      totbeats += durationsToPlay[h][i%durationsToPlay[h].length]/beatDur;
+      if ( (totbeats % beatsPerBar) === 0 ) {
+        notepr += "</span>";
       }
       notepr+="</span>";
+      maxBar = Math.max(maxBar, Math.ceil(totbeats/beatsPerBar));
     }
+    // add an extra span for errors that happen at the end, after all legit notes are played
+    notepr += "<span id=ntp_"+h+"_error style=display:inline-block>&nbsp;&nbsp;&nbsp;</span>";
 
     document.getElementById("notes"+(h?"RH":"LH")).innerHTML = notepr;
   }
+
+  setTimeout(function() {
+    // make bars for L and R the same width
+    for (let b = 1; b <= maxBar; b++) {
+      const lb = document.getElementById("bar_0_"+b);
+      const rb = document.getElementById("bar_1_"+b);
+      const lbw = (lb!==null)?parseInt(getComputedStyle(lb).width):0;
+      const rbw = (rb!==null)?parseInt(getComputedStyle(rb).width):0;
+      const maxw = Math.max(lbw,rbw) + "px";
+      console.log("barnum="+b+" maxw="+maxw+" lbw:"+lbw+" rbw:"+rbw+" rb:"+rb+" lb:"+lb);
+      if (lb !== null && rb !== null) {
+        lb.style.width = maxw;
+        rb.style.width = maxw;
+      }
+    }
+  }, 0);
+}
+
+function toggleBarScope(event) {
+
+  const [toss,hand,bar] = event.currentTarget.id.split('_');
+  //console.log("toggleBarScope clicked. h="+hand+" bar="+bar);
+
+  if (barScope === null) {
+    barScope = [];
+    for (let b = 0; b < maxBar; b++) {
+      barScope[b] = false;
+    }
+  }
+
+  barScope[bar] = ! barScope[bar];
+
+  // make sure they're contiguous
+  let oncount = 0;
+  var lowestBar = 100000;
+  var highestBar = -1;
+  for (let b = 1; b <= maxBar; b++) {
+    if (barScope[b]) {
+      lowestBar = b;
+      break;
+    }
+  }
+  for (let b = maxBar; b > 0; b--) {
+    if (barScope[b]) {
+      highestBar = b;
+      break;
+    }
+  }
+  // fill in all bars between lowest and highest, this will do nothing if no
+  // bars are selected. If no bars are selected, then all bars will play. If
+  // one or more bars are selected, just those bars will play
+  //console.log("Lowbar:"+lowestBar+" highbar:"+highestBar);
+  for (let b = lowestBar; b <= highestBar; b++) {
+    //console.log("setting bar to true:"+b);
+    barScope[b] = true;
+  }
+  // recolor all the bars to make them reflect reality
+  for (let b = 1; b <= maxBar; b++) {
+    const barleft = document.getElementById("bar_0_"+b);
+    const barright = document.getElementById("bar_1_"+b);
+    if (barScope[b]) {
+      if (barleft !== null) barleft.style.backgroundColor = "#CCCCFF";
+      if (barright !== null) barright.style.backgroundColor = "#CCCCFF";
+    } else {
+      if (barleft !== null) barleft.style.backgroundColor = "transparent";
+      if (barright !== null) barright.style.backgroundColor = "transparent";
+    }
+  }
+  activeBars.first = (lowestBar<maxBar)?lowestBar:1;
+  activeBars.last = (highestBar>0)?highestBar:maxBar;
+
+  // recalculate the noteScope
+  noteScope = [{first:0,last:0}, {first:0, last:0}];
+
+if (0) {
+  var s = "";
+  for (let h = 0; h < 2; h++) {
+    s += "hand="+h+" startbeats=";
+    for (let i = 0; i < noteStartBeat[h].length; i++) {
+      s += noteStartBeat[h][i]+" ";
+    }
+    s += " ";
+  }
+  console.log(s+" active bars:"+activeBars.first+"-"+activeBars.last);
+}
+
+  for (let h = 0; h < 2; h++) {
+    for (let i = 0; i < noteStartBeat[h].length; i++) {
+      if (noteStartBeat[h][i] === (activeBars.first-1)*beatsPerBar) {
+        noteScope[h].first = i;
+      } else if (Math.trunc(noteStartBeat[h][i]) < (activeBars.last)*beatsPerBar) {
+        noteScope[h].last = i;
+      }
+    }
+  }
+  //console.log("Note Scope, Left:"+noteScope[0].first+"-"+noteScope[0].last+" Right:"+noteScope[1].first+"-"+noteScope[1].last);
+
+  event.stopPropagation();
 }
 
 // Create presets
 console.log("pushing new presets");
 
 const scalemetrics = {HTQ: true, MetQ: true, DynQ: true, LegQ: true, StaQ: false};
-// blues scales use "swung eighths" so metrical quality won't show correct score.
-const bluesscalemetrics = {HTQ: true, MetQ: false, DynQ: true, LegQ: true, StaQ: false};
+
+const bluesscalemetrics = {HTQ: true, MetQ: true, DynQ: true, LegQ: true, StaQ: false};
+
+const bluesSwungEighths = [[1/8], [1/8], 1/8, true];
 
 presets.push("Scales, Major");
+presets.push(generateScalePreset('A', 'maj', 1, 3, null, scalemetrics));
+presets.push(generateScalePreset('B', 'maj', 1, 3, null, scalemetrics));
 presets.push(generateScalePreset('C', 'maj', 1, 3, null, scalemetrics));
 presets.push(generateScalePreset('C', 'maj', 2, 3, null, scalemetrics));
+presets.push(generateScalePreset('C#', 'maj', 1, 3, null, scalemetrics));
 presets.push(generateScalePreset('D', 'maj', 1, 3, null, scalemetrics));
 presets.push(generateScalePreset('E', 'maj', 1, 3, null, scalemetrics));
 presets.push(generateScalePreset('F', 'maj', 1, 3, null, scalemetrics));
-presets.push(generateScalePreset('G', 'maj', 1, 3));
+presets.push(generateScalePreset('F#', 'maj', 1, 3, null, scalemetrics));
+presets.push(generateScalePreset('G', 'maj', 1, 3, null, scalemetrics));
 presets.push(generateScalePreset('G', 'maj', 2, 3, null, scalemetrics));
-presets.push(generateScalePreset('A', 'maj', 1, 2, null, scalemetrics));
-presets.push(generateScalePreset('B', 'maj', 1, 2, null, scalemetrics));
-presets.push("Scales, Other");
+
+presets.push("Scales, Minor");
 presets.push(generateScalePreset('A', 'natMin', 1, 3, null, scalemetrics));
 presets.push(generateScalePreset('A', 'natMin', 2, 3, null, scalemetrics));
-presets.push(generateScalePreset('C', 'blues', 1, 3, null, bluesscalemetrics));
-presets.push(generateScalePreset('C', 'blues', 2, 3, null, bluesscalemetrics));
+presets.push(generateScalePreset('D', 'natMin', 1, 3, null, scalemetrics));
+presets.push(generateScalePreset('E', 'natMin', 1, 3, null, scalemetrics));
+presets.push(generateScalePreset('G', 'natMin', 1, 3, null, scalemetrics));
+presets.push(generateScalePreset('D', 'melMin', 1, 3, null, scalemetrics));
+presets.push(generateScalePreset('E', 'melMin', 1, 3, null, scalemetrics));
+presets.push(generateScalePreset('G', 'melMin', 1, 3, null, scalemetrics));
+
+presets.push("Scales, Other");
+presets.push(generateScalePreset('C', 'blues', 1, 3, null, bluesscalemetrics, bluesSwungEighths));
+presets.push(generateScalePreset('C', 'blues', 2, 3, null, bluesscalemetrics, bluesSwungEighths));
 presets.push(generateScalePreset('D', 'chroma', 1, 3, null, scalemetrics));
-//presets.push(generateScalePreset('C', 'mixoBlues', 1, 3));
+
 presets.push("Arpeggios");
 presets.push(generateScalePreset('C', 'majArp', 2, 3, null, scalemetrics));
 presets.push(generateScalePreset('F', 'majArp', 2, 3, null, scalemetrics));
@@ -798,55 +1077,107 @@ presets.push({name: 'Pitter-patter', leftHand: [],
   metrics: {HTQ: false, MetQ: false, DynQ: true, LegQ: false, StaQ: false}
 });
 
-presets.push("Song Drills");
-presets.push({
-  name: 'F&uuml;r Elise RH B1-8',
-  leftHand: [],
-  rightHand: [76, 75, 76, 75, 76, 71, 74, 72, 69, 60, 64, 69, 71, 64, 68, 71, 72, 64, 76, 75, 76, 75, 76, 71, 74, 72, 69, 60, 64, 69, 71, 62, 72, 71, 69],
-  leftFingers: null,
-  rightFingers: null,
-  metrics: {HTQ: false, MetQ: false, DynQ: true, LegQ: true, StaQ: false}
-});
-
-presets.push({
-  name: 'F&uuml;r Elise RH B9-14', leftHand: [],
-  rightHand: [76, 75, 76, 75, 76, 71, 74, 72, 69, 60, 64, 69, 71, 62, 72, 71, 69, 71, 72, 74, 76, 67, 77, 76, 74, 65, 76, 74, 72, 64, 74, 72, 71],
-  leftFingers: null,
-  rightFingers: null,
-  metrics: {HTQ: false, MetQ: false, DynQ: true, LegQ: true, StaQ: false}
-});
-
-presets.push({
-  name: 'F&uuml;r Elise LH Arps',
-  leftHand: [45, 52, 57, 40, 52, 56, 48, 55, 60, 43, 55, 59, 45, 52, 57, 40, 52, 64,],
-  rightHand: [],
-  leftFingers: null,
-  rightFingers: null,
-  metrics: {HTQ: false, MetQ: true, DynQ: true, LegQ: false, StaQ: false}
-});
-
-presets.push({
-  name: 'C.S.A B1',
-  leftHand: [60, 67, 64, 67, 64, 67, 60, 67, //C arp
-           ],
-  rightHand: [76, 86, 84, 76,
+presets.push({name: 'FGAmG LH impr pattern',
+  leftHand: [
+              41, 48, 53, 48, 53, 48, 41, 48, 53, 48, 53, 48, // F
+              43, 50, 55, 50, 55, 50, 43, 50, 55, 50, 55, 50, // G
+              45, 52, 57, 52, 57, 52, 45, 52, 57, 52, 57, 52, // Am
+              43, 50, 55, 50, 55, 50, 43, 50, 55, 50, 55, 50, // G
             ],
-  leftFingers: null,
-  rightFingers: null,
-  metrics: {HTQ: true, MetQ: false, DynQ: true, LegQ: false, StaQ: false}
-});
+  rightHand: [84,83,81,76,74,72]
+}
+);
+
+presets.push("Song Drills");
 
 presets.push({
-  name: 'C.S.A B1-2',
+  name: 'F&uuml;r Elise A Loop',
+  leftDur: [1/16],
+  rightHand: [
+    76, 75, 76, 75, 76, 71, 74, 72, 69,      60, 64, 69, 71,       64, 68, 71, 72,     64,
+    76, 75, 76, 75, 76, 71, 74, 72, 69,       60, 64, 69, 71,       62, 72, 71, 69,
+    71, 72, 74, 76,     67, 77, 76, 74,     65, 76, 74, 72,       64, 74, 72, 71
+  ],
+  leftHand: [
+    //-1, -1, -1, -1, -1, -1, -1, -1,
+    45, 52, 57,           40, 52, 56, 45, 52, 57,
+    45, 52, 57, 40, 52, 56, 45, 52, 57,
+    48, 55, 60, 43, 55, 59, 45, 52, 57,
+    40, 52, 64, // still need the weird hand crossing part
+  ],
+  rightDur: [1/16], // not every note is 1/16 but for now this is an approximation since most are
+
+  beatDur: 1/8,
+
+  beatsPerBar: 3,
+
+  targetBPM: 138,
+
+  leftFingers: null,
+  rightFingers: null,
+  metrics: {HTQ: false, MetQ: false, DynQ: true, LegQ: true, StaQ: false}
+});
+
+
+presets.push({
+  name: 'C.S.A B1-4',
   leftHand: [60, 67, 64, 67, 64, 67, 60, 67, //C arp
              62, 69, 65, 69, 65, 69, 62, 69, // Dm arp
+             64, 71, 67, 71, 67, 71, 64, 71, // Em arp
+            62, 69, 65, 69, 65, 69, 62, 69, // Dm arp
+            60
            ],
+  leftDur: [1/8],
   rightHand: [76, 86, 84, 76,
               77, 86, 84, 77,
+              79, 86, 84, 79,
+              77, 86, 84,     84, 83, 81, 83,
+              84
             ],
+  rightDur: [1/4, 1/4, 1/4, 1/4,
+             1/4, 1/4, 1/4, 1/4,
+             1/4, 1/4, 1/4, 1/4,
+             1/4, 1/4, 1/4,  1/16, 1/16, 1/16, 1/16,
+             3/8],
   leftFingers: null,
   rightFingers: null,
   metrics: {HTQ: true, MetQ: false, DynQ: true, LegQ: false, StaQ: false}
+});
+
+presets.push({
+  name: 'C.S.A B5',
+  leftHand: [
+             60, 67, 64, 67, 60, 64, 60, 67, // C arp, different pattern
+           ],
+  leftDur: [1/8],
+  rightHand: [
+              84,        79,   72,     72  // the 84 is dotted quarter, the 79 is eighth, rest quarter
+            ],
+  rightDur: [ 3/8,       1/8,  1/4,   1/4
+  ],
+  beatDur: 1/4,
+  leftFingers: null,
+  rightFingers: null,
+  metrics: {HTQ: false, MetQ: false, DynQ: true, LegQ: true, StaQ: false}
+});
+
+presets.push({
+  name: 'C.S.A B6',
+  leftHand: [
+             55, 62, 59, 62,     55, 62, 59, 62, // C arp, different pattern, true alberti
+           ],
+  leftDur: [1/8],
+  rightHand: [
+              71,72,71,72,71,72,71,72,  // trilling on B, technically could be more or fewer than this
+              71, 71, 69, 71,                            72     // the final 72 (C) is really in bar 7
+            ],
+  rightDur: [ 1/16,1/16,1/16,1/16,1/16,1/16,1/16,1/16,  // trills should really be faster than this, but for now 2 per LH note is good for learning it
+              1/8, 1/8, 1/8, 1/8,                       1/4      // the final 1/4 is really in bar 7
+  ],
+  beatDur: 1/4,
+  leftFingers: null,
+  rightFingers: null,
+  metrics: {HTQ: false, MetQ: false, DynQ: true, LegQ: true, StaQ: false}
 });
 
 presets.push({
@@ -855,16 +1186,24 @@ presets.push({
              62, 69, 65, 69, 65, 69, 62, 69, // Dm arp
              64, 71, 67, 71, 67, 71, 64, 71, // Em arp
              62, 69, 65, 69, 65, 69, 62, 69, // Dm arp
-             60, 67, 64, 67, 64, 67, 60, 67, //C arp
+
+             60, 67, 64, 67, 60, 64, 60, 67, //C arp, different pattern
            ],
+  leftDur: [1/8],
   rightHand: [76, 86, 84, 76,
               77, 86, 84, 77,
               79, 86, 84, 79,
-              77, 86, 84,  84, 83, 81, 83,  84
+              77, 86, 84, 84, 83, 81, 83, // last four are sixteenths
+              84, 79, 72, 72
             ],
+  rightDur: [1/4, 1/4, 1/4, 1/4,
+             1/4, 1/4, 1/4, 1/4,
+             1/4, 1/4, 1/4, 1/4,
+             1/4, 1/4, 1/4,  1/16, 1/16, 1/16, 1/16,
+             3/8, 1/8, 1/4, 1/4],
   leftFingers: null,
   rightFingers: null,
-  metrics: {HTQ: false, MetQ: false, DynQ: true, LegQ: false, StaQ: false}
+  metrics: {HTQ: false, MetQ: false, DynQ: true, LegQ: true, StaQ: false}
 });
 
 presets.push("Debugging");
@@ -873,23 +1212,42 @@ presets.push(  // a very simple pattern for debugging the software
     name: 'TEST',
     leftHand: [48, 50, 52, ],
     rightHand: [60, 62, 64, ],
+    leftDur: [1/4, 1/8, 1/8],
+    rightDur: [1/4, 1/8, 1/8],
+    beatDur: 1/4,
+    swingEighths: false,
     leftFingers: [5,4,3],
     rightFingers: [1,2,3],
-    metrics: {HTQ: false, MetQ: false, DynQ: false, LegQ: false, StaQ: false}
+    metrics: {HTQ: false, MetQ: true, DynQ: false, LegQ: false, StaQ: false},
   }
 );
-handlePresetSelection(presets.length-1); // default, makes it easier for me to test
+handlePresetSelection(presets.length-1); // this default makes it easier for me to test
 
-presets.push(  // a very simple pattern for debugging the software
+presets.push(  // a trivial "scale" for debugging the software
   {
     name: 'SC.TEST',
     leftHand: [48, 50, 52, 50, 48],
     rightHand: [60, 62, 64, 62, 60],
     leftFingers: [5,4,3,4,5],
     rightFingers: [1,2,3,2,1],
+    leftDur: [1/8],
+    rightDur: [1/8],
+    beatDur: 1/16,
+    swingEighths: true,
     metrics: {HTQ: true, MetQ: true, DynQ: true, LegQ: true, StaQ: true}
   }
 );
+
+presets.push({
+  name: 'TEST Trills',
+  leftHand: [],
+  rightHand: [71, 72, 71, 72, 71, 72, 71, 72,    71, 71, 69
+            ],
+  leftFingers: null,
+  rightFingers: null,
+  control: ['t'],
+  metrics: {HTQ: false, MetQ: false, DynQ: true, LegQ: false, StaQ: false}
+});
 
 // Create the preset menu
 var presetMenu = document.createElement('select');
@@ -933,7 +1291,8 @@ function resetPresetMenu() {
   presetMenu.selectedIndex = 0; // Set the selected index to the default option
 }
 
-function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = null, metrics = null) {
+function generateScalePreset(noteName, scaleType, numOctaves, lhOctave,
+  name = null, metrics = null, dur = [[1/4],[1/4]]) {
 
   const scaleIntervals = {
     maj: [0, 2, 4, 5, 7, 9, 11, 12],
@@ -1023,7 +1382,13 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
   }
 
   const arpmode = scaleType.includes("Arp");
-  console.log("arpmode="+arpmode);
+  //console.log("arpmode="+arpmode);
+
+  if (arpmode) {
+    preset.beatsPerBar = 3;
+  } else {
+    preset.beatsPerBar = 4;
+  }
 
   // Get the index of the starting note in the noteNames array
   const startNoteIndex = noteNames.indexOf(noteName);
@@ -1136,6 +1501,20 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
     }
 
   }
+
+  if (dur) {
+    preset.rightDur = avail(dur[0], [1/4]);
+    preset.leftDur = avail(dur[1], [1/4]);
+    preset.beatDur = avail(dur[2], 1/4);
+    preset.swingEighths = avail(dur[3], false);
+  } else {
+    // use defaults
+    preset.rightDur = [1/4];
+    preset.leftDur = [1/4];
+    preset.beatDur = 1/4;
+    preset.swingEighths = false;
+  }
+
   return preset;
 }
 
@@ -1146,12 +1525,13 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
       currentState = STATE.SETTING_NOTES;
       console.log("State: setting notes");
       notesToPlay = [[], []]; // reset
+      fingersToPlay = null;
 
       //document.getElementById("testname").textContent = "Custom Notes";
 
       resetPresetMenu();
 
-      updateSelectableOptions(true, true, false);
+      updateSelectableHands(true, true, false);
       changeSelectedHand('right');
 
       // Prompt the user to play notes
@@ -1189,6 +1569,7 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
         endTest(); // stop the timer
         button.textContent = "START";
         scrollToDataTop(false);
+        clearPlayedNotes();
 
         if (preferences.autoExitFullscreenStop) {
           exitFullscreen();
@@ -1212,7 +1593,7 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
       button.textContent = "STOP";
       document.getElementById('setNotesButton').disabled = true;
       // enable both hands mode
-      updateSelectableOptions(true, true, true);
+      updateSelectableHands(true, true, true);
 
       // Clear the displayed played notes during the test phase
       clearPlayedNotes();
@@ -1229,6 +1610,7 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
 
     function logOneRun(elapsed, notefail, strikes, bpm) {
       const runName = todayDate() + "|" + curPresetName + "|" + getSelectedHand();
+
       if (runHistory === null) {
         // hasn't been read yet
         runHistory = localStorage.getItem("runHistory");
@@ -1250,11 +1632,43 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
         runHistory[runName].maxBPM = 0;
         runHistory[runName].bestBPM = 0;
         runHistory[runName].sumStrikes = 0;
+        runHistory[runName].maxStreak = [0,0,0,0];
+        runHistory[runName].goodNotes = 0;
+      }
+
+      if (!isAvail(runHistory[runName].maxStreak)) {
+        runHistory[runName].maxStreak = [0,0,0,0];
+      }
+      for (let q = 0; q < 4; q++) {
+        if (maxStreak[q] > runHistory[runName].maxStreak[q]) {
+          runHistory[runName].maxStreak[q] = maxStreak[q];
+        }
+      }
+
+      if (!isAvail(runHistory[runName].numQBPM)) {
+          runHistory[runName].numQBPM = [];
+      }
+      if (!isAvail(runHistory[runName].sumQBPM)) {
+        runHistory[runName].sumQBPM = [];
       }
       runHistory[runName].count++;
       runHistory[runName].elapsed += elapsed;
+
+      if (!isAvail(runHistory[runName].goodNotes)) {
+        runHistory[runName].goodNotes = 0;
+      }
+      runHistory[runName].goodNotes += goodNotes;
+      goodNotes = 0; // this is a global right now
       if (notefail) {
         runHistory[runName].notefail++;
+
+        if (!isAvail(runHistory[runName].errorNotes)) {
+          runHistory[runName].errorNotes = [[],[]];
+        }
+        if (!isAvail(runHistory[runName].errorNotes[currentErrorNote.hand][currentErrorNote.noteIndex])) {
+          runHistory[runName].errorNotes[currentErrorNote.hand][currentErrorNote.noteIndex] = 0;
+        }
+        runHistory[runName].errorNotes[currentErrorNote.hand][currentErrorNote.noteIndex]++;
       } else {
         runHistory[runName].success++;
         runHistory[runName].sumStrikes += strikes;
@@ -1265,9 +1679,24 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
         if (strikes === 0 && bpm > runHistory[runName].bestBPM) {
           runHistory[runName].bestBPM = bpm;
         }
+        if (!runHistory[runName].numQBPM[strikes]) {
+          runHistory[runName].numQBPM[strikes] = 0;
+          runHistory[runName].sumQBPM[strikes] = 0;
+        }
+
+        runHistory[runName].numQBPM[strikes] += 1;
+        runHistory[runName].sumQBPM[strikes] += bpm;
       }
 
       localStorage.setItem("runHistory", JSON.stringify(runHistory));
+    }
+
+    function displayStreaks() {
+      // for now hard code passing quality, but this should be a preference
+      document.getElementById("curStreakDiv").innerHTML =
+        "Streak:<br><span class=bigstat>"+curStreak[2]+"</span><br><span style=font-size:small>Cur</span>";
+      document.getElementById("maxStreakDiv").innerHTML =
+        "<br><span class=bigstat>"+maxStreak[2]+"</span><br><span style=font-size:small>Max</span>";
     }
 
     // get the current date in yyyy-mm-dd format
@@ -1428,7 +1857,7 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
 
 
     // Function to update the availability of selectable options in the pulldown menu
-    function updateSelectableOptions(leftAvailable, rightAvailable, bothAvailable) {
+    function updateSelectableHands(leftAvailable, rightAvailable, bothAvailable) {
 
       return;  // for now do nothing
       var selHT = document.getElementById('ht');
@@ -1462,14 +1891,62 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
            d="M 206.04921,542.89329 C 204.33221,542.80244 202.99047,541.27833 202.45208,539.70226 C 202.12589,538.77722 202.30505,537.38950 203.39174,537.12966 C 204.96615,536.86226 206.27260,538.19967 207.00481,539.47953 C 207.52641,540.42880 207.81478,541.92368 206.83679,542.67615 C 206.60458,542.83188 206.32387,542.89434 206.04921,542.89329 z M 208.78446,537.49000 C 206.85001,536.31510 204.40641,536.22358 202.28813,536.88110 C 200.94630,537.35025 199.41169,538.34823 199.39900,539.97250 C 199.39807,541.56396 200.87900,542.55675 202.18949,543.02959 C 204.26418,543.70824 206.65796,543.64856 208.59501,542.56669 C 209.69149,541.98333 210.66334,540.77535 210.33379,539.43643 C 210.15258,538.57546 209.49304,537.93123 208.78446,537.49000 z "
            style="fill:#000000;fill-opacity:1.0000000" id="path2918" /> </g> </g> </svg>`;
 
-    const eighthNote=`<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox=[0 0 500 500]>
-<path fill="none" stroke-width="9" stroke="#000" d="M66,165V35l70,-20V145M66,44l70,-20"/>
-<path fill="#000" d="M70,164a25,15 0 1,0 0,1M140,144a25,15 0 1,0 0,1"/>
-</svg>`;
+    const eighthNote=`<div style=width:6px;height:13px;display:inline-block>
+<svg xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://web.resource.org/cc/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:svg="http://www.w3.org/2000/svg" id="svg3745" viewBox="0 0 52.13 97.301" version="1.0"
+   viewbox="0 0 120 120">
+  <g id="layer1" transform="translate(-382.51 -658)">
+    <path id="path3743" d="m408.04 658c5.88 14.34 12.3 22.76 16.39 27.42 3.23 3.68 20.94 20.04 0.53 45.61 12.12-25.04 7.76-39.88-13.92-49.03v53c0.68 21.83-21.75 23.16-27.21 17.35-5.65-5.99 7.67-25.89 24.21-19.35v-75z" fill-rule="evenodd"/>
+  </g>
+  <metadata>
+    <rdf:RDF>
+      <cc:Work>
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+        <cc:license rdf:resource="http://creativecommons.org/licenses/publicdomain/"/>
+        <dc:publisher>
+          <cc:Agent rdf:about="http://openclipart.org/">
+            <dc:title>Openclipart</dc:title>
+          </cc:Agent>
+        </dc:publisher>
+        <dc:title>Eighth note</dc:title>
+        <dc:date>2007-04-10T14:26:55</dc:date>
+        <dc:description>Une croche.</dc:description>
+        <dc:source>http://openclipart.org/detail/3864/eighth-note-by-corbeau</dc:source>
+        <dc:creator>
+          <cc:Agent>
+            <dc:title>corbeau</dc:title>
+          </cc:Agent>
+        </dc:creator>
+        <dc:subject>
+          <rdf:Bag>
+            <rdf:li>clip art</rdf:li>
+            <rdf:li>clipart</rdf:li>
+            <rdf:li>croche</rdf:li>
+            <rdf:li>eighth note</rdf:li>
+            <rdf:li>image</rdf:li>
+            <rdf:li>media</rdf:li>
+            <rdf:li>music</rdf:li>
+            <rdf:li>music notation</rdf:li>
+            <rdf:li>musique</rdf:li>
+            <rdf:li>notation musicale</rdf:li>
+            <rdf:li>note</rdf:li>
+            <rdf:li>public domain</rdf:li>
+            <rdf:li>svg</rdf:li>
+          </rdf:Bag>
+        </dc:subject>
+      </cc:Work>
+      <cc:License rdf:about="http://creativecommons.org/licenses/publicdomain/">
+        <cc:permits rdf:resource="http://creativecommons.org/ns#Reproduction"/>
+        <cc:permits rdf:resource="http://creativecommons.org/ns#Distribution"/>
+        <cc:permits rdf:resource="http://creativecommons.org/ns#DerivativeWorks"/>
+      </cc:License>
+    </rdf:RDF>
+  </metadata>
+</svg></div>`;
 
   const sixteenthNote=`<svg
    xmlns="http://www.w3.org/2000/svg"
-   height="13" width="20" viewBox="0 0 250 150" style=transform:translateY(2px);
+   height="12" width="9" viewBox="10 0 20 150" style=transform:translateY(2px);
    version="1.1"
    id="svg15612" > <g style="stroke:#000000;stroke-width:3" id="g16563">
     <path d="m 50.8,44.75 0,84" id="path16482" />
@@ -1511,8 +1988,9 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
 
     var currentBPMNote = quarterNote;
 
-    function displayTestStats(notes) {
+    function displayTestStats(notes, displayType) {
       var alerts = []; // alert structures for graph annotations
+      var metmean = 0;
 
       if (wrongNotePlayed && preferences['enableTones'] && preferences['toneOnNoteFail'] !== 'none') {
         playMIDINote(preferences['toneOnNoteFail'],
@@ -1521,35 +1999,40 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
       }
 
       // Increment the repetition count
-      repetitionCount++;
+      repCount++;
 
       // Calculate average BPM
       var duration = 1;
-
+      var noteCount = 1;
       if (notes !== null && !wrongNotePlayed) {
         let stime = 0;
         let etime = 0;
         const hand = getSelectedHand();
+
+        // make sure beatsToPlay is initialized to something reasonable
+        if (!isAvail(beatsToPlay) || !isAvail(beatsToPlay[0]) || !isAvail(beatsToPlay[1])) {
+          beatsToPlay = [notesToPlay[0].length, notesToPlay[1].length];
+          warning("BEATSTOPLAY WAS NOT INITIALIZED!");
+        }
+
         if (hand === 'both') {
           stime = Math.min(notes[0][0].sTime, notes[1][0].sTime);
           etime = Math.max(notes[0][notes[0].length-1].eTime, notes[1][notes[1].length-1].eTime);
+          noteCount = Math.max(beatsToPlay[0], beatsToPlay[1]);
         } else if (hand === 'left') {
           stime = notes[0][0].sTime;
           etime = notes[0][notes[0].length-1].eTime;
+          noteCount = beatsToPlay[0];
         } else {
           stime = notes[1][0].sTime;
           etime = notes[1][notes[1].length-1].eTime;
+          noteCount = beatsToPlay[1];
         }
         duration = etime - stime;
         totalDuration += duration;
       }
 
-      // Calculate average BPM for successful repetitions
-      // pick the hand with the largest number of notes as the number played.
-
-      var noteCount = Math.max(notesToPlay[0].length, notesToPlay[1].length);
-
-      var averageBPM = totalDuration === 0 ? 0 : Math.trunc((noteCount) * successCount / (totalDuration / 60000));
+      averageBPM = totalDuration === 0 ? 0 : Math.trunc((noteCount) * successCount / (totalDuration / 60000));
       var currentBPM = 0;
       if (notes !== null && !wrongNotePlayed) { // don't update currentBPM if we're in error state
         currentBPM = Math.trunc((noteCount) / (duration / 60000));
@@ -1560,18 +2043,31 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
         currentBPM = 0;
       }
 
+      const s = avail(beatDur, 1/4);
+      if (s === 1/2) {
+        currentBPMNote = sixteenthNote;
+      } else if (s === 1/4) {
+        currentBPMNote = quarterNote;
+      } else if (s === 1/8) {
+        currentBPMNote = eighthNote;
+      } else if (s === 1/16) {
+        currentBPMNote = sixteenthNote;
+      } else {
+        currentBPMNote = s; // just use a fraction
+      }
+
       // Print repetition and BPM details
       let stats = "<table><tr style='border-bottom:1px solid black'>";
       stats += '<td style=vertical-align:top;border:none;padding-right:10px>REPS:<br><span class=bigstat style="color:green">' +
         successCount +
         '</span>&nbsp;(' + Math.trunc(100 * successCount / ((successCount + failCount)?(successCount+failCount):1)) + '%) </td>';
 
-      stats += '<td style=vertical-align:top;border:none>NoteFail<br><span class=smallstat style="color:red">' +
+      stats += '<td style=vertical-align:top;border:none>NFail<br><span class=smallstat style="color:red">' +
         failCount + '</span></td>';
       stats += '<td style=vertical-align:top;border:none>QFail<br><span class="smallstat" style="color:red">' +
         softFailCount + '</span></td>';
 
-      stats += '<td style=vertical-align:top;border:none;padding-right:10px>BPM: '+currentBPMNote+'<br><span class=bigstat>' +
+      stats += '<td style=vertical-align:top;border:none;padding-right:10px>BPM:&nbsp;'+currentBPMNote+'<br><span class=bigstat>' +
         (currentBPM?Math.trunc(currentBPM):"&nbsp;") + '</span></td>';
       stats += '<td style=vertical-align:top;border:none;padding-right:10px>Avg:<br><span class=smallstat>' +
         Math.trunc(averageBPM) + "</span></td>";
@@ -1588,7 +2084,24 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
               "</span> <span style=font-size:small>("+(numQBPM[2])+")</span></td>";
       stats += '<td style=vertical-align:top;border:none;padding-right:10px>AvgQF:<br><span class=smallstat>' +
               ((numQBPM[3])?Math.trunc((sumQBPM[3])/(numQBPM[3])):0) +
-              "</span> <span style=font-size:small>("+(numQBPM[3])+")</span></td></tr>";
+              "</span> <span style=font-size:small>("+(numQBPM[3])+")</span></td>";
+              var nonzero = (nnAccuracy.success+nnAccuracy.fail)?0:1;
+              if (nonzero === 0 && nnAccuracy.fail === 0) {
+                // never give 100% accuracy, if for no other reason that if there are only a small
+                // number of runs our estimated accuracy can't be very certain.
+                // we will estimate that there is a 0.5/numsuccess probability of error that we just
+                // haven't been lucky enough to detect.
+                nonzero = 1/(nnAccuracy.success+0.001);
+              }
+              console.log("NONZERO="+nonzero);
+              var displaynacc = (100*(nnAccuracy.success/(nnAccuracy.success+nnAccuracy.fail+nonzero)).toFixed(4)).toFixed(2);
+              if (parseFloat(displaynacc) > 99.99) {
+                displaynacc = 99.99;
+              }
+      stats += '<td style=vertical-align:top;border:none;padding-right:10px>NNAcc:<br><span class=smallstat>' +
+              displaynacc +
+              "</span>&nbsp;<span style=font-size:small>("+nnAccuracy.success+":"+nnAccuracy.fail+")</td>";
+      stats += "</tr>";
       // compute quality metrics, hands togetherness
       // but only compute this if testing in hands together mode, and if
       // both sets of notes are the same length
@@ -1627,7 +2140,7 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
       }
 
       if (notes !== null && !wrongNotePlayed) {
-        // Metric quality: were notes played for roughly the same length of time?
+        // Metric quality: were notes played for the correct amount of time?
         // Could track for left and right independently to find trouble spots.
 
         var metStat = new StatTracker();
@@ -1637,15 +2150,29 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
             if (notes[h][i].eTime === null) {
               continue; // don't count notes that are not yet released.
             }
-            metStat.addDataPoint(notes[h][i].eTime - notes[h][i].sTime, [h,i]);
+
+            var d = calcDur(h,i);
+
+            var std = avail(beatDur, 1/4);
+
+            const data = (notes[h][i].eTime - notes[h][i].sTime) * (parseFloat(std) / parseFloat(d));
+
+            //console.log("METQ DP:"+data+" d:"+d+" std:"+std+" et:"+notes[h][i].eTime+" st:"+notes[h][i].sTime);
+
+
+            metStat.addDataPoint(
+              data,
+              [h,i]
+            );
           }
         }
-        const metmean = metStat.calculateMean();
+        metmean = metStat.calculateMean();
         const metsd = metStat.calculateStandardDeviation();
         var metmerit = metmean?Math.trunc(100*(1 - (metsd/metmean))):0;
         if (metmerit < 0) metmerit = 0;
         //console.log("Generating MetQ, prefs="+preferences['scoreMetQ']);
-        stats += tdPreferenceDisplay('scoreMetQ', "MetQ", metmerit, "("+Math.trunc(metmean)+"&plusmn;"+Math.trunc(metsd)+")");
+        stats += tdPreferenceDisplay('scoreMetQ', "MetQ", metmerit, "(" +
+          Math.trunc(metmean)+"&plusmn;"+Math.trunc(metsd)+")");
 
         metStat.findOutliers("SHORT", "LONG", alerts);
 
@@ -1705,7 +2232,6 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
         // Could track this separately for left and right hands as well to see
         // if one is better or worse
 
-
         var legSum = 0; // sum of all note durations
         var legError = 0; // sum of end/start gap or overlap errors
         var legNum = 0; // number of data points
@@ -1724,7 +2250,7 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
             legNum++;
             const notedur = notes[h][i].eTime - notes[h][i].sTime;
             legSum += notedur;
-            const diff = notes[h][i].eTime - notes[h][i+1].sTime;
+            let diff = notes[h][i].eTime - notes[h][i+1].sTime;
             if (diff > 0) {
               overlap += diff;
               numoverlap++;
@@ -1732,8 +2258,18 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
                 maxOverlap = diff;
                 noteMaxOverlap = [h,i];
               }
-              // add nothing to staccatto sum
-              //console.log("Zero stacSum");
+              // we allow up to 10% overlap of the second note's duration to
+              // not be an error at all.
+              // ENHANCEMENT: It might be a good idea to let the user determine
+              // this percentage as a preference, because there is disagreement among teachers about
+              // how much overlap, if any, is permissible.
+              const tenpercent = 0.1*(notes[h][i+1].eTime - notes[h][i+1].sTime);
+              diff -= tenpercent; // reduce diff by this amount
+              if (diff < 0) diff = 0; // but don't let it go below zero
+
+              // add nothing to staccatto sum because any overlap for staccatto is
+              // a fail.
+
             } else if (diff < 0) {
               gap -= diff;
               numgap++;
@@ -1744,6 +2280,7 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
                 staccattoSum += 100*(-diff/notedur);
               }
             }
+
             legError += Math.abs(diff);
           }
         }
@@ -1766,10 +2303,6 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
         }
         stats += tdPreferenceDisplay('scoreLegQ', "LegQ", legMerit, "(g:" + avggap + " o:" + avgoverlap + ")");
 
-        if (preferences['scoreLegQ']) {
-            strikes += strikeScore(legMerit);
-        }
-
         // staccatto quality
         // staccatto quality will be considered 100% for a note that has a gap after it plays
         // that is greater than the notes duration. if gap is less than that, then quality is 100*gap/duration
@@ -1779,8 +2312,21 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
 
         stats += tdPreferenceDisplay('scoreStaQ', "StaQ", stacMerit, "");
 
-        if (preferences['scoreStaQ']) {
+        // if both legQ and staQ are being scored, we will score strikes based
+        // on which one is better. This allows the user to turn both metrics on
+        // and then practice legatto vs. staccato at will. Presumably they're trying
+        // to do one or the other if they have both turned on.
+
+        if (preferences['scoreStaQ'] && preferences['scoreLegQ']) {
+          if (stacMerit > legMerit) {
             strikes += strikeScore(stacMerit);
+          } else {
+            strikes += strikeScore(legMerit);
+          }
+        } else if (preferences['scoreStaQ']) {
+            strikes += strikeScore(stacMerit);
+        } else if (preferences['scoreLegQ']) {
+            strikes += strikeScore(legMerit);
         }
 
       } else {
@@ -1792,7 +2338,7 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
       }
 
       // draw simple graph of number of runs with hq, mq, lq result.
-      stats += "<td style=border:none></td><td style=border:none></td>";
+      stats += "<td style=border:none><div id=curStreakDiv></div></td><td style=border:none><div id=maxStreakDiv></div></td>";
       var totqbpm = numQBPM[0]+numQBPM[1]+numQBPM[2]+numQBPM[3];
       if (totqbpm === 0) totqbpm = 1; // avoid div by 0 errors
 
@@ -1810,6 +2356,8 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
 
       if (strikes > 2) { // sloppy play! warn user
         softFailCount++;
+        // IMPLEMENT: if preferences say that a softFail is a fail, that logic should be here
+        // for example this would cause a soft fail to cancel this as a REP
       }
       stats += "</table>";
 
@@ -1832,8 +2380,30 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
 
       messageStats(stats);
 
+      // update streaks
+      if (displayType !== "reset") { // we don't update streaks if this is just a repaint
+        if (!wrongNotePlayed) {
+          for (let q = 0; q < strikes; q++) {
+            curStreak[q] = 0; // too many strikes for this streak
+          }
+          for (let q = strikes; q <= 3; q++) {
+            // All streaks greater than or equal to strikes are extended.
+            // for example if strikes == 1 (medium quality) then both
+            // medium and low quality streaks are extended
+            curStreak[q]++
+            if (curStreak[q] > maxStreak[q]) {
+              maxStreak[q] = curStreak[q];
+            }
+          }
+        } else {
+          // on notefail, all streaks end
+          curStreak = [0,0,0,0];
+        }
+      }
+      displayStreaks();
+
       if (!wrongNotePlayed) {
-        drawNoteBarGraph(notes, strikes, alerts);
+        drawNoteBarGraph(notes, strikes, alerts, metmean);
         logOneRun(duration, false, strikes, currentBPM);
       } else {
         logOneRun(0, true, 0, 0);
@@ -1985,22 +2555,51 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
 
     }
 
+    function calcDur(h, i) {
+      var d = parseFloat(avail(beatDur, 1/4));
+
+      if (isAvail(durationsToPlay) && isAvail(durationsToPlay[h]) && durationsToPlay[h].length > 0) {
+        d = parseFloat(durationsToPlay[h][i%durationsToPlay[h].length]); // durations array wraps
+      }
+
+      if (swingEighths && d === 1/8) {
+        const msg = "Graph SW8 orig="+d;
+        if ( (i%2) === 1) {
+          // short swung note
+          d = d*2/3;
+        } else {
+          // long swung note
+          d = d*4/3;
+        }
+        //console.log(msg+" adj="+d+" i="+i);
+      } else {
+        //console.log("Graph NOT SW8. sw8="+swingEighths+" d="+d);
+      }
+      return parseFloat(d);
+    }
 
     function clearStats() {
-      currentBPM = 0;
+      //currentBPM = 0;
       averageBPM = 0;
       maxBPM = 0;
       bestBPM = 0;
       successCount = 0;
-      failCount = 0;
+      failCount = 0;    // a fail could include soft fails depending on prefs
       softFailCount = 0;
-      repetitionCount = 0;
+      noteFailCount = 0;
+      repCount = 0;
       totalDuration = 0;
       startTime = null;
       wrongNotePlayed = false;
       numQBPM = [0,0,0,0];
       sumQBPM = [0,0,0,0];
-      displayTestStats(null);
+      midiNotes = [];
+      curStreak = [0,0,0,0];
+      maxStreak = [0,0,0,0];
+      errorNotes = [[],[]];
+      nnAccuracy = {success:0, fail:0};
+
+      displayTestStats(null, "reset");
     }
 
     var patternCanvas = null;
@@ -2027,31 +2626,43 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
 
     function redrawNoteBarGraph() {
       if (priorOptions !== null) {
-        drawNoteBarGraph(priorOptions[0].slice(), priorOptions[1], priorOptions[2].slice());
+        drawNoteBarGraph(priorOptions[0].slice(), priorOptions[1], priorOptions[2].slice(), priorOptions[3]);
       } else {
         console.log("No prior options, not redrawing graph");
       }
     }
 
-    function drawNoteBarGraph(notes, strikes, alerts) {
+    function drawNoteBarGraph(notes, strikes, alerts, metmean) {
       if (notes === null) {
         return;
       }
 
-      priorOptions = [notes.slice(), strikes, (alerts!==null)?alerts.slice():null];
+      priorOptions = [notes.slice(), strikes, (alerts!==null)?alerts.slice():null, metmean];
+
+      midiNotes = []; // we'll fill this in as we traverse the note data
 
       //console.log("Drawing graph notes="+notes);
-      const canvas = document.getElementById('graphCanvas');
-      const s = getComputedStyle(canvas);
-      canvas.width = parseInt(s.width);
-      canvas.height = parseInt(s.height);
+      const graphCanvas = document.getElementById('graphCanvas');
+      const s = getComputedStyle(graphCanvas);
+      graphCanvas.width = parseInt(s.width);
+      graphCanvas.height = parseInt(s.height);
+      console.log("Graph w="+graphCanvas.width+" h="+graphCanvas.height);
 
-      if (canvas === null) {
-        warning("Canvas null");
-        return;
+      if (canvasLarge === null) {
+        canvasLarge = document.createElement("canvas");
+        canvasLarge.width = Math.trunc(parseInt(s.width)*2.2);
+        canvasLarge.height = parseInt(s.height)*2;
+        canvasLarge.style.display = "none";
+        document.body.appendChild(canvasLarge);
       }
+      canvasLarge.width = parseInt(s.width)*2;
+      canvasLarge.height = parseInt(s.height)*2;
 
-      const ctx = canvas.getContext('2d');
+      // reset magnification and offset.
+      graphMag = 0.5;
+      graphOffset = {x:0, y:0};
+
+      const ctx = canvasLarge.getContext('2d');
 
       if (patternCanvas === null) {
         createPattern();
@@ -2060,7 +2671,7 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
       }
 
       // Clear the canvas
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.clearRect(0, 0, canvasLarge.width, canvasLarge.height);
 
       // Define the bar dimensions
       const hand = getSelectedHand();
@@ -2073,7 +2684,7 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
         numnotes = 2*notes[0].length;
       }
       const barSpacing = 0;
-      const barHeight = Math.trunc(canvas.height/(numnotes+barSpacing));
+      const barHeight = Math.trunc(canvasLarge.height/(numnotes+barSpacing));
       const noteSpacing = (2*barHeight+barSpacing);
 
       // Compute the scaling factor for the horizontal axis
@@ -2091,29 +2702,31 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
         lateETime = notes[1][lastNote].eTime;
       } else {
         //warning("Graph Finding last note");
-        lastNote = Math.min(notes[0].length-1, notes[1].length-1);
+        lastNote = Math.max(notes[0].length-1, notes[1].length-1);
         earlySTime = Math.min(notes[1][0].sTime, notes[0][0].sTime);
-        lateETime = Math.max(notes[1][lastNote].eTime, notes[0][lastNote].eTime);
+        lateETime = Math.max(notes[1][notes[1].length-1].eTime, notes[0][notes[0].length-1].eTime);
       }
 
+      const hmargin = 65; // horizontal margin on both left and right.
+
       const maxDuration = lateETime - earlySTime;
-      const scaleFactor = maxDuration === 0 ? 1 : canvas.width / maxDuration;
+      const scaleFactor = (maxDuration === 0) ? 1 : (canvasLarge.width-2*hmargin) / maxDuration;
 
       // Draw scale
       const scaleMarkerWidth = 10; // Width of the scale marker line
       const scaleMarkerHeight = 5; // Height of the scale marker line
 
       ctx.fillStyle = "black";
-      ctx.font = "12px Arial";
-      let fontHeight = 12;
+      ctx.font = "24px Arial";
+      let fontHeight = 24;
       ctx.textAlign = "left";
       ctx.textBaseline = "bottom";
 
       // Calculate the length of the scale marker line
       const scaleMarkerLength = 100 * scaleFactor; // 100ms scaled to the current scaleFactor
 
-      const scaleX = canvas.width-scaleMarkerLength-40;
-      const scaleY = 20;
+      const scaleX = 20; // canvasLarge.width-scaleMarkerLength-40;
+      const scaleY = canvasLarge.height/2;
       ctx.fillText("100 ms", scaleX, scaleY-5); // Draw the scale label above the marker
 
       // Draw the scale marker line
@@ -2135,9 +2748,15 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
 
       for (let i = 0; i <= lastNote; i++) {
         for (let h = 0; h < 2; h++) {
+
           //console.log("graphing hand:"+h);
           if ((h === 0 && hand === 'right') || (h === 1 && hand === 'left')) {
             console.log("skipping");
+            continue;
+          }
+          if (notes[h].length <= i) {
+            // this hand ran out of notes, sometimes one hand has fewer notes than the other
+            // for example when practicing a piece of a song
             continue;
           }
           //console.log("graphing note:"+i);
@@ -2146,9 +2765,29 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
           const eTime = n.eTime - earlySTime;
           const w = (eTime - sTime) * scaleFactor;
 
+          // take into account note durations here
+
+          const d = calcDur(h,i);
+          const adjmetmean = metmean*d/beatDur;
+          const wmean = (metmean*d/beatDur) * scaleFactor;
+
+          // we conveniently have everything we need to set up the midi replay
+          // data structure right here. So, although it doesn't have much to do
+          // with the graph, go ahead and grab the data.
+          //console.log("New note:"+n.note);
+          const tt = "+"+(sTime+1000).toString(); // start 1 second after button pressed
+          const nn = new Note(n.note.number);
+          nn.options = {
+            duration:   n.eTime - n.sTime,
+            attack:     n.velocity,
+            time:       tt
+          }
+
+          midiNotes.push(nn);
+
           // Draw bar
-//console.log("Drawing bar, flushright="+flushRight);
-          const x = (!flushRight)?(sTime * scaleFactor):40;
+          //console.log("Drawing bar, flushright="+flushRight);
+          const x = (!flushRight)?(sTime * scaleFactor+hmargin):40;
           const y = i * noteSpacing + h*(barHeight+barSpacing);
 
           // Draw rectangular outline with 100% opacity
@@ -2161,8 +2800,43 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
           ctx.fillStyle = `rgba(${h === 0 ? 0 : 255}, 0, ${h === 1 ? 0 : 255}, ${(speed/100)*(speed/100)})`;
 
           // Fill the bar with adjusted opacity
-          //console.log("graphing rect at:x"+x+" y"+y+" w"+w+" h"+barHeight);
           ctx.fillRect(x, y, w, barHeight);
+
+          // Show an outline with dashed lines of
+          // the "correct" length of this note given its duration and BPM figures.
+          // So the steps are: (1) take the BPM figure computed by stats and then figure out
+          // the number of milliseconds that implies for beatDur. Then scale that to the dur of
+          // this note. Then draw a dashed rectangle starting where this note started and ending
+          // at the "ideal" length figure. Take into account swung eighths too.
+          ctx.save();
+
+
+          // draw different emphasis depending on how close the expected duration was
+          // the played duration
+          var err = adjmetmean/(eTime - sTime);
+          if (err > 1) { // short note
+            err = 1/err; // gives us value between 0 and 1 where 1 === perfect
+          }
+
+          if (err > 0.9) { // good match
+            ctx.strokeStyle = "green";
+            ctx.setLineDash([2,4]);
+            ctx.lineWidth = 1;
+          } else if (err > 0.70) { // not so good
+            ctx.strokeStyle = "orange";
+            ctx.setLineDash([4,4]);
+            ctx.lineWidth = 2;
+          } else { // bad
+            ctx.strokeStyle = "red";
+            ctx.setLineDash([8,4]);
+            ctx.lineWidth = 3;
+          }
+
+          ctx.fillStyle = "black";
+
+          ctx.strokeRect(x, y, wmean, barHeight);
+          //ctx.fillText("m:"+Math.trunc(adjmetmean)+" a:"+Math.trunc(eTime-sTime), x+w+10, y+25);
+          ctx.restore();
 
           // see if there is an alert for this note
           let numalertsfound = 0;
@@ -2171,7 +2845,7 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
             if (alerts[a].note && alerts[a].note[0] === h && alerts[a].note[1] === i) {
               // found an alert for this note, highlight it
               //console.log("Found an alert on note:"+alerts[a].note);
-              ctx.setLineDash([4,4]);
+              ctx.setLineDash([8,8]);
               ctx.strokeRect(x,y-barHeight*3,w,barHeight*7);
               ctx.textAlign = "right";
               ctx.textBaseline = "bottom";
@@ -2196,30 +2870,33 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
             }
           }
 
-          if (barHeight < 10) {
-            ctx.font = "italic 9px Arial";
-            fontHeight = 9;
-          } else if (barHeight > 14) {
-            ctx.font = "italic 14px Arial";
-            fontHeight = 14;
+          if (barHeight < 18) {
+            fontHeight = 11;
           } else {
-            ctx.font = "italic " + (barHeight) + "px Arial";
-            fontHeight = barHeight-2;
+            fontHeight = Math.trunc(barHeight*0.7);
+            if (fontHeight > 24) {
+              fontHeight = 24;
+            }
           }
+          ctx.font = "italic " + fontHeight + "px Arial";
 
           // find finger, if any available
           let finger = "";
-          if (fingersToPlay !== null && typeof(fingersToPlay) !== "undefined" &&
-                typeof(fingersToPlay[h]) !== "undefined" &&
-                fingersToPlay[h] !== null) {
-            finger = "."+fingersToPlay[h][i];
+          if (isAvail(fingersToPlay) && isAvail(fingersToPlay[h])) {
+                if (isAvail(fingersToPlay[h][i])) {
+                  finger = "."+fingersToPlay[h][i];
+                }
           }
+
+          // find duration, if any available
+          var dur = prDur(h, i);
 
           // draw the note name to left of bar
           ctx.fillStyle = barcolors[h];
           ctx.textAlign = "right";
           ctx.textBaseline = "top";
-          ctx.fillText(prnote(notes[h][i].note)+finger, x-3, y);
+
+          ctx.fillText(prnote(notes[h][i].note)+finger+dur, x-3, y);
 
           // Show velocity
           if (speed < 70) {
@@ -2227,16 +2904,7 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
           } else {
             ctx.fillStyle = "white";
           }
-          if (barHeight < 10) {
-            ctx.font = "italic 8px Arial";
-            fontHeight = 8;
-          } else if (barHeight > 14) {
-            ctx.font = "italic 12px Arial";
-            fontHeight = 12;
-          } else {
-            ctx.font = "italic " + (barHeight-2) + "px Arial";
-            fontHeight = barHeight-2;
-          }
+
           ctx.textAlign = "left";
           ctx.textBaseline = "bottom";
 
@@ -2264,30 +2932,27 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
     }
 
     if (!flushRight) {
+      ctx.font = "90px Arial";
       if (strikes > 2) {
-        ctx.font = "48px Arial";
         ctx.fillStyle = "red";
         ctx.textBaseline = "bottom";
         ctx.textAlign = "left";
-        ctx.fillText("SLOW DOWN!", 10, canvas.height-40);
+        ctx.fillText("SLOW DOWN!", 10, canvasLarge.height-60/graphMag);
       } else if (strikes === 2) {
-        ctx.font = "48px Arial";
         ctx.fillStyle = "orange";
         ctx.textBaseline = "bottom";
         ctx.textAlign = "left";
-        ctx.fillText("PASSING", 10, canvas.height-40);
+        ctx.fillText("PASSING", 10, canvasLarge.height-60/graphMag);
       } else if (strikes === 1) {
-        ctx.font = "48px Arial";
         ctx.fillStyle = "blue";
         ctx.textBaseline = "bottom";
         ctx.textAlign = "left";
-        ctx.fillText("GOOD", 10, canvas.height-40);
+        ctx.fillText("GOOD", 10, canvasLarge.height-60/graphMag);
       } else {
-        ctx.font = "48px Arial";
         ctx.fillStyle = "green";
         ctx.textBaseline = "bottom";
         ctx.textAlign = "left";
-        ctx.fillText("EXCELLENT", 10, canvas.height-40);
+        ctx.fillText("EXCELLENT", 10, canvasLarge.height-60/graphMag);
       }
     }
 
@@ -2360,6 +3025,66 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
         }
       }
     }
+    if (!wrongNotePlayed) {
+      graphShow();
+    }
+  }
+
+  function graphShow() {
+    const graphCanvas = document.getElementById('graphCanvas');
+    const ctx = graphCanvas.getContext("2d");
+
+    if (canvasLarge === null) {
+      return; // no graph yet
+    }
+    const ctxLarge = canvasLarge.getContext("2d");
+
+    ctxLarge.setLineDash([7,7]);
+    ctxLarge.strokeRect(0,0,canvasLarge.width,canvasLarge.height);
+
+    ctx.clearRect(0,0,graphCanvas.width,graphCanvas.height);
+
+    console.log("ShowGraph: cw="+canvasLarge.width+" ch="+canvasLarge.height+" gw="+graphCanvas.width+" gh="+graphCanvas.height);
+    ctx.drawImage(canvasLarge, graphOffset.x, graphOffset.y, canvasLarge.width, canvasLarge.height,
+                          0, 0, Math.trunc(canvasLarge.width*graphMag), Math.trunc(canvasLarge.height*graphMag));
+    ctx.save();
+    ctx.setLineDash([2,2]);
+    ctx.strokeStyle = "orange";
+    ctx.strokeRect(0,0,graphCanvas.width,graphCanvas.height);
+
+    ctx.restore();
+  }
+
+  function prDur(h, i) {
+    var dur = "";
+    if (isAvail(durationsToPlay) && isAvail(durationsToPlay[h])
+          && durationsToPlay[h].length > 0) {
+        dur = durationsToPlay[h][i%durationsToPlay[h].length];
+        if (dur === beatDur) {
+          dur = ""; // if dur is default, don't clutter up the screen
+        } else {
+          dur = durMap(dur);
+        }
+    }
+    return dur;
+
+    function durMap(dur) {
+      dur = dur.toString();
+      const durmap = { "1":"w", "1.5": "w.",
+        "0.5":"h", "0.75":"h.", "0.25":"q", "0.375":"q.",
+        "0.125":"e", "0.0625":"s", "0.03125":"t"
+      };
+      return avail(durmap[dur], dur);
+    }
+  }
+
+  function durFrac(dur) {
+    dur = dur.toString();
+    const durmap = { "1":"1/1", "1.5": "1.5/1",
+      "0.5":"1/2", "0.75":"3/4", "0.25":"1/4", "0.375":"3/8",
+      "0.125":"1/8", "0.0625":"1/16", "0.03125":"1/32"
+    };
+    return avail(durmap[dur], dur);
   }
 
   function graphTap(event) {
@@ -2370,33 +3095,36 @@ function generateScalePreset(noteName, scaleType, numOctaves, lhOctave, name = n
 
     // Calculate the center of the canvas
     const centerX = canvas.width / 2;
-    const oneThirdY = canvas.height / 3;
+    const oneHalfY = canvas.height / 2;
 
     // Set flushRight based on the tap position
-    if (tapY > oneThirdY) {
+    if (tapY > oneHalfY) {
           // don't count it close to the top of the canvas because there are other controls there and the user's
           // finger could touch the top of the canvas sometimes.
           flushRight = tapX < centerX;
+          redrawNoteBarGraph();
     }
-
-    redrawNoteBarGraph();
   }
 
 // Attach the graphTap function to the onload event of the window
 window.addEventListener('load', function () {
 
-  //warning("redirecting console");
-
   redirectConsole();
 
   // Attach event listeners to the canvas for tap and click events
   const canvas = document.getElementById('graphCanvas');
-  canvas.addEventListener('click', graphTap);
-  canvas.addEventListener('touchend', graphTap);
+  canvas.addEventListener('mousedown', graphDragStart);
+  canvas.addEventListener('mousemove', graphDragMove);
+  canvas.addEventListener('mouseup', graphDragEnd);
+
+  canvas.addEventListener('touchstart', graphDragStart);
+  canvas.addEventListener('touchmove', graphDragMove);
+  canvas.addEventListener('touchend', graphDragEnd);
+
   //warning("loading prefs");
   loadPrefs();
   //warning("displaying empty results");
-  displayTestStats(null);
+  displayTestStats(null, "reset");
   //warning("calling setPedalSymbol");
   setPedalSymbol();
 
@@ -2408,423 +3136,672 @@ window.addEventListener('load', function () {
   //showTestGenerateForm();
 });
 
+var dragOrigin = null;
+var startOffset = null;
 
-    function clearPlayedNotes() {
-      playedNotes = [[], []];
-      wrongNotePlayed = false;
+function graphDragStart(event) {
+  dragOrigin = {x:0,y:0};
+  //warning("Event type:"+event.type);
+  if (event.type === 'touchstart') {
+    dragOrigin.x = event.touches[0].clientX;
+    dragOrigin.y = event.touches[0].clientY;
+    //warning("Touches:"+ event.touches.length+" x:"+dragOrigin.x+" y:"+dragOrigin.y);
+    if (typeof dragOrigin.x === 'undefined') {
+      dragOrigin.x = 0;
+    }
+  } else {
+    dragOrigin.x = event.clientX;
+    dragOrigin.y = event.clientY;
+  }
 
-      for (let h = 0; h < 2; h++) {
-        for (let i = 0; i < notesToPlay[h].length; i++) {
-          let ntp = document.getElementById("ntp_"+h+"_"+i);
-          if (ntp !== null) {
-            ntp.style.color = "black";
-            ntp.style.fontWeight = "normal";
-          }
-        }
+  if (dragOrigin.x > graphCanvas.width*0.66 || graphMag === 0.5) { // ignore touchstart near the right edge, or if not magnified, so its easier to scroll the window
+    dragOrigin = null;
+    return;
+  }
+  event.preventDefault();
+  startOffset = {x:0,y:0};
+  startOffset.x = graphOffset.x;
+  startOffset.y = graphOffset.y;
+  //warning("DRAGSTART: offx:"+dragOrigin.x+" offy:"+dragOrigin.y+" gx"+graphOffset.x+" gy:"+graphOffset.y+" cw:"+graphCanvas.width);
+}
+
+function graphDragMove(event) {
+  if (graphMag === 0.5 || graphOrigin === null) {
+    return; // no dragging needed when half magnified because entire graph fits on screen
+  }
+  //warning("Event type:"+event.type);
+  event.preventDefault();
+  if (dragOrigin === null) { // there's been no touchstart inside the window
+    return;
+  }
+  var x;
+  var y;
+  if (event.type === 'touchmove') {
+    x = event.touches[0].clientX;
+    y = event.touches[0].clientY;
+    //warning("Touches:"+ event.touches.length+" x:"+x+" y:"+y);
+  } else {
+    x = event.clientX;
+    y = event.clientY
+  }
+
+  graphOffset.x = startOffset.x+dragOrigin.x-x;
+  graphOffset.y = startOffset.y+dragOrigin.y-y;
+  //warning("DRAG: offx:"+graphOffset.x+" offy:"+graphOffset.y+" x:"+x+" y:"+y+" startx:"+startOffset.x+" starty:"+startOffset.y);
+  graphShow();
+}
+
+function graphDragEnd(event) {
+  event.preventDefault();
+  dragOrigin = null;
+  startOffset = null;
+}
+
+function magnifyScreen(dir) {
+  if (dir === -1) {
+    graphMag *= 3/4;
+  } else {
+    graphMag *= 4/3;
+  }
+
+  if (graphMag > 2) {
+    graphMag = 2;
+  } else if (graphMag <= 1/2) {
+    graphMag = 1/2;
+    graphOffset = {x:0,y:0}; // reset when things get small enough to show entire thing on the screen
+  }
+  graphShow();
+}
+
+function clearPlayedNotes() {
+  playedNotes = [[], []];
+  wrongNotePlayed = false;
+
+  for (let h = 0; h < 2; h++) {
+    for (let i = 0; i <= notesToPlay[h].length; i++) {
+      let ntp = null;
+      if (i === notesToPlay[h].length) {
+        ntp = document.getElementById("ntp_"+h+"_error");
+      } else {
+        ntp = document.getElementById("ntp_"+h+"_"+i);
+      }
+      if (ntp !== null) {
+        ntp.style.color = "black";
+        ntp.style.fontWeight = "normal";
+        ntp.style.backgroundColor = "";
+      } else {
+        console.log("**** NTP is null during RESET");
       }
     }
+  }
+}
 
 
-    function clearNotesToPlay() {
-      notesToPlay = [[], []];
-      var notesDiv = document.getElementById('notesLH');
-      notesDiv.innerHTML = '';
-      notesDiv = document.getElementById('notesRH');
-      notesDiv.innerHTML = '';
-      wrongNotePlayed = false;
-      errorStats(wrongNotePlayed);
+function clearNotesToPlay() {
+  notesToPlay = [[], []];
+  errorNotes = [[],[]];
+  var notesDiv = document.getElementById('notesLH');
+  notesDiv.innerHTML = '';
+  notesDiv = document.getElementById('notesRH');
+  notesDiv.innerHTML = '';
+  wrongNotePlayed = false;
+  errorStats(wrongNotePlayed);
+}
+
+function prnotenum(note) {
+  const octave = Math.floor(note / 12) - 1;
+  const noteNames = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+
+  if (note === -1) {
+    return "_"; // rest
+  }
+  return noteNames[note % 12] + octave;
+}
+
+function prnote(note) {
+  return prnotenum(note.number);
+}
+
+if (typeof WebMidi !== 'undefined' && WebMidi !== null) {
+  // Check if Web MIDI is supported
+  if (WebMidi.supported) {
+    WebMidi.enable(function (err) {
+      if (err) {
+        console.error('WebMidi could not be enabled:', err);
+      } else { // initialize
+
+        WebMidi.addListener("connected", function(event) {
+            warning("Connection to MIDI received");
+            connectMidi();
+        });
+
+        WebMidi.addListener("disconnected", function(event) {
+            warning("Lost MIDI connection: "+event.port.id+" "+event.port.manufacturer+" "+event.port.name);
+            keyboardStatus = 'disconnected';
+        });
+
+        connectMidi();
+
+      } // end of initialize
+    }); // end of webmidi.enable
+  } else { // end of if webmidi supported
+    console.error('Web MIDI is not supported in this browser.');
+  }
+} else {
+  console.error('Web MIDI is null--is not supported in this browser.');
+}
+
+function connectMidi() {
+  var outputs = WebMidi.outputs;
+  if (outputs.length > 0) {
+    for (let i = 0; i < outputs.length; i++) {
+      message("Output["+i+"]="+outputs[i].type+"/"+outputs[i].manufacturer+"/"+outputs[i].name);
     }
+    midiOutput = outputs[0];
+    setTimeout(function () {
+      playMIDINote("C1", 300, 80, 52);
+    },1000);
+    setTimeout(function () {
+      playMIDINote("C2", 300, 100, 52);
+    },1400);
+    setTimeout(function () {
+      playMIDINote("C3", 300, 127, 52);
+    },1800);
+  } else {
+    warning('No MIDI output devices found.');
+  }
 
-    function prnotenum(note) {
-      const octave = Math.floor(note / 12) - 1;
-      const noteNames = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+  // Retrieve the first available MIDI input device
+  var input;
+  if (WebMidi.inputs.length > 0) {
 
-      return noteNames[note % 12] + octave;
+    for (let i = 0; i < WebMidi.inputs.length; i++) {
+      WebMidi.inputs[i].removeListener(); // remove any prior listeners so we don't get double-listeners
     }
+    input = WebMidi.inputs[0];
+    message("Connected to WebMidi input port 0:" + WebMidi.inputs[0].name + " " + WebMidi.inputs[0].manufacturer);
+    keyboardStatus = 'connected';
+  } else {
+    warning('No MIDI input devices found. Connect a device then refresh.');
+    keyboardStatus = 'disconnected';
+    return;
+  }
 
-    function prnote(note) {
-      return prnotenum(note.number);
+  input.addListener('controlchange', "all", controlChangeHandler, { once: true });
+
+  function controlChangeHandler(event) {
+    if (event.controller.name === 'holdpedal') {
+      if (event.value) {
+        document.getElementById('pedalSymbolDiv').innerHTML = pedalSymbol?pedalSymbol:"PEDAL";
+      } else {
+        document.getElementById('pedalSymbolDiv').innerHTML = "<div style=width:4em;>&nbsp;</div>";
+      }
     }
+  }
 
-    if (typeof WebMidi !== 'undefined' && WebMidi !== null) {
-      // Check if Web MIDI is supported
-      if (WebMidi.supported) {
-        WebMidi.enable(function (err) {
-          if (err) {
-            console.error('WebMidi could not be enabled:', err);
-          } else { // initialize
+  input.addListener('noteoff', 'all', noteOffHandler, { once: true });
+  input.addListener('noteon', 'all', noteOnHandler, { once: true });
 
-            var outputs = WebMidi.outputs;
-            if (outputs.length > 0) {
-              for (let i = 0; i < outputs.length; i++) {
-                message("Output["+i+"]="+outputs[i].type+"/"+outputs[i].manufacturer+"/"+outputs[i].name);
+  function noteOffHandler(e) {
+
+    // remove from list of notes showing on mini keyboard canvas
+    keyboardOptions.notesOn = keyboardOptions.notesOn.filter((element) => element !== e.note.number);
+
+    if (currentState !== STATE.SETTING_NOTES &&
+      (e.note.number > noteFilterHigh || e.note.number < noteFilterLow)) {
+      console.log("ignoring note out of range");
+      return;
+    }
+    const all = [waitNotes, playedNotes];  // the ending note could be in either
+
+    for (let d = 0; d < 2; d++) {
+      if (d === 0 && all[d] === null) {
+        console.log("Waitnotes null, skipping d="+d);
+        continue; // waitNotes can be null if processing was previously completed
+      }
+      for (let hand = 0; hand < 2; hand++) {
+        // go backwards since most recent notes are likely the ones that have just finished playing
+        //console.log("Finding note in: d="+d+" hand=" + hand);
+        for (let n = all[d][hand].length-1; n >= 0; n--) {
+            if (all[d][hand][n].note.number === e.note.number && all[d][hand][n].eTime === null) {
+              all[d][hand][n].eTime = e.timestamp;
+              //console.log("found ending note");
+              if (d === 0) {  // if the note was found in the waitNotes array
+                // we found the noteoff in the waitNotes array so it might now
+                // be complete. see if it has any eTime === null
+                for (let h2 = 0; h2 < 2; h2++) {
+                  for (let n2 = 0; n2 < waitNotes[h2].length; n2++) {
+                    if (waitNotes[h2][n2].eTime === null) {
+                      console.log("waitNotes is still incomplete");
+                      return; // no we're still waiting for at least 1 note
+                    }
+                  }
+                }
+
+                // if we get here then waitNotes is now full so we can compute stats and
+                // clear it out.
+                // to avoid blocking here, we spin it off async using a 0 second timeout.
+                // to avoid race conditions, we send it a copy of the waitNotes array.
+
+                setTimeout(function() {displayTestStats(waitNotes.slice());}, 0);
               }
-              midiOutput = outputs[0];
-              setTimeout(function () {
-                playMIDINote("C1", 300, 80, 52);
-              },1000);
-              setTimeout(function () {
-                playMIDINote("C2", 300, 100, 52);
-              },1400);
-              setTimeout(function () {
-                playMIDINote("C3", 300, 127, 52);
-              },1800);
-            } else {
-              warning('No MIDI output devices found.');
-            }
-
-            // Retrieve the first available MIDI input device
-            var input;
-            if (WebMidi.inputs.length > 0) {
-              input = WebMidi.inputs[0]; // Remove 'var' keyword here
-              message("Connected to WebMidi input port 0:" + WebMidi.inputs[0].name + " " + WebMidi.inputs[0].manufacturer);
-            } else {
-              warning('No MIDI input devices found. Connect a device then refresh.');
               return;
             }
-
-            input.addListener('controlchange', "all", (event) => {
-              if (event.controller.name === 'holdpedal') {
-                if (event.value) {
-                  document.getElementById('pedalSymbolDiv').innerHTML = pedalSymbol?pedalSymbol:"PEDAL";
-                } else {
-                  document.getElementById('pedalSymbolDiv').innerHTML = "<div style=width:4em;>&nbsp;</div>";
-                }
-              }
-            });
-
-            input.addListener('noteoff', 'all', function (e) {
-
-              // remove from list of notes showing on mini keyboard canvas
-              keyboardOptions.notesOn = keyboardOptions.notesOn.filter((element) => element !== e.note.number);
-
-              if (currentState !== STATE.SETTING_NOTES &&
-                (e.note.number > noteFilterHigh || e.note.number < noteFilterLow)) {
-                console.log("ignoring note out of range");
-                return;
-              }
-              const all = [waitNotes, playedNotes];  // the ending note could be in either
-
-              for (let d = 0; d < 2; d++) {
-                if (all[d] === null) {
-                  continue; // waitNotes can be null if processing was previously completed
-                }
-                for (let hand = 0; hand < 2; hand++) {
-                  // go backwards since most recent notes are likely the ones that have just finished playing
-                  //console.log("Finding note in: d="+d+" hand=" + hand);
-                  for (let n = all[d][hand].length-1; n >= 0; n--) {
-                      if (all[d][hand][n].note.number === e.note.number && all[d][hand][n].eTime === null) {
-                        all[d][hand][n].eTime = e.timestamp;
-                        //console.log("found ending note");
-                        if (d === 0) {  // if the note was found in the waitNotes array
-                          // we found the noteoff in the waitNotes array so it might now
-                          // be complete. see if it has any eTime === null
-                          for (h2 = 0; h2 < 2; h2++) {
-                            for (n2 = 0; n2 < waitNotes[h2].length; n2++) {
-                              if (waitNotes[h2][n2].eTime === null) {
-                                //console.log("waitNotes is still incomplete");
-                                return; // no we're still waiting for at least 1 note
-                              }
-                            }
-                          }
-
-                          // if we get here then waitNotes is now full so we can compute stats and
-                          // clear it out.
-                          // to avoid blocking here, we spin it off async using a 0 second timeout.
-                          // to avoid race conditions, we send it a copy of the waitNotes array.
-
-                          setTimeout(function() {displayTestStats(waitNotes.slice());}, 0);
-                        }
-                        return;
-                      }
-                    }
-                }
-              }
-              //console.log("Could not find ending note");
-              //debugWindow();
-            });
-
-            // Add event listener for "noteon" events
-            input.addListener('noteon', 'all', function (e) {
-
-              keyboardOptions.notesOn.push(e.note.number);
-
-              // we ignore notes that are significantly out of range
-              // of the current hand.
-              if (currentState !== STATE.SETTING_NOTES &&
-                (e.note.number > noteFilterHigh || e.note.number < noteFilterLow)) {
-                console.log("ignoring note out of range");
-                return;
-              }
-              currentHand = getSelectedHand();
-
-              // store stats (further down in the code)
-              const notestruct = {
-                  note:   e.note,
-                  velocity: e.velocity,
-                  sTime:  e.timestamp,
-                  eTime:  null
-              };
-
-              if (currentState === STATE.SETTING_NOTES) {
-                var note = e.note.number;
-                if (currentHand === 'left') {
-                  notesToPlay[0].push(note);
-                  // Display the human-readable note name on the main screen
-                  var noteName = prnote(e.note);
-                  var notesDiv = document.getElementById('notesLH');
-                  notesDiv.textContent = notesDiv.textContent + " " + noteName;
-                }
-                if (currentHand === 'right' || currentHand === 'both') {
-                  notesToPlay[1].push(note);
-                  // Display the human-readable note name on the main screen
-                  var noteName = prnote(e.note);
-                  var notesDiv = document.getElementById('notesRH');
-                  notesDiv.textContent = notesDiv.textContent + " " + noteName;
-                }
-                updateDisplayedNotesToPlay();
-
-              } else if (currentState === STATE.TESTING_NOTES) {
-                //debugWindow();
-                // Check if the played note matches the expected note
-                var playedNote = e.note.number;
-
-                var matchhand = 0;
-                if (currentHand === 'left') {
-                  playedNotes[0].push(notestruct);
-                } else if (currentHand === 'right') {
-                  playedNotes[1].push(notestruct);
-                  matchhand = 1;
-                } else {
-                  // take a peek and see if it matches expected left hand
-                  if (playedNote === notesToPlay[0][playedNotes[0].length]) {
-                    playedNotes[0].push(notestruct);
-                  } else {
-                    playedNotes[1].push(notestruct);
-                    matchhand = 1;
-                  }
-                }
-
-                const expectedNote = notesToPlay[matchhand][playedNotes[matchhand].length - 1]; // note number
-
-                // if this is the first note for the matching hand, and
-                // there is no data in the other hand, then this is the very
-                // first note of the new test cycle so start the timer.
-                if (playedNotes[matchhand].length === 1 && playedNotes[1-matchhand].length === 0) {
-                  startTime = performance.now(); // we always start when the first note starts
-                }
-
-                //console.log("Test: Expected: " + expectedNote + " got: " + playedNote + " start=" + notestruct.sTime);
-
-                if (playedNote === expectedNote) {
-                  showNote(e.note, matchhand, playedNotes[matchhand].length - 1, true);
-                  wrongNotePlayed = false;
-                  errorStats(wrongNotePlayed);
-                } else if (
-                  (currentHand === 'both' && (playedNote === notesToPlay[0][0] || playedNote === notesToPlay[1][0]))
-                   ||
-                  (currentHand === 'right' && (playedNote === notesToPlay[1][0]))
-                    ||
-                  (currentHand === 'left' && (playedNote === notesToPlay[0][0]))
-                ) {
-                    // This could, rarely, result in a false good run, but it is necessary to
-                    // avoid false fails. Basically, at any time the user can restart the current run
-                    // without penalty as long as they haven't hit a wrong note.
-                    // Without this code, with scales and arpeggios the starting and ending notes
-                    // of each hand are the same, so if a user hits a wrong note and doesn't notice
-                    // and continues playing, the ending notes will be falsely detected as the
-                    // starting note, which will cause failures to stack up even though no mistakes
-                    // are being made.
-                    playedNotes = [[],[]];
-                    clearPlayedNotes();
-                    if (playedNote === notesToPlay[0][0]) {
-                      matchhand = 0;
-                    } else {
-                      matchhand = 1;
-                    }
-                    playedNotes[matchhand].push(notestruct);
-                    showNote(e.note, matchhand, 0, true);
-                    wrongNotePlayed = false;
-                    startTime = performance.now();
-                    errorStats(wrongNotePlayed);
-                } else { // missed the note
-                  showNote(e.note, matchhand, -1, false);
-                  wrongNotePlayed = true;
-                  errorStats(wrongNotePlayed);
-                  failCount++; // we do this here, but not again in the flushing state
-                  displayTestStats(null);
-                  currentState = STATE.TEST_FLUSHING;
-                  console.log("State=flushing, failcount=" + failCount);
-                }
-
-                // See if we have played the last note required, thus ending this
-                // test cycle.
-                //warning("Test cycle check. ch="+currentHand+" ntp0len="+notesToPlay[0].length+" ntp1len="+notesToPlay[1].length+" pn0len="+playedNotes[0].length+" pn1len="+playedNotes[1].length)
-                if ( (!wrongNotePlayed) &&
-                  (
-                    (currentHand === 'right' && notesToPlay[1].length === playedNotes[1].length) ||
-                    (currentHand === 'left' && notesToPlay[0].length === playedNotes[0].length) ||
-                    (currentHand === 'both' && notesToPlay[0].length === playedNotes[0].length &&
-                      notesToPlay[1].length === playedNotes[1].length)
-                  )
-                ) {
-                  // we've come to the end of a successful test cycle.
-                  //message("Completed Test Cycle");
-                  successCount++;
-                  //displayTestStats();
-                  waitNotes = playedNotes.slice(); // copy of array
-                  playedNotes = [[], []];
-                  clearPlayedNotes();
-                }
-              } else if (currentState === STATE.TEST_FLUSHING) {
-                // continue testing when we see either the first LH or first RH
-
-                var playedNote = e.note.number;
-
-                if (
-                    ( currentHand === 'right' && playedNote === notesToPlay[1][0] ) ||
-                    (currentHand === 'left' && playedNote === notesToPlay[0][0]) ||
-                    (currentHand === 'both' &&
-                      (playedNote === notesToPlay[0][0] || playedNote === notesToPlay[1][0])
-                    )
-                  ) {
-                  wrongNotePlayed = false;
-                  clearPlayedNotes();
-                  if (currentHand === 'left') {
-                    playedNotes[0].push(notestruct);
-                    showNote(e.note, 0, playedNotes[0].length-1, true);
-                  } else if (currentHand === 'right') {
-                    playedNotes[1].push(notestruct);
-                    showNote(e.note, 1, playedNotes[1].length-1, true);
-                  } else if (playedNote === notesToPlay[0][0]) {
-                    playedNotes[0].push(notestruct);
-                    showNote(e.note, 0, playedNotes[0].length-1, true);
-                  } else {
-                    playedNotes[1].push(notestruct);
-                    showNote(e.note, 1, playedNotes[1].length-1, true);
-                  }
-                  startTime = performance.now();
-                  //console.log("While Flushing, got start note: going back into state testing");
-                  currentState = STATE.TESTING_NOTES;
-                } else {
-                  wrongNotePlayed = true;
-                  currentState = STATE.TEST_FLUSHING;
-                  //console.log("In state flushing, note still wrong, still flushing failed=" + failCount);
-                }
-              }
-            }); // end of input add listener
-          } // end of initialize
-        }); // end of webmidi.enable
-      } else { // end of if webmidi supported
-        console.error('Web MIDI is not supported in this browser.');
-      }
-    } else {
-      console.error('Web MIDI is null--is not supported in this browser.');
-    }
-
-    // Function to start the test and initialize the start time
-    function startTest() {
-      testStartTime = Date.now();
-      updateElapsedTime(); // Update elapsed time starts a timer to keep it up to date
-    }
-
-    function showNote(note, hand, index, correct) {
-      // Display the played note during the test phase, highlighting in green or red
-      const divname = 'playedNotes'+(hand?'RH':'LH');
-
-      const ntp = document.getElementById("ntp_"+hand+"_"+index);
-      if (ntp !== null) {
-        ntp.style.color = "green";
-        ntp.style.fontWeight = "bold";
+          }
       }
     }
+    console.log("Could not find ending note");
+    //debugWindow();
+  }
 
-    function replay(notes, hand, speedMultiplier) {
-      if (midiOutput === null || notes === null) {
-        warning("No MIDI output device available for replay.");
-        return;
+  function noteOnHandler(e) {
+
+    console.log("*****NoteOn: "+e.note.number);
+
+    keyboardOptions.notesOn.push(e.note.number);
+
+    // we ignore notes that are significantly out of range
+    // of the current hand. This allows you, for example, to accompany
+    // a RH scale with a LH chord progression (common when practicing blues scales)
+
+    if (currentState !== STATE.SETTING_NOTES &&
+      (e.note.number > noteFilterHigh || e.note.number < noteFilterLow)) {
+      console.log("ignoring note out of range");
+      return;
+    }
+    currentHand = getSelectedHand();
+
+    // store stats (used further down in the code)
+    const notestruct = {
+        note:   e.note,
+        velocity: e.velocity,
+        sTime:  e.timestamp,
+        eTime:  null
+    };
+
+    if (currentState === STATE.SETTING_NOTES) {
+      var note = e.note.number;
+      if (currentHand === 'left') {
+        notesToPlay[0].push(note);
+        // Display the human-readable note name on the main screen
+        var noteName = prnote(e.note);
+        var notesDiv = document.getElementById('notesLH');
+        notesDiv.textContent = notesDiv.textContent + " " + noteName;
       }
+      if (currentHand === 'right' || currentHand === 'both') {
+        notesToPlay[1].push(note);
+        // Display the human-readable note name on the main screen
+        var noteName = prnote(e.note);
+        var notesDiv = document.getElementById('notesRH');
+        notesDiv.textContent = notesDiv.textContent + " " + noteName;
+      }
+      updateDisplayedNotesToPlay();
 
-      var startTime;
+    } else if (currentState === STATE.TESTING_NOTES) {
+      console.log("STATE.TESTING_NOTES");
 
-      if (hand === 'left') {
-        startTime = notes[0][0].sTime;
-      } else if (hand === 'right') {
-        startTime = notes[1][0].sTime;
+      // Check if the played note matches the expected note
+      var playedNote = e.note.number;
+
+      var matchhand = 0;
+
+      if (currentHand === 'left') {
+        playedNotes[0].push(notestruct);
+      } else if (currentHand === 'right') {
+        playedNotes[1].push(notestruct);
+        matchhand = 1;
       } else {
-        startTime = math.Min(notes[0][0].sTime, notes[0][1].sTime);
-      }
+        // take a peek and see if it matches expected left hand
 
-      for (let i = 0; i < notes.length; i++) {
-        if (hand === 'both' || hand === 'left') {
-
+        function nextNonRest(notes, start) {
+          for (let i = start; i < notes.length; i++) {
+            if (notes[i] !== RESTNOTE) {
+              return notes[i];
+            }
+          }
+          return null;
         }
-        if (hand === 'both' || hand === 'right') {
+        const nextLeft = nextNonRest(notesToPlay[0], playedNotes[0].length); //notesToPlay[0][playedNotes[0].length];
+        const nextRight = nextNonRest(notesToPlay[1], playedNotes[1].length); //notesToPlay[1][playedNotes[1].length];
+        if (playedNote === nextLeft) {
+          playedNotes[0].push(notestruct);
+        } else if (playedNote === nextRight){
+          playedNotes[1].push(notestruct);
+          matchhand = 1;
+        } else {
+          // it doesn't match either hand. Choose the hand where the played note is
+          // closest to the expected note (in terms of midi number of the notes)
 
+          if (Math.abs(playedNote-nextLeft) < Math.abs(playedNote-nextRight)) {
+            matchhand = 0;
+          } else {
+            matchhand = 1;
+          }
+          console.log("MISS MATCH: pn="+playedNote+" nextLeft="+nextLeft+
+            " nextRight="+nextRight+
+            " matchhand="+matchhand
+          );
+          playedNotes[matchhand].push(notestruct);
         }
       }
-    }
 
-    // Function to play a MIDI note for a specific duration
-    function playMIDINote(noteNumber, dur, vel, voice) {
-      if (midiOutput === null)
-        return;
+      const expectedNote = notesToPlay[matchhand][playedNotes[matchhand].length - 1]; // note number
 
-      dur = (typeof dur === 'string') ? parseInt(dur) : dur;
-      vel = (typeof vel === 'string') ? parseInt(vel) : vel;
-      voice = (typeof voice === 'string') ? parseInt(voice) : voice;
+      // if this is the first note for the matching hand, and
+      // there is no data in the other hand, then this is the very
+      // first note of the new test cycle so start the timer.
 
-      let n = new Note(noteNumber);
-      n.duration = dur;
-      n.rawAttack = vel;
-      n.rawRelease = 127;
+      if (playedNotes[matchhand].length === 1 && playedNotes[1-matchhand].length === 0) {
+        startTime = performance.now(); // we always start when the first note starts
+      }
 
-      console.log("Playing note "+n+" num:"+noteNumber+" att:"+vel+" dur:"+dur+" voice:"+voice);
+      console.log("Test: Expected: " + expectedNote + " got: " + playedNote + " start=" + notestruct.sTime);
 
-      midiOutput.channels[1].sendProgramChange(voice);
+      console.log("NOTE ANALYSIS: curhand:"+currentHand+" priorFailed:"+priorFailed+
+        " played0:"+playedNotes[0].length+" played1:"+playedNotes[1].length+
+        " played=expected:"+(playedNote===expectedNote));
 
-      setTimeout(function() {
-        midiOutput.channels[1].playNote(n);
+      if (playedNote === expectedNote) {
+        showNote(e.note, matchhand, playedNotes[matchhand].length - 1, true);
+        wrongNotePlayed = false;
+        errorStats(wrongNotePlayed);
+        nnAccuracy.success++;
+        goodNotes++;  // this is the number of good notes just in the current run, it gets reset by logOneRun
+        console.log("NN.SUCCESS");
+      } else if (
+        (currentHand === 'both' && (playedNote === notesToPlay[0][0] || playedNote === notesToPlay[1][0]))
+         ||
+        (currentHand === 'right' && (playedNote === notesToPlay[1][0]))
+          ||
+        (currentHand === 'left' && (playedNote === notesToPlay[0][0]))
+      ) {
+          // FALSE FAIL DETECT #1 (Restart cancels run)
+          // This could, rarely, result in a false good run, but it is necessary to
+          // avoid false fails. Basically, at any time the user can restart the current run
+          // without penalty as long as they haven't hit a wrong note.
+          // Without this code, with scales and arpeggios the starting and ending notes
+          // of each hand are the same, so if a user hits a wrong note and doesn't notice
+          // and continues playing, the ending notes will be falsely detected as the
+          // starting note, which will cause failures to stack up even though no mistakes
+          // are being made.
 
-        setTimeout(function() { // for some reason automatic noteoff not always working
-          midiOutput.channels[1].sendNoteOff(noteNumber);
-        }, dur);
-      }, 20);
-    }
+          // no credit for notes played if you cancel early!
+          const canc = goodNotes - 1; // cancel them all except the one just played
+          nnAccuracy.success -= canc; // adjust entire session accuracy figures too
+          goodNotes = 1; // just the one just played is now considered good
+          console.log("CANCELED GOOD NOTES "+canc+" gn="+goodNotes);
 
-    // Function to update the elapsed time display
-    function updateElapsedTime() {
-      if (testStartTime) {
-        var currentTime = Date.now();
-        var elapsedTime = currentTime - testStartTime;
-        var elapsedSeconds = Math.floor(elapsedTime / 1000); // Convert milliseconds to seconds
+          playedNotes = [[],[]];
+          clearPlayedNotes();
+          if (playedNote === notesToPlay[0][0]) {
+            matchhand = 0;
+          } else {
+            matchhand = 1;
+          }
+          playedNotes[matchhand].push(notestruct);
+          showNote(e.note, matchhand, 0, true);
+          wrongNotePlayed = false;
+          startTime = performance.now();
+          errorStats(wrongNotePlayed);
+      } else if (currentHand === 'both' && priorFailed === true &&
+          (playedNotes[0].length+playedNotes[1].length)===2) {
+        // FALSE FAIL DETECTION #2
+        // ok, this is a missed note that occurred in a very specific situation:
+        // 1. we are in hands together mode
+        // 2. the prior result was failure, meaning we recently came back into a new run after a fail
+        // 3. Exactly one note has been recognized as good so far.
+        // 4. We now have a bad note.
+        // In this situation, if we count this as a failed run, we will very frequently be causing a
+        // false bad run. What can happen (esp with scales/arps) is that the user kept playing after
+        // a bad note (which in fact they should get in the habit of doing: keep playing after a mistake)
+        // and, for example, the left hand gets up to the tonic note of the right hand, which would cause
+        // a new run to start being counted, however as soon as the right hand plays another notes it would
+        // be logged as yet another failure. So essentially we are saying that in this situation it would
+        // be better to just consider this to be part of the prior failure rather than count it as a new
+        // failure. Another way to look at it is that after a fail state, we will require BOTH hands to play
+        // one good note before we'll consider a new run to be truly started. As with the code above, this
+        // may on occassion fail to count a legit error, but the vast majority of the time this will stop
+        // a false failure.
+        currentState = STATE.TEST_FLUSHING;
+        wrongNotePlayed = true;
+        priorFailed = true;
+        console.log("***********TEST OF FALSE NEG TRIGGERED");
+      } else { // missed the note
+        console.log("NFail got:"+prnote(e.note));
+        wrongNotePlayed = true;
+        nnAccuracy.fail++;
+        console.log("NN.FAIL");
+        // add one error at note position played.
+        const errorindex = playedNotes[matchhand].length-1
+        if (!isAvail(errorNotes[matchhand])) {
+          errorNotes[matchhand] = [];
+        }
+        if (!isAvail(errorNotes[matchhand][errorindex])) {
+          errorNotes[matchhand][errorindex] = 0;
+        }
+        currentErrorNote = {hand:matchhand, errorIndex:errorindex}; // needed for logOneRun
+        errorNotes[matchhand][errorindex]++;
 
-        // Update the element with the elapsed time
-        var elapsedTimeElement = document.getElementById('elapsedTime');
-        elapsedTimeElement.textContent = formatTime(elapsedSeconds);
-        // Schedule the next update in 1 second
-        setTimeout(updateElapsedTime, 1000);
+        showNoteErrors(e.note, matchhand, errorindex, errorNotes[matchhand][errorindex]);
+        showNote(e.note, matchhand, errorindex, false);
+
+        errorStats(wrongNotePlayed);
+        failCount++; // we do this here, but not again in the flushing state
+        noteFailCount++;
+        displayTestStats(null, "failure");
+        currentState = STATE.TEST_FLUSHING;
+        console.log("State=flushing, failcount=" + failCount);
+        priorFailed = true;
+      }
+
+      // See if we have played the last note required, thus ending this
+      // test cycle.
+      //warning("Test cycle check. ch="+currentHand+" ntp0len="+notesToPlay[0].length+" ntp1len="+notesToPlay[1].length+" pn0len="+playedNotes[0].length+" pn1len="+playedNotes[1].length)
+      if ( (!wrongNotePlayed) &&
+        (
+          (currentHand === 'right' && notesToPlay[1].length === playedNotes[1].length) ||
+          (currentHand === 'left' && notesToPlay[0].length === playedNotes[0].length) ||
+          (currentHand === 'both' && notesToPlay[0].length === playedNotes[0].length &&
+            notesToPlay[1].length === playedNotes[1].length)
+        )
+      ) {
+        // we've come to the end of a successful test cycle.
+        //message("Completed Test Cycle");
+        successCount++;
+        waitNotes = playedNotes.slice(); // copy of array
+        playedNotes = [[], []];
+        clearPlayedNotes();
+        priorFailed = false;
+      }
+    } else if (currentState === STATE.TEST_FLUSHING) {
+      // continue testing when we see either the first LH or first RH
+
+      var playedNote = e.note.number;
+
+      if (
+          ( currentHand === 'right' && playedNote === notesToPlay[1][0] ) ||
+          (currentHand === 'left' && playedNote === notesToPlay[0][0]) ||
+          (currentHand === 'both' &&
+            (playedNote === notesToPlay[0][0] || playedNote === notesToPlay[1][0])
+          )
+        ) {
+        wrongNotePlayed = false;
+        clearPlayedNotes();
+        if (currentHand === 'left') {
+          playedNotes[0].push(notestruct);
+          showNote(e.note, 0, playedNotes[0].length-1, true);
+        } else if (currentHand === 'right') {
+          playedNotes[1].push(notestruct);
+          showNote(e.note, 1, playedNotes[1].length-1, true);
+        } else if (playedNote === notesToPlay[0][0]) {
+          playedNotes[0].push(notestruct);
+          showNote(e.note, 0, playedNotes[0].length-1, true);
+        } else {
+          playedNotes[1].push(notestruct);
+          showNote(e.note, 1, playedNotes[1].length-1, true);
+        }
+        startTime = performance.now();
+        //console.log("While Flushing, got start note: going back into state testing");
+        currentState = STATE.TESTING_NOTES;
+      } else {
+        wrongNotePlayed = true;
+        currentState = STATE.TEST_FLUSHING;
+        //console.log("In state flushing, note still wrong, still flushing failed=" + failCount);
       }
     }
+  } // end of noteOnHandler
+}
 
-    // Function to format the elapsed time in MM:SS format
-    function formatTime(seconds) {
-      var minutes = Math.floor(seconds / 60);
-      var remainingSeconds = seconds % 60;
+// Function to start the test and initialize the start time
+function startTest() {
+  testStartTime = Date.now();
+  updateElapsedTime(); // Update elapsed time starts a timer to keep it up to date
+}
 
-      // Pad single-digit seconds with leading zero
-      var secondsString = remainingSeconds < 10 ? '0' + remainingSeconds : remainingSeconds;
+function showNote(note, hand, index, correct) {
+  //console.log("Showing note h="+hand+" index="+index+" correct="+correct);
+  // Display the played note during the test phase, highlighting in green or red
 
-      return minutes + ':' + secondsString;
+  if (index >= notesToPlay[hand].length) {
+    index = "error";
+  }
+  const ntp = document.getElementById("ntp_"+hand+"_"+index);
+  if (ntp !== null) {
+    ntp.style.color = correct?"green":"red";
+    ntp.style.fontWeight = "bold";
+    ntp.style.backgroundColor = correct?"#98FB98":"#FFCCCB"; // pale green or pale red
+
+    ntp.parentElement.scrollIntoView({behavior:'smooth', block: 'nearest', inline: 'nearest'}, false);
+  } else {
+    console.log("ShowNote NPT is null");
+  }
+}
+
+function showNoteErrors(note, hand, index, errors) {
+  //console.log("Showing note error for h="+hand+" i="+index+" numerr="+errors);
+  if (index >= notesToPlay[hand].length) {
+    index = "error"; // we're past the end of the played notes
+  }
+  const ntp = document.getElementById("ntp_"+hand+"_"+index);
+  if (ntp !== null) {
+    if (errors === 0) {
+      ntp.style.border = "none";
+    } else if (errors === 1) {
+      ntp.style.border = "1px dotted orange";
+    } else if (errors === 2) {
+      ntp.style.border = "1px solid orange";
+    } else if (errors === 3) {
+      ntp.style.border = "2px solid orange";
+    } else if (errors === 4) {
+      ntp.style.border = "1px solid red";
+    } else if (errors === 5) {
+      ntp.style.border = "2px solid red";
+    }  else if (errors === 6) {
+      ntp.style.border = "3px solid red";
+    } else if (errors === 7) {
+      ntp.style.border = "4px double red";
+    } else if (errors > 7) {
+      ntp.style.border = "6px double red";
     }
+  } else {
+    console.error("*NTP IS NULL");
+  }
+}
 
-    // Function to end the test and reset the start time
-    var run = 0;
+function printObject(obj) {
+  var p = "";
+  for (const key in obj) {
+    p += `${key}:`+obj[key]+'\n';
+  }
+  return p;
+}
 
-    function endTest() {
+function replay(notes, hand, speedMultiplier) {
+  if (midiOutput === null || notes === null) {
+    warning("No MIDI output device available for replay.");
+    return;
+  }
 
-      testStartTime = null;
+  var startTime;
+
+  if (hand === 'left') {
+    startTime = notes[0][0].sTime;
+  } else if (hand === 'right') {
+    startTime = notes[1][0].sTime;
+  } else {
+    startTime = math.Min(notes[0][0].sTime, notes[0][1].sTime);
+  }
+
+  for (let i = 0; i < notes.length; i++) {
+    if (hand === 'both' || hand === 'left') {
+
     }
+    if (hand === 'both' || hand === 'right') {
+
+    }
+  }
+}
+
+// Function to play a MIDI note for a specific duration
+function playMIDINote(noteNumber, dur, vel, voice) {
+  if (midiOutput === null)
+    return;
+
+  dur = (typeof dur === 'string') ? parseInt(dur) : dur;
+  vel = (typeof vel === 'string') ? parseInt(vel) : vel;
+  voice = (typeof voice === 'string') ? parseInt(voice) : voice;
+
+  let n = new Note(noteNumber);
+  n.duration = dur;
+  n.rawAttack = vel;
+  n.rawRelease = 127;
+
+  console.log("Playing note "+noteNumber+" att:"+vel+" dur:"+dur+" voice:"+voice);
+
+  midiOutput.channels[1].sendProgramChange(voice);
+
+  setTimeout(function() {
+    midiOutput.channels[1].playNote(n);
+
+    setTimeout(function() { // for some reason automatic noteoff not always working
+      midiOutput.channels[1].sendNoteOff(noteNumber);
+    }, dur);
+  }, 20);
+}
+
+// Function to update the elapsed time display
+function updateElapsedTime() {
+  if (testStartTime) {
+    var currentTime = Date.now();
+    var elapsedTime = currentTime - testStartTime;
+    var elapsedSeconds = Math.floor(elapsedTime / 1000); // Convert milliseconds to seconds
+
+    // Update the element with the elapsed time
+    var elapsedTimeElement = document.getElementById('elapsedTime');
+    elapsedTimeElement.textContent = formatTime(elapsedSeconds);
+    // Schedule the next update in 1 second
+    setTimeout(updateElapsedTime, 1000);
+  }
+}
+
+// Function to format the elapsed time in MM:SS format
+function formatTime(seconds) {
+  var minutes = Math.floor(seconds / 60);
+  var remainingSeconds = Math.trunc(seconds % 60);
+
+  // Pad single-digit seconds with leading zero
+  var secondsString = remainingSeconds < 10 ? '0' + remainingSeconds : remainingSeconds;
+
+  return minutes + ':' + secondsString;
+}
+
+// Function to end the test and reset the start time
+var run = 0;
+
+function endTest() {
+
+  testStartTime = null;
+}
 
 // Create an AudioContext instance
 var audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -2995,6 +3972,16 @@ function drawPianoKeyboard(options) {
       keynum++;
     }
   }
+
+  if (keyboardStatus === 'disconnected') {
+    ctx.fillStyle = "rgba(240,240,240,0.8)";
+    ctx.fillRect(0,0,keyboardCanvas.width,keyboardCanvas.height);
+    ctx.font = "bold "+Math.trunc(whiteKeyHeight)+"px Arial";
+    ctx.fillStyle = "red";
+    ctx.textBaseline = "bottom";
+    ctx.textAlign = "center";
+    ctx.fillText("DISCONNECTED", keyboardCanvas.width/2, keyboardCanvas.height+5);
+  }
 }
 
 function copyToClipboard(text) {
@@ -3122,6 +4109,8 @@ function playVoice(event) {
 
 }
 
+// This makes it easier to debug on tablet devices with no access to the console.
+// Since the midi is using the OTG port, it's hard to get debugging info out.
 function redirectConsole() {
   // Override the console.log function
   const originalConsoleError = console.error;
@@ -3181,13 +4170,13 @@ function generateTest() {
 }
 
 function populateTestNameOptions() {
-    const testNameSelect = document.getElementById("testNameSelect");
+    const testNameSelect = document.getElementById("testNameHistorySelect");
     testNameSelect.innerHTML = ""; // blank it out
 
     // add the "all" option
     const allopt = document.createElement("option");
     allopt.value = "all";
-    allopt.textContent = "ALL";
+    allopt.textContent = " ALL";
     testNameSelect.appendChild(allopt);
 
     const testNames = Object.keys(runHistory);
@@ -3195,14 +4184,53 @@ function populateTestNameOptions() {
     testNames.forEach((testName) => {
         const option = document.createElement("option");
         const [date, preset, hand] = testName.split("|");
+
+        const decoded = decodeHTMLEntities(preset);
         if (typeof seen[preset] !== 'undefined') {
           return;
         }
         seen[preset] = true;
         option.value = preset;
-        option.textContent = preset;
+        option.textContent = decoded;
+        if (preset === curPresetName) {
+          option.selected = true;
+        }
         testNameSelect.appendChild(option);
+
+        // also select current hand
+        const h = getSelectedHand();
+        const sel = document.getElementById("handSelect");
+        sel.value = h;
     });
+
+    sortSelectedOptions(testNameSelect);
+}
+
+function sortSelectedOptions(select) {
+  // Get all options in the select element
+  const options = Array.from(select.options);
+
+  // Sort the options alphabetically by textContent
+  options.sort((a, b) => {
+    const textA = a.textContent.toUpperCase();
+    const textB = b.textContent.toUpperCase();
+    return textA.localeCompare(textB);
+  });
+
+  // Clear the select element
+  select.innerHTML = '';
+
+  // Append the sorted options back to the select element
+  options.forEach((option) => {
+    select.appendChild(option);
+  });
+}
+
+
+function decodeHTMLEntities(html) {
+  const textarea = document.createElement("textarea");
+  textarea.innerHTML = html;
+  return textarea.value;
 }
 
 // This function populates the history table with run data
@@ -3230,26 +4258,7 @@ function populateHistoryTable() {
 
     populateTestNameOptions();
 
-    // Loop through the runHistory object and populate the table
-    for (const runName in runHistory) {
-        const runData = runHistory[runName];
-        const [date, preset, hand] = runName.split("|");
-
-        const newRow = document.createElement("tr");
-        newRow.innerHTML = `
-            <td>${date}</td>
-            <td>${preset}</td>
-            <td>${hand}</td>
-            <td>${runData.success}</td>
-            <td>${runData.notefail} (${Math.trunc(100*runData.notefail/(runData.count))}%)</td>
-            <td>${(runData.elapsed/1000).toFixed(2)}</td>
-            <td>${(runData.sumBPM / runData.success).toFixed(2)}</td>
-            <td>${runData.maxBPM}</td>
-            <td>${runData.bestBPM}</td>
-            <td>${(runData.sumStrikes / runData.success).toFixed(2)}</td>
-        `;
-        historyTableBody.appendChild(newRow);
-    }
+    return;
 }
 
 // Function to filter and display history based on selected filters
@@ -3258,7 +4267,7 @@ function filterAndDisplayHistory() {
     historyTableBody.innerHTML = ""; // Clear the existing rows in the table
 
     const dateRange = document.getElementById("dateRangeSelect").value;
-    const selectedTestName = document.getElementById("testNameSelect").value;
+    const selectedTestName = document.getElementById("testNameHistorySelect").value;
     const selectedHand = document.getElementById("handSelect").value;
 
     // Initialize an object to store statistics for graphing
@@ -3270,17 +4279,12 @@ function filterAndDisplayHistory() {
     let lastMonth = '';
 
     // Loop through the runHistory object and populate the table
+    var totReps = 0;
+    var totNfail = 0;
+    var totElapsed = 0;
     for (const runName in runHistory) {
         const runData = runHistory[runName];
         const [date, preset, hand] = runName.split("|");
-
-        const [year, month, day] = date.split('-');
-        datedisp = year + "-" + month;
-        if (firstMonth === '') {
-          firstMonth = datedisp;
-        }
-        lastMonth = datedisp; // this will keep overwriting until it is really the last one
-        console.log("lastmonth=y-m"+datedisp);
 
         // Date range filtering logic
         if (dateRange === "1Month" && !isWithinLastMonths(date, 1)) continue;
@@ -3292,6 +4296,13 @@ function filterAndDisplayHistory() {
 
         // Hand filtering logic
         if (selectedHand !== "any" && selectedHand !== hand) continue;
+
+        const [year, month, day] = date.split('-');
+        const datedisp = year + "-" + month;
+        if (firstMonth === '') {
+          firstMonth = date;
+        }
+        lastMonth = date; // this will keep overwriting until it is really the last one
 
         // Initialize the monthly statistics if not already done
         if (!stats[date]) {
@@ -3309,35 +4320,92 @@ function filterAndDisplayHistory() {
         stats[date].notefail = Math.trunc(100*runData.notefail/(runData.success+runData.notefail+0.1));
 
         // Update maxBPM
-        console.log("avg="+stats[date].avgBPM+" best="+stats[date].bestBPM+" max="+stats[date].maxBPM);
+        //console.log("avg="+stats[date].avgBPM+" best="+stats[date].bestBPM+" max="+stats[date].maxBPM);
+
+
         maxBPM = Math.max(
             maxBPM,
             stats[date].bestBPM,
             stats[date].maxBPM,
             stats[date].avgBPM
         );
-        minBPM = Math.min(
-            minBPM,
-            stats[date].bestBPM,
-            stats[date].maxBPM,
-            stats[date].avgBPM
-        );
+
+        if (stats[date].bestBPM>0||stats[date].maxBPM>0||stats[date].avgBPM>0) {
+          // only update if at least one of the above is over zero, this avoids pathological cases
+          // where no reps were successful and so all the data would be zero.
+          minBPM = Math.min(
+              minBPM,
+              stats[date].bestBPM,
+              stats[date].maxBPM,
+              stats[date].avgBPM
+          );
+        }
 
         const newRow = document.createElement("tr");
+        var acc = "&nbsp;";
+        if (typeof runData.goodNotes !== 'undefined' && runData.goodNotes !== null) {
+          acc = (100*runData.goodNotes/Math.max(runData.goodNotes+runData.notefail,1)).toFixed(2);
+          qrows += `<td>${acc}%</td>`;
+        }
+
+        var errmaplink = "";
+        if (isAvail(runData.errorNotes)) {
+          errmaplink = "<div onclick=showErrorMap('"+runName+"') onmouseover='this.style.backgroundColor=\"white\"' onmouseout='this.style.backgroundColor=\"rgb(238,238,238)\"' style=color:blue;>SHOW</span>";
+        }
+        var streaklink = "";
+        if (isAvail(runData.maxStreak)) {
+          streaklink = "<div onclick=showStreakData('"+runName+"') onmouseover='this.style.backgroundColor=\"white\"' onmouseout='this.style.backgroundColor=\"rgb(238,238,238)\"' style=color:blue;>SHOW</span>";
+        }
+
         newRow.innerHTML = `
             <td>${date}</td>
             <td>${preset}</td>
             <td>${hand}</td>
             <td>${runData.success}</td>
             <td>${runData.notefail} (${Math.trunc(100*runData.notefail/(runData.count))}%)</td>
-            <td>${(runData.elapsed/1000).toFixed(2)}</td>
-            <td>${(runData.sumBPM / runData.success).toFixed(2)}</td>
+            <td>${(runData.elapsed/1000).toFixed(1)}</td>
+            <td>${(runData.sumStrikes / runData.success).toFixed(2)}</td>
+            <td>${acc}</td>
+            <td>${errmaplink}</td>
+            <td>${streaklink}</td>
+            <td>${Math.trunc(runData.sumBPM / runData.success)}</td>
             <td>${runData.maxBPM}</td>
             <td>${runData.bestBPM}</td>
-            <td>${(runData.sumStrikes / runData.success).toFixed(2)}</td>
+
         `;
+
+        totReps += runData.success;
+        totNfail += runData.notefail;
+        totElapsed += (runData.elapsed/1000);
+
+        if (typeof runData.numQBPM !== 'undefined' && runData.numQBPM !== null) {
+            var qrows = "";
+            var sum = 0;
+            for (var q = 0; q < 4; q++) {
+              if (typeof runData.numQBPM[q] !== 'undefined' && runData.numQBPM[q] !== null) {
+                sum += runData.numQBPM[q];
+              } else {
+                runData.numQBPM[q] = 0;
+              }
+            }
+            if (sum === 0) sum = 1;  // avoid div by zero errors
+            for (var q = 0; q < 4; q++) {
+              console.log("ADDING QROW: q:"+q+" sum:"+sum+" rD[q]:"+runData.sumQBPM[q]+" n:"+runData.numQBPM[q]);
+              qrows += `<td>${Math.trunc(100*runData.numQBPM[q]/sum)}%</td>`;
+            }
+            newRow.innerHTML += qrows;
+        }
+
         historyTableBody.appendChild(newRow);
     }
+
+    const sumRow = document.createElement("tr");
+
+    sumRow.innerHTML += "<td colspan=3 style=text-align:left;font-weight:bold>TOTALS</td>" +
+                        "<td style=text-align:left;font-weight:bold>"+totReps+"</td>" +
+                        "<td style=text-align:left;font-weight:bold>"+totNfail+" ("+Math.trunc(100*totNfail/(totNfail+totReps))+"%)"+"</td>" +
+                        "<td style=text-align:left;font-weight:bold>"+formatTime(totElapsed)+"</td>";
+    historyTableBody.appendChild(sumRow);
 
     maxBPM = Math.ceil(maxBPM/20)*20;  // round nearest 20
     minBPM = Math.floor(minBPM/20)*20;  // round nearest 20
@@ -3348,9 +4416,10 @@ function filterAndDisplayHistory() {
     }
 }
 
+
 function drawHistoryGraph(stats, firstMonth, lastMonth, maxBPM, minBPM) {
 
-  console.log("In Drawhist fm="+firstMonth+" lm="+lastMonth+" maxbpm="+maxBPM);
+  //console.log("In Drawhist fm="+firstMonth+" lm="+lastMonth+" maxbpm="+maxBPM);
   if (maxBPM === 0) {
     maxBPM = 1; // avoid div by 0 errors, the graph is pathologic in this case anyway.
   }
@@ -3373,30 +4442,49 @@ function drawHistoryGraph(stats, firstMonth, lastMonth, maxBPM, minBPM) {
   ctx.fillStyle = "white";
   ctx.textAlign = "left";
 
-  const [fyear,fmonth,fday] = firstMonth.split('-');
-  let [lyear,lmonth,lday] = lastMonth.split('-');
-  lmonth++;
-  if (lmonth > 12) {
-    lyear++;
-    lmonth = 1;
+  let [fyear,fmonth,fday] = firstMonth.split('-');
+  if (fday >= 22) {
+    fday = 22;
+  } else if (fday >= 15) {
+    fday = 15;
+  } else if (fday >= 7) {
+    fday = 7;
+  } else {
+    fday = "01";
   }
-  lastMonth = lyear+'-'+lmonth;
+  let [lyear,lmonth,lday] = lastMonth.split('-');
+  if (lday < 7) {
+    lday = 7;
+  } else if (lday < 15) {
+    lday = 15;
+
+  } else if (lday < 22) {
+    lday = 22;
+  } else if (lday <= 28) {
+    if (lmonth === 2) {
+      lday = 28;
+    } else if (lmonth === 3 || lmonth === 4 || lmonth===6||lmonth===9||lmonth===11) {
+      lday = 30;
+    } else {
+      lday = 31;
+    }
+  }
 
   console.log("graphhist: firstMonth="+firstMonth+" Adj lastmonth="+lastMonth);
 
-  const firstday = dateToDaysSince1970(firstMonth+"-01");
-  const lastday = dateToDaysSince1970(lastMonth+"-01");
+  const firstday = dateToDaysSince1970(fyear+"-"+fmonth+"-"+fday);
+  const lastday = dateToDaysSince1970(lyear+"-"+lmonth+"-"+lday);
   const totdays = lastday-firstday;
 
-  console.log("Totdays="+totdays);
+  console.log("Totdays="+totdays+" firsmonth="+firstMonth+" lastm="+lastMonth);
 
-  const graphAxisHorizontalMargin = 40; // pixels to leave for axis and labels
+  const graphAxisHorizontalMargin = 55; // pixels to leave for axis and labels
   const graphAxisVerticalMargin = 25;
 
   const xScale = (canvas.width-2*graphAxisHorizontalMargin) / totdays;
   const yScale = (canvas.height-2*graphAxisVerticalMargin) / (maxBPM-minBPM);
 
-  console.log("xscale="+xScale);
+  //console.log("xscale="+xScale);
 
   // Draw horizontal and vertical axes
 
@@ -3409,26 +4497,43 @@ function drawHistoryGraph(stats, firstMonth, lastMonth, maxBPM, minBPM) {
 
   ctx.lineWidth = 2;
 
-  console.log("Drawing history graph "+fyear+"."+fmonth+" "+lyear+"."+lmonth);
+  //console.log("Drawing history graph "+fyear+"."+fmonth+" "+lyear+"."+lmonth);
 
   // Draw labels on the horizontal axis
-  for (let year = fyear, month = fmonth; year <= lyear && month <= lmonth; ) {
-    const x = graphAxisHorizontalMargin + (dateToDaysSince1970(year+'-'+month+'-01') - firstday)*xScale;
+  for (let year = fyear, month = fmonth, day = fday;
+       parseInt(year) <= parseInt(lyear) && parseInt(month) <= parseInt(lmonth) ;
+       // there is no third part for the for loop, this is handled at the end of the loop
+     ) {
+    console.log("Drawing date axis m="+month+" d="+day+" y="+year);
+    const x = graphAxisHorizontalMargin + (dateToDaysSince1970(year+'-'+month+'-'+day) - firstday)*xScale;
+    console.log(" x="+x+" daystodate returned:"+dateToDaysSince1970(year+'-'+month+'-'+day)+" firstday="+firstday);
 
-    ctx.fillText(year+'-'+month, x, canvas.height - graphAxisVerticalMargin/2); // Adjust label position
+    ctx.fillText(year+'-'+month+'-'+day, x, canvas.height - graphAxisVerticalMargin/2); // Adjust label position
 
-    console.log("***label "+year+'-'+month+" at x="+x+" y="+(canvas.height-graphAxisVerticalMargin/2));
+    //console.log("***label "+year+'-'+month+" at x="+x+" y="+(canvas.height-graphAxisVerticalMargin/2));
 
     ctx.moveTo(x, graphAxisVerticalMargin);
     ctx.lineTo(x, canvas.height-graphAxisVerticalMargin);
     ctx.stroke();
 
-    // increment month
-    month++;
-    if (month > 12) {
-      month = 1;
-      year++;
+    // increment date by quarter-months (approximately)
+    // IMPLEMENT: This really should be different amounts based on how long the total time span is.
+    // For example, if the timespan is less than 15 days, this should go by just a few days. If the
+    // timespan is 9 months, it should probably go by months. If 36 months, perhaps by quarters, etc.
+    // there's room for about 8 labels at the bottom, so the increment should be something like
+    // timespan/8 days, but with rounding to something reasonable like 1 week, 1 month, etc.
+
+    if (day < 15) {
+      day = 15;
+    } else {
+      day = "01";
+      month++;
+      if (month > 12) {
+        month = "01";
+        year++;
+      }
     }
+    console.log("Updated yyyy mm dd="+year+" "+month+" "+day+" last="+lyear+" "+lmonth+" "+lday);
   }
   // draw labels on the left vertical axis
   ctx.textAlign = "right";
@@ -3451,13 +4556,12 @@ function drawHistoryGraph(stats, firstMonth, lastMonth, maxBPM, minBPM) {
   ctx.lineWidth = "1";
   let perYScale = (canvas.height-2*graphAxisVerticalMargin) / (100);
   for (let per = 10; per < 100; per += 10) {
-    const y = canvas.height - graphAxisVerticalMargin - per*yScale + 5;
+    const y = canvas.height - graphAxisVerticalMargin - per*perYScale + 5;
 
     ctx.fillText(per+'% ', canvas.width-graphAxisHorizontalMargin+3, y);
 
     ctx.moveTo(graphAxisHorizontalMargin, y);
     ctx.lineTo(canvas.width-graphAxisHorizontalMargin, y);
-    //ctx.stroke();
   }
 
   // give color code
@@ -3485,8 +4589,11 @@ function drawHistoryGraph(stats, firstMonth, lastMonth, maxBPM, minBPM) {
     let firstkey = true;
     for (const key in stats) {
       if (stats.hasOwnProperty(key)) {
-          const x = graphAxisHorizontalMargin + (dateToDaysSince1970(key) - firstday) * xScale;
-          const y = canvas.height - graphAxisVerticalMargin - (stats[key][dataKeys[i]]-minBPM) * perYScale;
+          if (stats[key][dataKeys[i]] === 0) {
+            continue; // don't graph 0 bpm data points, they represent a lack of data not actual data
+          }
+          const x = graphAxisHorizontalMargin + (dateToDaysSince1970(key) - firstday) * xScale + 2*i;
+          const y = canvas.height - graphAxisVerticalMargin - (stats[key][dataKeys[i]]-minBPM) * yScale;
           if (firstkey) {
             ctx.moveTo(x, y);
             firstkey = false;
@@ -3500,8 +4607,11 @@ function drawHistoryGraph(stats, firstMonth, lastMonth, maxBPM, minBPM) {
 
     for (const key in stats) {
       if (stats.hasOwnProperty(key)) {
-          const x = graphAxisHorizontalMargin + (dateToDaysSince1970(key) - firstday) * xScale;
-          const y = canvas.height - graphAxisVerticalMargin - (stats[key][dataKeys[i]]-minBPM) * perYScale;
+          if (stats[key][dataKeys[i]] === 0) {
+            continue; // don't graph 0 bpm data points, they represent a lack of data not actual data
+          }
+          const x = graphAxisHorizontalMargin + (dateToDaysSince1970(key) - firstday) * xScale + 2*i;
+          const y = canvas.height - graphAxisVerticalMargin - (stats[key][dataKeys[i]]-minBPM) * yScale;
           ctx.fillStyle = colors[i];
           ctx.beginPath();
           ctx.moveTo(x, y - 4); // Move to the top point
@@ -3514,8 +4624,12 @@ function drawHistoryGraph(stats, firstMonth, lastMonth, maxBPM, minBPM) {
     }
   }
 
+  // draw the notefail data
+
   var first = true;
-  ctx.strokeStyle = "#F00";
+  ctx.strokeStyle = "rgba(255,0,0,0.5)";
+  ctx.setLineDash([4,4]);
+  ctx.lineDashOffset = 0;
   ctx.beginPath();
 
   for (const date in stats) {
@@ -3523,9 +4637,9 @@ function drawHistoryGraph(stats, firstMonth, lastMonth, maxBPM, minBPM) {
       continue;
     }
     const x = graphAxisHorizontalMargin + (dateToDaysSince1970(date) - firstday) * xScale;
-    const y = canvas.height - graphAxisVerticalMargin - (stats[date].notefail) * yScale;
+    const y = canvas.height - graphAxisVerticalMargin - (stats[date].notefail) * perYScale;
 
-    console.log("Drawing nfail at x="+x+" y="+y+" val="+stats[date].notefail);
+    //console.log("Drawing nfail at x="+x+" y="+y+" val="+stats[date].notefail);
 
     if (first) {
       ctx.moveTo(x, y);
@@ -3535,14 +4649,16 @@ function drawHistoryGraph(stats, firstMonth, lastMonth, maxBPM, minBPM) {
     }
   }
   ctx.stroke();
+  ctx.setLineDash([]);
 
-  ctx.fillStyle = "#FF0000";
+  ctx.fillStyle = "rgba(255,0,0,0.5)";
+
   for (const date in stats) {
     if (!stats.hasOwnProperty(date)) {
       continue;
     }
     const x = graphAxisHorizontalMargin + (dateToDaysSince1970(date) - firstday) * xScale;
-    const y = canvas.height - graphAxisVerticalMargin - (stats[date].notefail) * yScale;
+    const y = canvas.height - graphAxisVerticalMargin - (stats[date].notefail) * perYScale;
      ctx.beginPath();
      ctx.moveTo(x, y - 4); // Move to the top point
      ctx.lineTo(x + 4, y); // Line to the right point
@@ -3551,6 +4667,7 @@ function drawHistoryGraph(stats, firstMonth, lastMonth, maxBPM, minBPM) {
      ctx.closePath(); // Close the path to complete the diamond
      ctx.fill(); // Fill the diamond
   }
+
 }
 
 
@@ -3571,12 +4688,18 @@ const historyTableContainer = document.getElementById("historyTableContainer");
 historyButton.addEventListener("click", function() {
     populateHistoryTable();
     historyTableContainer.style.display = "block";
+    setTimeout(function() {
+      filterAndDisplayHistory();
+    }, 1000);
 });
 
 function dateToDaysSince1970(dateString) {
     const parts = dateString.split('-');
-    if (parts.length !== 3) {
-        throw new Error("Invalid date format. Use yyyy-mm-dd.");
+    if (parts.length === 2) {
+      parts[2] = 1;
+      console.log("auto added 01 day to date");
+    } else if (parts.length !== 3) {
+        throw new Error("Invalid date format. '"+dateString+"' Use yyyy-mm-dd.");
     }
 
     const year = parseInt(parts[0], 10);
@@ -3592,6 +4715,48 @@ function dateToDaysSince1970(dateString) {
     return daysDifference;
 }
 
-  </script>
+function showHistory() {
+  document.getElementById('importExportContainer').style.display='block';
+  const hist = JSON.stringify(runHistory);
+  document.getElementById('importExportTextarea').value = hist;
+  document.getElementById('importExportSizeDiv').innerHTML = "Bytes: "+hist.length;
+
+  setTimeout(function() {
+    document.getElementById("historyGraph").scrollIntoView({ behavior: "smooth", block: "end" });
+  }, 1200);
+
+}
+
+function playGraph() {
+
+  console.log("playing midi notes from graph");
+
+  if (midiNotes === null || midiNotes.length === 0) {
+    warning("There are no notes to play.");
+    return;
+  }
+
+ document.getElementById("svgPlayButton").style.fill = "red";
+
+ setTimeout(function() {
+    document.getElementById("svgPlayButton").style.fill = "black";
+ }, 1000);
+
+ for (let i = 0; i < midiNotes.length; i++) {
+   warning("MidiNote["+i+"]="+midiNotes[i].name+
+    ":"+midiNotes[i].options.time+
+    ":"+midiNotes[i].options.duration+
+    ":"+midiNotes[i].options.attack);
+ }
+
+ midiOutput.channels[1].sendProgramChange(0); // grand piano
+ for (let i = 0; i < midiNotes.length; i++) {
+    midiOutput.channels[1].playNote(midiNotes[i], midiNotes[i].options);
+ }
+
+
+}
+
+</script>
 </body>
 </html>
