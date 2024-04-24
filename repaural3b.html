@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>REPiano Aural Training</title>
+    <script src="https://cdn.jsdelivr.net/npm/webmidi@next/dist/iife/webmidi.iife.js"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 20px;
+        }
+
+        #auralTraining {
+            max-width: 100%;
+            margin: auto;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        select,
+        input {
+            margin-bottom: 10px;
+        }
+
+        .option-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        #startButton {
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        #progressArea {
+            margin-top: 20px;
+        }
+
+        #infoArea, #testResults {
+            margin-top: 10px;
+            border: 1px solid #ddd;
+            flex: 1;
+            padding: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        #container {
+             display: flex;
+         }
+    </style>
+</head>
+
+<body>
+
+    <div id="auralTraining">
+        <h2>&#127929;</span>REP<em>iano</em> Aural Training</h2>
+
+        <div class="option-group">
+            <label for="lowestNote">Octave Range:</label>
+            <select id="lowestNote" onchange="drawPianoKeyboard();">
+                <option value="0">0</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4" selected>4</option>
+                <option value="5">5</option>
+            </select>
+            &nbsp;to&nbsp;
+            <select id="highestNote"  onchange="drawPianoKeyboard();">
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5" selected>5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+            </select>
+        </div>
+
+        <div class="option-group">
+            <label>Pitch Values:</label>
+            <label><input id=check_C type="checkbox" value="C" checked> C</label>
+            <label><input type="checkbox" value="C#"> C#</label>
+            <label><input type="checkbox" value="D"> D</label>
+            <label><input type="checkbox" value="D#"> D#</label>
+            <label><input type="checkbox" value="E"> E</label>
+            <label><input type="checkbox" value="F"> F</label>
+            <label><input type="checkbox" value="F#" checked> F#</label>
+            <label><input type="checkbox" value="G"> G</label>
+            <label><input type="checkbox" value="G#"> G#</label>
+            <label><input type="checkbox" value="A"> A</label>
+            <label><input type="checkbox" value="A#"> A#</label>
+            <label><input type="checkbox" value="B"> B</label>
+        </div>
+
+        <div class="option-group">
+            <label for="numTrials">Number of Trials:</label>
+            <select id="numTrials">
+                <option value="10">10</option>
+                <option value="15">15</option>
+                <option value="20" selected>20</option>
+                <option value="25">25</option>
+            </select>
+        </div>
+
+        <button id="startButton" onclick="startAuralTraining()">START</button>
+        <button id="replayButton" onclick="replayLastNote()" disabled=true>REPLAY</button>
+
+        <canvas id=keyboard style=width:100%;height:50px;margin-top:5px></canvas>
+
+        <div id="progressArea">
+            <strong>Trial:</strong> <span id="trialNumber">0</span> |
+            <strong>Correct:</strong> <span id="correctCount">0</span> |
+            <strong>Incorrect:</strong> <span id="incorrectCount">0</span>
+        </div>
+        <div id=container>
+        <div id="infoArea"></div>
+        <div id="testResults"></div>
+        </div>
+    </div>
+
+
+<script>
+
+  //////////////////////////////////////////
+  // Global variables
+  var STATE = {
+    PROMPTING: 0,
+    TESTING: 1,
+  };
+
+  var curState = STATE.PROMPTING;
+  var curTrial = 0;
+  var curCorrect = 0;
+  var curTestNote = null;
+  var curTestParams = "";
+  var runHistory = [];
+
+  var midiOutput = null;
+
+  // end Global Variables
+  ///////////////////////////////////////////
+
+function saveSettings() {
+    const settings = {
+        lowestNote: document.getElementById('lowestNote').value,
+        highestNote: document.getElementById('highestNote').value,
+        pitchValues: Array.from(document.querySelectorAll('.option-group input[type="checkbox"]'))
+                            .map(checkbox => ({ value: checkbox.value, checked: checkbox.checked })),
+        numTrials: document.getElementById('numTrials').value
+    };
+    localStorage.setItem('REPianoSettings', JSON.stringify(settings));
+}
+
+function loadSettings() {
+    const settings = JSON.parse(localStorage.getItem('REPianoSettings'));
+    if (settings) {
+        document.getElementById('lowestNote').value = settings.lowestNote;
+        document.getElementById('highestNote').value = settings.highestNote;
+        settings.pitchValues.forEach(pv => {
+            let checkbox = document.querySelector(`input[value="${pv.value}"]`);
+            if (checkbox) checkbox.checked = pv.checked;
+        });
+        document.getElementById('numTrials').value = settings.numTrials;
+    }
+}
+
+function replayLastNote() {
+    if (curTestNote) {
+        playNote(curTestNote); // Assuming playNote is a function that sends MIDI signals
+        message("Replayed test note");
+    } else {
+        message("No note has been played yet.", "#E11");
+    }
+}
+
+
+// Add these event listeners to save settings when changes occur
+document.getElementById('lowestNote').addEventListener('change', saveSettings);
+document.getElementById('highestNote').addEventListener('change', saveSettings);
+document.querySelectorAll('.option-group input[type="checkbox"]').forEach(checkbox => {
+    checkbox.addEventListener('change', saveSettings);
+});
+document.getElementById('numTrials').addEventListener('change', saveSettings);
+
+
+
+  window.onload = function() {
+    loadSettings(); // Load settings on window load
+    if (typeof WebMidi !== 'undefined' && WebMidi !== null) {
+      // Check if Web MIDI is supported
+      if (WebMidi.supported) {
+        WebMidi.enable(function (err) {
+          if (err) {
+            console.error('WebMidi could not be enabled:', err);
+          } else { // initialize
+
+            WebMidi.addListener("connected", function(event) {
+                warning("Connection to MIDI received");
+                connectMidi();
+            });
+
+            WebMidi.addListener("disconnected", function(event) {
+                warning("Lost MIDI connection: "+event.port.id+" "+event.port.manufacturer+" "+event.port.name);
+                keyboardStatus = 'disconnected';
+            });
+
+            connectMidi();
+
+          } // end of initialize
+        }); // end of webmidi.enable
+      } else { // end of if webmidi supported
+        console.error('Web MIDI is not supported in this browser.');
+      }
+    } else {
+      console.error('Web MIDI is null--is not supported in this browser.');
+    }
+
+    // retreive any prior run runHistory
+    loadRunHistory();
+
+    message("Retrieved history: "+runHistory.length+" records");
+
+    drawPianoKeyboard();
+  }
+
+  function loadRunHistory() {
+    runHistory = localStorage.getItem("REPauralRunHistory");
+
+    if (runHistory === null) {
+      console.log("setting runHistory to empty array");
+      runHistory = [];
+    } else {
+      console.log("Parsing runHistory");
+      runHistory = JSON.parse(runHistory);
+
+      if (runHistory.length > 0) {
+        const len = runHistory.length;
+        messageResults("Prior Tests:");
+        for (let i = 0; i < runHistory.length; i++) {
+          const date = new Date(runHistory[i].timeStamp);
+          // Get individual components of the date
+          const year = date.getFullYear();
+          const month = date.getMonth() + 1; // Months are 0-indexed, so add 1
+          const day = date.getDate();
+          const hours = date.getHours();
+          const minutes = date.getMinutes();
+          const seconds = date.getSeconds();
+
+          // Format the date as a string
+          const formattedDate = `${year}-${month < 10 ? '0' + month : month}-${day < 10 ? '0' + day : day} ${hours}:${minutes}:${seconds}`;
+
+          messageResults(formattedDate+" "+runHistory[i].score+"% "+runHistory[i].testParams);
+
+        }
+        messageResults("<br>Today's Tests:<br>");
+      }
+    }
+  }
+
+
+  function connectMidi() {
+    var outputs = WebMidi.outputs;
+    if (outputs.length > 0) {
+      for (let i = 0; i < outputs.length; i++) {
+        message("Output["+i+"]="+outputs[i].type+"/"+outputs[i].manufacturer+"/"+outputs[i].name);
+      }
+      midiOutput = outputs[0];
+      setTimeout(function () {
+        playNote("C1");
+      },1000);
+      setTimeout(function () {
+        playNote("C2");
+      },1400);
+      setTimeout(function () {
+        playNote("C3");
+      },1800);
+    } else {
+      console.log('No MIDI output devices found.');
+    }
+
+    // Retrieve the first available MIDI input device
+    var input;
+    if (WebMidi.inputs.length > 0) {
+
+      for (let i = 0; i < WebMidi.inputs.length; i++) {
+        WebMidi.inputs[i].removeListener(); // remove any prior listeners so we don't get double-listeners
+      }
+      input = WebMidi.inputs[0];
+      console.log("Connected to WebMidi input port 0:" + WebMidi.inputs[0].name + " " + WebMidi.inputs[0].manufacturer);
+    } else {
+      console.log('No MIDI input devices found. Please connect a device.');
+      return;
+    }
+
+    input.addListener('controlchange', "all", controlChangeHandler, { once: true });
+
+    function controlChangeHandler(event) {
+      if (event.controller.name === 'holdpedal') {
+        if (event.value) {
+          console.log("Pedal down");
+        } else {
+          console.log("Pedal up");
+        }
+      }
+    }
+
+    input.addListener('noteoff', 'all', noteOffHandler, { once: true });
+    input.addListener('noteon', 'all', noteOnHandler, { once: true });
+
+    function noteOnHandler(e) {
+
+      //message("Got note from user:"+e.note.name+":"+e.note.number+":"+e.note.octave+":"+e.note.accidental);
+      console.log(e.note);
+      const usernote = e.note.name+
+        ((typeof e.note.accidental !== 'undefined')?e.note.accidental:'') +
+        e.note.octave;
+      message("You played: "+usernote);
+
+      scoreNote(usernote);
+
+    }
+
+    function noteOffHandler(e) {
+    }
+  } // end of connectMidi
+
+
+
+    // Function to play a note
+    function playNote(note, duration=1000, program=5) {
+      const opts = {
+        duration: duration,
+        time: "+0",
+        attack: 0.6,
+      };
+
+      console.log("Playing note:"+note);
+      midiOutput.channels[1].sendProgramChange(program); // grand piano
+      midiOutput.channels[1].playNote(note, opts);
+    }
+
+    // Function to start Aural Training
+    function startAuralTraining() {
+      curState = STATE.TESTING;
+      curTrial = 0;
+      curCorrect = 0;
+      updateTestResults();
+      maxTrial = document.getElementById("numTrials").value;
+      generateTrial();
+      document.getElementById('replayButton').disabled = false; // Enable replay button when test starts
+    }
+
+    function generateTrial() {
+      if (curTrial >= maxTrial) {
+        curState = STATE.PROMPTING;
+        displayTestResults();
+        document.getElementById('replayButton').disabled = true; // Disable replay button when test ends
+        return;
+      }
+      const lowest = parseInt(document.getElementById("lowestNote").value);
+      const highest = parseInt(document.getElementById("highestNote").value);
+      curTestParams = "Runs:"+maxTrial+" Octaves:"+lowest+"-"+highest+" Notes:";
+      let pitches = [];
+      const pitchchecks = document.querySelectorAll('input[type="checkbox"]');
+      pitchchecks.forEach(checkbox => {
+          if (checkbox.checked) {
+              pitches.push(checkbox.value);
+              console.log("pushing:"+checkbox.value);
+              curTestParams += checkbox.value+" ";
+          }
+      });
+
+      if (pitches.length === 0) {
+        pitches.push("C"); // the user selected nothing so use this as a default
+        document.getElementById("check_C").checked = true;
+        curTestParams += "C";
+      }
+
+      allSettings = {
+        octaveLow: lowest,
+        octaveHigh: highest,
+        pitchList: pitches,
+        maxTrial: maxTrial
+      }
+      localStorage.setItem("REPianoAuralSettings", JSON.stringify(allSettings));
+
+      // select a random octave
+      const octave = Math.trunc(Math.random() * (highest - lowest + 1)) + lowest;
+      // select a random pitch
+      const pitch = pitches[Math.trunc(Math.random() * pitches.length)];
+      // play the note
+      curTestNote = pitch + octave.toString();
+      message("Play the note you just heard...");
+      playNote(curTestNote);
+
+    }
+
+    function message(str) {
+      const ia = document.getElementById("infoArea");
+      ia.innerHTML += "<p>"+str+"</p>";
+      ia.scrollTop = ia.scrollHeight;
+    }
+
+    function messageResults(str) {
+      const tra = document.getElementById("testResults");
+      tra.innerHTML += "<div>"+str+"<div>";
+      tra.scrollTop = tra.scrollHeight;
+    }
+
+    function warning(str, color="#B11") {
+      const ia = document.getElementById("infoArea");
+      ia.innerHTML += "<p style=color:"+color+">"+str+"</p>";
+      ia.scrollTop = ia.scrollHeight;
+    }
+
+    function updateTestResults() {
+      document.getElementById("trialNumber").innerHTML = curTrial;
+      document.getElementById("correctCount").innerHTML = curCorrect;
+      document.getElementById("incorrectCount").innerHTML = curTrial-curCorrect;
+    }
+
+    let resultNumber = 0;
+    function displayTestResults() {
+      message("<br>TEST COMPLETE<br>==============");
+      const score = Math.trunc(0.5+100*curCorrect/maxTrial);
+      message("SCORE: "+score+"%");
+      message("==============");
+      var result = "";
+      resultNumber++;
+      result += resultNumber+") "+score+"% "+curTestParams;
+      messageResults(result);
+
+      const data = {
+        timeStamp: new Date().getTime(),
+        testParams: curTestParams,
+        score: score,
+      };
+
+      runHistory.push(data);
+      localStorage.setItem("REPauralRunHistory", JSON.stringify(runHistory));
+    }
+
+    var keyboardNoteMap = [];
+
+    function drawPianoKeyboard(options=null) {
+      const canvas = document.getElementById("keyboard");
+      const ctx = canvas.getContext('2d');
+      const s = getComputedStyle(canvas);
+      canvas.width = parseInt(s.width);
+      canvas.height = parseInt(s.height);
+
+      const lowest = parseInt(document.getElementById("lowestNote").value);
+      const highest = parseInt(document.getElementById("highestNote").value);
+      const numOctaves = highest-lowest+1;
+      const startingOctave = lowest;
+      const canvasWidth = canvas.width;
+      const canvasHeight = canvas.height;
+
+      const whiteKeyWidth = canvasWidth / (1 + numOctaves * 7); // we will tack on one extra "C" at the end
+      const whiteKeyHeight = canvasHeight;
+      const blackKeyWidth = whiteKeyWidth * 0.6;
+      const blackKeyHeight = whiteKeyHeight * 0.6;
+
+      const noteNames = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+
+      ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+      const whiteKeyOffsets = [0,2,4,5,7,9,11]; // offset within an octave of white key numbers
+
+      keyboardNoteMap = []; // compute rectangles of notes so we can tell which one was clicked
+
+      // Draw white keys
+      for (let o = 0; o <= numOctaves; o++) {
+        for (let i = 0; i < 7; i++) {
+          const x = o * 7 * whiteKeyWidth + i * whiteKeyWidth;
+          ctx.fillStyle = 'white';
+          ctx.fillRect(x, 0, whiteKeyWidth, whiteKeyHeight);
+          ctx.strokeStyle = 'black';
+          ctx.strokeRect(x, 0, whiteKeyWidth, whiteKeyHeight);
+
+          const noteNumber = (startingOctave+o+1) * 12 + whiteKeyOffsets[i];
+          const map = {
+            note: noteNumber,
+            rect: [x, 0, x+whiteKeyWidth, whiteKeyHeight]
+          };
+          keyboardNoteMap.push(map);
+
+          // Check if the current note should be highlighted
+
+          if ((noteNumber%12) === 0) {
+            ctx.font = "9px Arial";
+            ctx.textAlign = "left";
+            ctx.textBaseline = "bottom";
+            ctx.fillStyle = "black";
+            const octave = Math.trunc(noteNumber/12)-1;
+
+            ctx.fillText("C"+octave, x+1, whiteKeyHeight-2);
+          }
+
+          if (options !== null && options.notesOn && options.notesOn.includes(noteNumber)) {
+            ctx.fillStyle = 'blue';
+            ctx.fillRect(x+1, 1, whiteKeyWidth-3, whiteKeyHeight-2);
+            ctx.fillStyle = 'white';
+            ctx.font = "9px Arial";
+            ctx.textAlign = "left";
+            ctx.textBaseline = "bottom";
+            ctx.fillText(prnotenum(noteNumber), x+1, whiteKeyHeight-2)
+          }
+
+          if (o === numOctaves) {
+            break;  // this is just one more C to end the keyboard.
+          }
+        }
+      }
+
+      // Draw black keys
+      ctx.fillStyle = 'black';
+      const blackKeyIndices = [1, 2, 4, 5, 6];
+      const blackKeyOffsets = [1,3,6,8,10];
+      for (let o = 0; o < numOctaves; o++) {
+        let keynum = 0;
+        for (const keyIndex of blackKeyIndices) {
+          const x = o * 7 * whiteKeyWidth + keyIndex * whiteKeyWidth - blackKeyWidth / 2;
+          ctx.fillRect(x, 0, blackKeyWidth, blackKeyHeight);
+          // Check if the current note should be highlighted
+          const noteNumber = (startingOctave+o+1) * 12 + blackKeyOffsets[keynum];
+          const map = {
+            note: noteNumber,
+            rect: [x, 0, x+blackKeyWidth, blackKeyHeight]
+          };
+          keyboardNoteMap.unshift(map); // put black keys first since there is some overlap in rectangles with white keys
+          if (options !== null && options.notesOn && options.notesOn.includes(noteNumber)) {
+            ctx.fillStyle = 'blue';
+            ctx.fillRect(x+1, 1, blackKeyWidth-2, blackKeyHeight-2);
+            ctx.fillStyle = 'white';
+            ctx.textAlign = "left";
+            ctx.textBaseline = "bottom";
+            ctx.save();
+            ctx.translate(x-1,5);
+            ctx.rotate(Math.PI/2);
+            ctx.font = "10px Arial";
+            ctx.fillText(prnotenum(noteNumber), 0, 0);
+            ctx.restore();
+            ctx.fillStyle = 'black';
+          }
+          keynum++;
+        }
+      }
+
+      setupKeyboardCanvas();
+
+    } // end of drawPianoKeyboard
+
+    // Assuming your existing functions are set up correctly
+
+    function setupKeyboardCanvas() {
+        const canvas = document.getElementById("keyboard");
+        canvas.addEventListener('mousedown', function(e) {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            playNoteFromClick(x, y);
+        });
+    }
+
+    function scoreNote(usernote) {
+      if (curState === STATE.PROMPTING) {
+        warning("No test is in progress");
+        return;
+      }
+      curTrial++;
+      if (usernote === curTestNote) {
+        curCorrect++;
+        warning("CORRECT!","#181");
+      } else {
+        warning("INCORRECT!","#E11");
+        warning("answer: "+curTestNote);
+        playNote('E0',200);
+      }
+      updateTestResults();
+
+      setTimeout(function() {
+          generateTrial();
+        }, 1000);
+    }
+
+
+    function playNoteFromClick(x, y) {
+        for (let map of keyboardNoteMap) {
+            const rect = map.rect;
+            if (x >= rect[0] && x <= rect[2] && y >= rect[1] && y <= rect[3]) {
+                const noteNumber = map.note;
+                console.log('Playing note from onscreen keyboard:', noteNumber);
+                playNote(noteNumber);
+                scoreNote(midiNoteToName(noteNumber));
+                break; // Stop checking after the first match
+            }
+        }
+
+        function midiNoteToName(noteNumber) {
+            const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+            const octave = Math.floor(noteNumber / 12) - 1;  // MIDI note 0 is C-1
+            const noteName = noteNames[noteNumber % 12];
+            return `${noteName}${octave}`;
+        }
+    }
+
+</script>
+
+</body>
+</html>
