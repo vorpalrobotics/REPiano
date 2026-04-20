@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>YouTube Loop‑Trainer (v6 — timeline labels)</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+<link rel="icon" href="youloop-icon.ico" type="image/x-icon">
+
+<style>
+  body { font-family:sans-serif; margin:2rem; }
+  #playerWrapper { position:relative; max-width:640px; }
+  #player        { width:100%; aspect-ratio:16/9; }
+
+  /* 3‑2‑1 overlay */
+  #countOverlay { position:absolute; inset:0; display:none;
+                  place-content:center; font-size:15rem; color:#fff;
+                  text-shadow:4px 4px 8px #000; }
+
+  /* timeline */
+  #timeline  { position:relative; width:100%; height:8px;
+              background:#ddd; border-radius:4px; margin-top:.4rem }
+  #segments  { position:absolute; inset:0; }
+  .seg       { position:absolute; top:0; height:100%;
+               background:#bbb; opacity:.7; cursor:pointer; }
+  .seg .label{ position:absolute; top:-10px; left:0;
+               font-size:7px; white-space:nowrap; color:#333; }
+  #loopBar   { position:absolute; top:0; height:100%; background:#87cefa; z-index:2 }
+  #loopBar .label{ position:absolute; top:-10px; left:0;
+                   font-size:7px; white-space:nowrap; color:#000; }
+  #cursor    { position:absolute; top:-2px; width:2px; height:12px;
+               background:#000; z-index:3 }
+
+  .row{margin:.6rem 0;display:flex;gap:.6rem;align-items:center;flex-wrap:nowrap}
+  input[type="text"]{width:19ch;text-align:center}
+  button{padding:2px 6px;margin:2px;background:#dcdcdc;cursor:pointer}
+  input[type="range"]{}
+  table{border-collapse:collapse;margin-top:.6rem}
+  td{border:1px solid #ccc;padding:.2rem .6rem}
+  td.name{cursor:pointer;color:#06c;text-decoration:underline}
+  td.icon{cursor:pointer;text-align:center;width:32px}
+
+  #nameModal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;
+             align-items:center;justify-content:center}
+  #nameModal>div{background:#fff;padding:1rem 1.5rem;border-radius:8px;
+                 display:flex;flex-direction:column;gap:.6rem}
+</style>
+</head>
+<body>
+
+<!-- video load -->
+<div class="row">
+  <label for="videoId">YouTube ID:</label><input id="videoId">
+  <button id="loadBtn">Load video</button>
+</div>
+
+<!-- player -->
+<div id="playerWrapper">
+  <div id="player"></div>
+  <div id="countOverlay"></div>
+
+  <div id="timeline">
+    <div id="segments"></div>
+    <div id="loopBar"><span class="label"></span></div>
+    <div id="cursor"></div>
+  </div>
+</div>
+
+<!-- loop controls -->
+<div style=max-width:640px>
+<div class="row">
+  <button id="loopToggle" disabled title="Start or stop looping"><i class="fa-solid fa-play"></i> Start Loop</button>
+  <button id="rewindBtn" title="Rewind to start of loop"><i class="fa-solid fa-backward-fast"></i></button>
+  <span style="width:2em"></span>
+  <button id="setStart" title="Click to set loop start to current video position">START@</button><input id="start" style="width:4em">
+  <button id="setEnd" title="Click to set loop end to current video position">END@</button><input id="end" style="width:4em">
+  <button id="saveLoopBtn" title="Save this loop to browser local storage"><i class="fa-solid fa-floppy-disk"></i></button>
+  <span id="currentLoopName" style="font-weight:bold"></span>
+</div>
+
+<!-- speed / countdown -->
+<div class="row">
+  <label for="speed">Video speed:</label>
+  <input id="speed" type="range" min="20" max="200" step="10" style=width:60% title="Set video playback speed">
+  <span id="speedLabel"></span>
+</div>
+<div class="row">
+  <label>Countdown: <input type="checkbox" id="countdownChk" title="Set whether or not a countdown occurs at start of each loop cycle"></label>
+  <span style="width:1.5em"></span>
+  <label for="countVolume"><i class="fa-solid fa-volume-high" title="Set countdown beep volume"></i></label>
+  <input id="countVolume" type="range" min="0" max="100" step="5" style="width:30%">
+  <span id="countvolumelabel"></span>
+</div>
+</div>
+
+<!-- saved loops -->
+<h3>Saved loops for this video</h3>
+<table id="loopsTable"></table>
+
+<!-- saved videos -->
+<h3>Your saved videos</h3>
+<table id="videosTable"></table>
+
+<!-- backup / restore -->
+<div class="row" style="margin-top:1rem">
+  <button id="exportBtn"><i class="fa-solid fa-file-export"></i> EXPORT</button>
+  <button id="importBtn"><i class="fa-solid fa-file-import"></i> IMPORT</button>
+  <input id="importFile" type="file" accept="application/json" style="display:none">
+  <input id="singleImportFile" type="file" accept="application/json" style="display:none">
+</div>
+
+<!-- modal -->
+<div id="nameModal">
+  <div>
+    <label>Name for loop: <input id="nameInput"></label>
+    <div style="text-align:right">
+      <button id="nameOk">OK</button><button id="nameCancel">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.youtube.com/iframe_api"></script>
+<script>
+/* ---------------- helpers / storage keys ---------------- */
+const $=id=>document.getElementById(id);
+const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
+const SETTING="ytLoopTrainer";
+const LOOPS=v=>`ytLoopTrainer_loops_${v}`;
+const VIDEOS="ytLoopTrainer_videoList";
+
+/* ---------------- reactive state ---------------- */
+let player,duration=0,loopStart=0,loopEnd=10,looping=false,
+    poll=null,lastTime=0,justLooped=false,countingDown=false,
+    currentLoopName="",loops={},videoList={};
+
+let apiReady = false;        // ➊  add near the top
+let pending  = false;        //     keep one queued request
+
+function onYouTubeIframeAPIReady() {   // ➋  this name is required
+  apiReady = true;
+  if (pending) { pending = false; loadVideo(); }
+}
+
+/* ---------------- saved video list ---------------- */
+function loadVideoList(){try{videoList=JSON.parse(localStorage.getItem(VIDEOS)||"{}");}catch{videoList={};}}
+function saveVideoList(){localStorage.setItem(VIDEOS,JSON.stringify(videoList));renderVideos();}
+
+function renderVideos(){
+  const tbl = $("videosTable");
+  tbl.innerHTML = "";
+
+  // header
+  const hdr = document.createElement("tr");
+  ["Title","ID","#Loops","", ""].forEach(txt=>{
+    const th=document.createElement("th"); th.textContent=txt; hdr.appendChild(th);
+  });
+  tbl.appendChild(hdr);
+
+  Object.entries(videoList).forEach(([id,info])=>{
+    const tr=document.createElement("tr");
+
+    // click title loads the video
+    const tdT=document.createElement("td");
+    tdT.textContent = info.title || "(untitled)";
+    tdT.className   = "name";
+    tdT.onclick     = ()=>{ $("videoId").value=id; loadVideo(); };
+
+    const tdI=document.createElement("td"); tdI.textContent=id;
+    const tdC=document.createElement("td"); tdC.textContent=info.count||0;
+
+    // SAVE icon
+    const tdSave=document.createElement("td"); tdSave.className="icon";
+    tdSave.innerHTML='<i class="fa-solid fa-floppy-disk" title="Export loops"></i>';
+    tdSave.onclick = e=>{ e.stopPropagation(); exportSingle(id); };
+
+    // LOAD icon
+    const tdLoad=document.createElement("td"); tdLoad.className="icon";
+    tdLoad.innerHTML='<i class="fa-solid fa-folder-open" title="Import loops"></i>';
+    tdLoad.onclick = e=>{ e.stopPropagation(); beginSingleImport(id); };
+
+    tr.append(tdT,tdI,tdC,tdSave,tdLoad);
+    tbl.appendChild(tr);
+  });
+}
+
+
+/* ---------------- per‑video loops ---------------- */
+function loadLoops(id){try{loops=JSON.parse(localStorage.getItem(LOOPS(id))||"{}");}catch{loops={};}
+  renderLoops();updateLoopCount(id);}
+function saveLoops(id){localStorage.setItem(LOOPS(id),JSON.stringify(loops));updateLoopCount(id);}
+function updateLoopCount(id){if(!videoList[id])videoList[id]={title:"(unknown)",count:0};
+  videoList[id].count=Object.keys(loops).length;saveVideoList();}
+
+/* ---------------- fetch title via oEmbed ---------------- */
+async function fetchTitle(id){
+  if(videoList[id]&&videoList[id].title)return;
+  try{
+    const r=await fetch(`https://www.youtube.com/oembed?url=https://youtu.be/${id}&format=json`);
+    const j= r.ok?await r.json():{title:"(unknown)"};
+    videoList[id]={title:j.title,count:videoList[id]?.count||0};
+  }catch{videoList[id]={title:"(unknown)",count:videoList[id]?.count||0};}
+  saveVideoList();
+}
+
+/* ---------------- timeline render ---------------- */
+function renderTimeline(){
+  if(!duration)return;
+  /* active bar */
+  const bar=$("loopBar");
+  bar.style.left=(loopStart/duration*100)+"%";
+  bar.style.width=((loopEnd-loopStart)/duration*100)+"%";
+  bar.querySelector(".label").textContent=currentLoopName;
+  /* other bars */
+  const segs=$("segments");segs.innerHTML="";
+  Object.entries(loops).forEach(([n,{start,end}])=>{
+    if(n===currentLoopName) return;
+    const div=document.createElement("div");
+    div.className="seg";
+    div.style.left=(start/duration*100)+"%";
+    div.style.width=((end-start)/duration*100)+"%";
+    div.innerHTML=`<span class="label">${n}</span>`;
+    div.onclick=()=>{loopStart=start;loopEnd=end;currentLoopName=n;validateLoop();showName();};
+    segs.appendChild(div);
+  });
+}
+function showName(){
+  $("currentLoopName").textContent = currentLoopName
+      ? `«${currentLoopName}»`
+      : "(unsaved)";
+}
+
+function markUnsaved(){
+  currentLoopName = "";
+  showName();                 // will display “(unsaved)”
+}
+
+/* ---------------- loops table ---------------- */
+function renderLoops(){
+  const t=$("loopsTable");t.innerHTML="";
+  let found = false;
+  Object.entries(loops).forEach(([n,{start,end}])=>{
+    found = true;
+    const tr=document.createElement("tr");
+    const tdN=document.createElement("td");tdN.textContent=n;tdN.className="name";
+    const tdS=document.createElement("td");tdS.textContent=start.toFixed(1);
+    const tdE=document.createElement("td");tdE.textContent=end.toFixed(1);
+    const tdX=document.createElement("td");tdX.className="icon";tdX.innerHTML='<i class="fa-solid fa-trash"></i>';
+    tr.append(tdN,tdS,tdE,tdX);t.appendChild(tr);
+    tdN.onclick=()=>{loopStart=start;loopEnd=end;currentLoopName=n;validateLoop();showName();};
+    tdX.onclick=()=>{
+      if(confirm(`Delete "${n}"?`)) {
+        delete loops[n];
+        saveLoops(currentVid());
+        renderLoops();
+        if(currentLoopName===n){
+          currentLoopName="";showName();
+        }
+      }
+    };
+  });
+  if (!found) {
+    const tr=document.createElement("tr");
+    const tdN=document.createElement("td");tdN.textContent="None";
+    tr.append(tdN);t.appendChild(tr);
+  }
+  renderTimeline();
+}
+
+/* ---------------- modal ---------------- */
+function openName(){ $("nameInput").value=currentLoopName;$("nameModal").style.display="flex";$("nameInput").focus();}
+const closeName=()=>{$("nameModal").style.display="none";}
+const sanitize=s=>s.trim().replace(/[^A-Za-z0-9_-]/g,"");
+function unique(base){let i=0,c=base;while(loops[c]){i++;c=`${base}-${i}`;}return c;}
+
+/* ---------------- validation ---------------- */
+function validateLoop(){
+  if(duration){loopStart=clamp(loopStart,0,duration-0.1);loopEnd=clamp(loopEnd,0.1,duration);}
+  else{loopStart=Math.max(0,loopStart);loopEnd=Math.max(loopStart+0.1,loopEnd);}
+  if(loopEnd-loopStart<0.1)loopEnd=loopStart+0.1;
+  $("start").value=loopStart.toFixed(1);$("end").value=loopEnd.toFixed(1);
+  renderTimeline();saveSettings();
+}
+
+/* ---------------- settings ---------------- */
+function saveSettings(){
+  localStorage.setItem(SETTING,JSON.stringify({
+    id:currentVid(),start:loopStart,end:loopEnd,
+    speed:+$("speed").value,countdown:$("countdownChk").checked,
+    countvolume:+$("countVolume").value
+  }));
+}
+function loadSettings(){
+  try{return JSON.parse(localStorage.getItem(SETTING)||"null");}catch{return null;}
+}
+
+/* ---------------- YouTube ---------------- */
+function currentVid(){return $("videoId").value.trim();}
+function loadVideo(){
+  if (!apiReady) { pending = true; return; }   // ➌ bail out until ready
+  const id=currentVid();if(!id){alert("enter id");return;}
+  fetchTitle(id);loadLoops(id);saveSettings();
+  if(player){player.loadVideoById(id);return;}
+  player=new YT.Player("player",{videoId:id,playerVars:{rel:0,modestbranding:1,origin:location.origin},
+    events:{onReady,onStateChange:e=>{}}});
+  player.addEventListener("onReady",onReady);
+}
+function onReady(){
+  duration=player.getDuration();validateLoop();$("loopToggle").disabled=false;speedChanged();
+  poll=setInterval(()=>{if(!player||countingDown)return;
+    const st=player.getPlayerState(),now=player.getCurrentTime();$("cursor").style.left=(now/duration*100)+"%";
+    if(looping&&!justLooped&&Math.abs(now-lastTime)>1)toggleLoop(false,false);
+    lastTime=now;justLooped=false;
+    if(looping&&st===YT.PlayerState.PLAYING&&now>=loopEnd){
+      $("countdownChk").checked?startCountdown(3):(player.seekTo(loopStart,true),justLooped=true);
+    }},250);
+}
+
+/* ---------------- countdown ---------------- */
+function playBeep(){
+  try{const c=new (AudioContext||webkitAudioContext)(),o=c.createOscillator(),g=c.createGain();
+      o.frequency.value=880;o.connect(g);g.connect(c.destination);o.start();
+      g.gain.setValueAtTime(+$("countVolume").value/100,c.currentTime);
+      o.stop(c.currentTime+0.15);setTimeout(()=>c.close(),200);}catch{}
+}
+function startCountdown(sec=3){
+  countingDown=true;player.pauseVideo();let n=sec;
+  $("countOverlay").style.display="grid";$("countOverlay").textContent=n;playBeep();
+  countdownTimer=setInterval(()=>{n--;
+    if(n){$("countOverlay").textContent=n;playBeep();}
+    else{clearInterval(countdownTimer);$("countOverlay").style.display="none";
+         player.seekTo(loopStart,true);player.playVideo();countingDown=false;justLooped=true;}},1000);
+}
+const cancelCountdown=()=>{if(countingDown){clearInterval(countdownTimer);
+  $("countOverlay").style.display="none";countingDown=false;}};
+
+/* ---------------- controls ---------------- */
+const setStart=()=>{if(player){loopStart=player.getCurrentTime();markUnsaved();validateLoop();}};
+const setEnd  =()=>{if(player){loopEnd  =player.getCurrentTime();markUnsaved();validateLoop();}};
+$("start").onchange=()=>{loopStart=parseFloat($("start").value)||0;markUnsaved();validateLoop();};
+$("end").onchange  =()=>{loopEnd  =parseFloat($("end").value)||0;markUnsaved();validateLoop();};
+$("countVolume").oninput=()=>{$("countvolumelabel").textContent=$("countVolume").value+"%";};
+
+function toggleLoop(force,pause=true){
+  if(!duration)return;const on=force!==undefined?force:!looping;if(on===looping)return;
+  looping=on;$("loopToggle").innerHTML=looping?"<i class=\"fa-solid fa-stop\"></i> Stop Loop":"<i class=\"fa-solid fa-play\"></i> Start Loop";
+  if(looping){cancelCountdown();player.seekTo(loopStart,true);
+    if(player.getPlayerState()!==1)player.playVideo();lastTime=loopStart;justLooped=true;}
+  else{cancelCountdown();if(pause&&player.getPlayerState()===1)player.pauseVideo();}
+}
+function rewind(){if(!duration)return;cancelCountdown();
+  const play=player.getPlayerState()===1;player.seekTo(loopStart,true);if(play)player.playVideo();
+  lastTime=loopStart;justLooped=true;}
+
+function speedChanged(){
+  const r=+$("speed").value/100;$("speedLabel").textContent=r.toFixed(2)+"×";
+  if(player){const a=player.getAvailablePlaybackRates();
+    player.setPlaybackRate(a.reduce((p,c)=>Math.abs(c-r)<Math.abs(p-r)?c:p));}
+  saveSettings();
+}
+
+/* ---------------- save loop workflow ---------------- */
+function savePrompt(){if(!currentVid()){alert("Load video first");return;}$("nameInput").value=currentLoopName;
+  $("nameModal").style.display="flex";$("nameInput").focus();}
+function saveConfirm(){
+  let n=sanitize($("nameInput").value);if(!n){alert("name?");return;}n=unique(n);
+  loops[n]={start:loopStart,end:loopEnd};saveLoops(currentVid());renderLoops();
+  currentLoopName=n;showName();$("nameModal").style.display="none";
+}
+
+/* ---------------- init ---------------- */
+(function(){
+  loadVideoList();
+  const s=loadSettings();
+  if(s){$("videoId").value=s.id||"";loopStart=+s.start||0;loopEnd=+s.end||loopStart+10;
+    $("speed").value=s.speed||100;$("countdownChk").checked=!!s.countdown;
+    $("countVolume").value=s.countvolume||20;}
+  else{$("speed").value=100;$("countVolume").value=20;}
+  $("countvolumelabel").textContent=$("countVolume").value+"%";
+  speedChanged();validateLoop();renderVideos();
+  if($("videoId").value)loadVideo();
+})();
+
+/* ---------- EXPORT / IMPORT ---------- */
+function gatherAllData(){
+  const data = { videos:{} };
+  Object.keys(videoList).forEach(id=>{
+    const loopsJSON = localStorage.getItem(LOOPS(id));
+    data.videos[id] = {
+      title : videoList[id].title || "(untitled)",
+      loops : loopsJSON ? JSON.parse(loopsJSON) : {}
+    };
+  });
+  return data;
+}
+
+function exportAll(){
+  const blob = new Blob(
+      [JSON.stringify(gatherAllData(), null, 2)],
+      {type: "application/json"});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement("a");
+  a.href = url;
+  a.download = "yt-loop-backup.json";
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function applyImportedData(obj){
+  if(!obj || !obj.videos) throw new Error("Bad file");
+  // clear current storage? No – merge / overwrite
+  Object.entries(obj.videos).forEach(([id,info])=>{
+    localStorage.setItem(LOOPS(id), JSON.stringify(info.loops||{}));
+    videoList[id] = {
+      title : info.title || "(untitled)",
+      count : Object.keys(info.loops||{}).length
+    };
+  });
+  saveVideoList();                    // refresh table + persist list
+  // reload loops for the currently‑loaded video, if any
+  if(currentVid()) loadLoops(currentVid());
+  alert("Import complete!");
+}
+
+$("exportBtn").onclick = exportAll;
+$("importBtn").onclick = ()=>$("importFile").click();
+$("importFile").onchange = e=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ev=>{
+    try{ const obj = JSON.parse(ev.target.result); applyImportedData(obj); }
+    catch(err){ alert("Import failed: "+err.message); }
+    finally{ $("importFile").value = ""; }
+  };
+  reader.readAsText(file);
+};
+
+
+/* ---------- per‑video export ---------- */
+function exportSingle(id){
+  const loopsJSON = localStorage.getItem(LOOPS(id));
+  if(!loopsJSON){ alert("No loops saved for this video"); return; }
+
+  const data = {
+    id:    id,
+    title: videoList[id]?.title || "(untitled)",
+    loops: JSON.parse(loopsJSON)
+  };
+
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:"application/json"});
+  const a    = Object.assign(document.createElement("a"), {
+           href:URL.createObjectURL(blob),
+           download:`loops-${id}.json`});
+  document.body.append(a); a.click(); a.remove();
+  URL.revokeObjectURL(a.href);
+}
+
+/* ---------- per‑video import ---------- */
+let importTargetId = null;   // row that asked for the import
+
+function beginSingleImport(id){
+  importTargetId = id;
+  $("singleImportFile").click();
+}
+
+$("singleImportFile").onchange = e=>{
+  const file = e.target.files[0];
+  if(!file){ importTargetId=null; return; }
+
+  const reader = new FileReader();
+  reader.onload = ev=>{
+    try{
+      const obj = JSON.parse(ev.target.result);
+
+      if(!obj.id || obj.id !== importTargetId){
+        throw new Error("File does not belong to this video.");
+      }
+      if(!obj.loops || typeof obj.loops !== "object"){
+        throw new Error("No loops found in file.");
+      }
+
+      // save loops & update counts
+      localStorage.setItem(LOOPS(obj.id), JSON.stringify(obj.loops));
+      loadLoops(obj.id);               // refresh current view if same id
+      alert("Loops imported!");
+    }catch(err){
+      alert("Import failed: " + err.message);
+    }finally{
+      $("singleImportFile").value = "";
+      importTargetId = null;
+    }
+  };
+  reader.readAsText(file);
+};
+
+
+/* ---------------- DOM events ---------------- */
+$("loadBtn").onclick=loadVideo;
+$("setStart").onclick=setStart;
+$("setEnd").onclick=setEnd;
+$("loopToggle").onclick=()=>toggleLoop();
+$("rewindBtn").onclick=rewind;
+$("saveLoopBtn").onclick=savePrompt;
+$("speed").oninput=speedChanged;
+$("countdownChk").onchange=saveSettings;
+$("countVolume").onchange=saveSettings;
+$("nameOk").onclick=saveConfirm;
+$("nameCancel").onclick=()=>$("nameModal").style.display="none";
+$("nameInput").onkeydown=e=>{if(e.key==="Enter")saveConfirm();if(e.key==="Escape")$("nameModal").style.display="none";}
+</script>
+</body>
+</html>

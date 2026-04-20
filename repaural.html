@@ -50,7 +50,7 @@
             border: 1px solid #ddd;
             flex: 1;
             padding: 10px;
-            max-height: 200px;
+            max-height: 150px;
             overflow-y: auto;
         }
 
@@ -63,7 +63,7 @@
 <body>
 
     <div id="auralTraining">
-        <h2>&#127929;</span>REP<em>iano</em> Aural Training</h2>
+        <h3>&#127929;</span>REP<em>iano</em> Aural Training</h3>
 
         <div class="option-group">
             <label for="lowestNote">Octave Range:</label>
@@ -84,6 +84,18 @@
                 <option value="6">6</option>
                 <option value="7">7</option>
             </select>
+
+            <label for="velocitySlider" style=padding-left:20px>Volume:</label>
+            <input type="range" id="velocitySlider" min="0" max="100" value="70" />
+            <span id="velocityValue">70%</span>
+
+            <label for="numTrials" style=padding-left:20px>Number of Trials:</label>
+            <select id="numTrials">
+                <option value="10">10</option>
+                <option value="15">15</option>
+                <option value="20" selected>20</option>
+                <option value="25">25</option>
+            </select>
         </div>
 
         <div class="option-group">
@@ -102,20 +114,10 @@
             <label><input type="checkbox" value="B"> B</label>
         </div>
 
-        <div class="option-group">
-            <label for="numTrials">Number of Trials:</label>
-            <select id="numTrials">
-                <option value="10">10</option>
-                <option value="15">15</option>
-                <option value="20" selected>20</option>
-                <option value="25">25</option>
-            </select>
-        </div>
-
         <button id="startButton" onclick="startAuralTraining()">START</button>
         <button id="replayButton" onclick="replayLastNote()" disabled=true>REPLAY</button>
 
-        <canvas id=keyboard style=width:100%;height:50px;margin-top:5px></canvas>
+        <canvas id=keyboard style=width:100%;height:40px;margin-top:5px></canvas>
 
         <div id="progressArea">
             <strong>Trial:</strong> <span id="trialNumber">0</span> |
@@ -149,6 +151,10 @@
 
   // end Global Variables
   ///////////////////////////////////////////
+
+document.getElementById('velocitySlider').addEventListener('input', function() {
+    document.getElementById('velocityValue').textContent = this.value+"%";
+});
 
 function saveSettings() {
     const settings = {
@@ -337,11 +343,13 @@ document.getElementById('numTrials').addEventListener('change', saveSettings);
 
 
     // Function to play a note
-    function playNote(note, duration=1000, program=5) {
+    function playNote(note, duration=1000, program=0) {
+      const velocity = parseInt(document.getElementById('velocitySlider').value)/100;
       const opts = {
         duration: duration,
         time: "+0",
         attack: 0.6,
+        velocity: velocity
       };
 
       console.log("Playing note:"+note);
@@ -585,13 +593,13 @@ document.getElementById('numTrials').addEventListener('change', saveSettings);
       } else {
         warning("INCORRECT!","#E11");
         warning("answer: "+curTestNote);
-        playNote('E0',200);
+        //playNote("C0", 100, 2);
       }
       updateTestResults();
 
       setTimeout(function() {
           generateTrial();
-        }, 1000);
+        }, 1500);
     }
 
 
@@ -601,7 +609,7 @@ document.getElementById('numTrials').addEventListener('change', saveSettings);
             if (x >= rect[0] && x <= rect[2] && y >= rect[1] && y <= rect[3]) {
                 const noteNumber = map.note;
                 console.log('Playing note from onscreen keyboard:', noteNumber);
-                playNote(noteNumber);
+                playNote(noteNumber,300);
                 scoreNote(midiNoteToName(noteNumber));
                 break; // Stop checking after the first match
             }
