@@ -831,9 +831,16 @@ TO IMPLEMENT:
     <thead>
     <tr style="font-weight:bold">
       <td></td>
-      <td>Short Name</td>
+      <td onclick="sortFreePlayBy('name')" style="cursor:pointer;user-select:none" title="Click to sort by name">
+        Short Name <span id="sortIndicatorName"></span>
+      </td>
+      <td onclick="sortFreePlayBy('practice')" style="cursor:pointer;user-select:none" title="Click to sort by practice recency">
+        Practice <span id="sortIndicatorPractice">▼</span>
+      </td>
       <td>Description</td>
-      <td>Category</td>
+      <td onclick="sortFreePlayBy('category')" style="cursor:pointer;user-select:none" title="Click to sort by category">
+        Category <span id="sortIndicatorCategory"></span>
+      </td>
       <td title="Hide/Unhide"></td>
       <td title="Edit"></td>
    </tr>
@@ -1037,6 +1044,7 @@ will generally be shorter than your clock time at the keyboard practicing, depen
   <script src="repiano-js/config.js"></script>
   <script src="repiano-js/utils.js"></script>
   <script src="repiano-js/init-globals.js"></script>
+  <script src="repiano-js/idb-wrapper.js"></script>
   <script src="repiano-js/storage.js"></script>
   <script src="repiano-js/voice.js"></script>
   <script src="repiano-js/audio.js"></script>

@@ -309,8 +309,20 @@ document.getElementById('importBackup').addEventListener('change', handleImportF
 
 // initialize history
 
-setTimeout(function() {
-  loadRunHistory(true);
+setTimeout(async function() {
+  // Initialize IndexedDB first
+  console.log("Initializing IndexedDB...");
+  try {
+    await initIDB();
+    console.log("IDB initialized successfully");
+  } catch (error) {
+    console.error("Failed to initialize IDB:", error);
+    alert("Failed to initialize database. The application may not work correctly.");
+    return;
+  }
+  
+  // Load runHistory from IDB
+  await loadRunHistory(true);
   loadFreePlay(); // Load freePlay items from runHistory and rebuild preset menu
   checkBackupStatus();
   updateMetronome();
@@ -877,13 +889,14 @@ function limitNumber(inputElement) {
     }
 }
 
-function logFreePlayManualTime() {
+async function logFreePlayManualTime() {
   console.log("logFreePlayManualTime");
   let value = document.getElementById("freePlayManualInput").value;
 
   value = avail(value, 0);
 
-  logFreePlay(value*60*1000, true);  // the time value is minutes, stored in milliseconds
+  await logFreePlay(value*60*1000, true);  // the time value is minutes, stored in milliseconds
+  console.log("Manual time logged successfully");
   document.getElementById("freePlaySaveMessage").innerHTML = "Saved &check;";
   setTimeout(function() {
     document.getElementById("freePlaySaveMessage").innerHTML = "";
@@ -7373,6 +7386,7 @@ function magnifyScreen(dir) {
 function clearPlayedNotes(matchhand=null, firstnon=-1) {
 
   if (notesToPlay === null || !isAvail(notesToPlay) || notesToPlay.length === 0 ||
+      !isAvail(notesToPlay[0]) || !isAvail(notesToPlay[1]) ||
       notesToPlay[0].length + notesToPlay[1].length === 0) {
     return;
   }
@@ -8307,9 +8321,18 @@ function formatTime(seconds) {
 // Function to end the test and reset the start time
 let run = 0;
 
-function endTest() {
+async function endTest() {
   if (testOptions.isFreePlay) {
-    logFreePlay(Date.now() - testStartTime + testPauseTime);
+    await logFreePlay(Date.now() - testStartTime + testPauseTime);
+    console.log("Free play time logged in endTest");
+    
+    // Update the manual input field to show the new total
+    const newTotal = getTodayFreePlayTime();
+    const inputField = document.getElementById("freePlayManualInput");
+    if (inputField) {
+      inputField.value = newTotal;
+      console.log("Updated freePlayManualInput to:", newTotal);
+    }
     //document.getElementById("PresetMenu").disabled = false; // it was disabled during the test.
   }
   testStartTime = null;

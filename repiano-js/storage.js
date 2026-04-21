@@ -212,7 +212,7 @@ function handleImportFileSelect(evt) {
     reader.readAsText(file);
 }
 
-function restoreRunHistoryFromJSON(importedJSON) {
+async function restoreRunHistoryFromJSON(importedJSON) {
   console.log('restoreRunHistoryFromJSON called, JSON length:', importedJSON.length);
   try {
       console.log('Parsing JSON...');
@@ -229,14 +229,19 @@ function restoreRunHistoryFromJSON(importedJSON) {
         console.log('.PREF.FREEPLAY NOT found in imported data');
       }
       
+      // Clear existing IDB data before import
+      console.log('Clearing existing IDB data...');
+      await clearIDB();
+      console.log('IDB cleared');
+      
       // Replace the existing runHistory with importedData
       console.log('Replacing runHistory with imported data...');
       runHistory = importedData;
       console.log('runHistory replaced, new key count:', Object.keys(runHistory).length);
       
-      // Save the imported data to localStorage
-      console.log('Saving to localStorage...');
-      saveRunHistory();
+      // Save the imported data to IDB
+      console.log('Saving to IDB...');
+      await saveRunHistory();
       console.log('Save complete');
       
       // Reload freePlay array from the imported data
@@ -255,17 +260,42 @@ function restoreRunHistoryFromJSON(importedJSON) {
   }
 }
 
-function loadRunHistory(force=false) {
+async function loadRunHistory(force=false) {
+  console.log("[LOAD] loadRunHistory called, force:", force, "runHistory is null:", runHistory === null);
 
   if (!force && runHistory !== null) {
+    console.log("[LOAD] runHistory already loaded, skipping");
     return;
   }
-  runHistory = localStorage.getItem("runHistory");
-
-  if (runHistory === null) {
+  
+  console.log("[LOAD] Loading runHistory from IDB...");
+  try {
+    runHistory = await getAllFromIDB();
+    
+    if (!runHistory || Object.keys(runHistory).length === 0) {
+      console.log("[LOAD] IDB is empty, initializing empty runHistory");
+      runHistory = {};
+    } else {
+      const keyCount = Object.keys(runHistory).length;
+      console.log("[LOAD] runHistory loaded from IDB, keys:", keyCount);
+      
+      // Log a sample of keys to verify data
+      const sampleKeys = Object.keys(runHistory).slice(0, 5);
+      console.log("[LOAD] Sample keys:", sampleKeys);
+      
+      // Check for the free play entry
+      const todayFreePlayKeys = Object.keys(runHistory).filter(k => 
+        k.includes(todayDate()) && k.includes("Free Play")
+      );
+      console.log("[LOAD] Today's free play entries:", todayFreePlayKeys);
+      todayFreePlayKeys.forEach(key => {
+        console.log(`[LOAD] ${key}:`, runHistory[key]);
+      });
+    }
+  } catch (error) {
+    console.error("[LOAD] Error loading from IDB:", error);
+    console.log("[LOAD] Initializing empty runHistory");
     runHistory = {};
-  } else {
-    runHistory = JSON.parse(runHistory);
   }
 
   ////////////// Edits and fixes to bug-introduced or other history errors goes here /////////////
@@ -327,6 +357,22 @@ function loadRunHistory(force=false) {
   }
 }
 
-function saveRunHistory() {
-  localStorage.setItem("runHistory", JSON.stringify(runHistory));
+// Save runHistory to IDB
+// Returns a promise so critical callers can await if needed
+// Most callers can just call it without await (fire-and-forget)
+async function saveRunHistory() {
+  const saveId = Date.now();
+  console.log(`[SAVE ${saveId}] saveRunHistory called`);
+  console.trace(`[SAVE ${saveId}] Call stack:`);
+  
+  try {
+    console.log(`[SAVE ${saveId}] Starting saveAllToIDB...`);
+    await saveAllToIDB(runHistory);
+    console.log(`[SAVE ${saveId}] saveAllToIDB completed successfully`);
+    console.log(`[SAVE ${saveId}] runHistory saved to IDB successfully`);
+  } catch (error) {
+    console.error(`[SAVE ${saveId}] Error saving to IDB:`, error);
+    alert("Failed to save data to IndexedDB. Your changes may not be persisted.");
+    throw error;
+  }
 }
