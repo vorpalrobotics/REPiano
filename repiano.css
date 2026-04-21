@@ -1,0 +1,238 @@
+.green-note {
+  color: green;
+}
+.red-note {
+  color: red;
+}
+th.col, td.col, td, th {
+  border-left:1px solid black;
+  border-right:1px solid black;
+}
+th {
+  border-top:1px solid black;
+  border-bottom:1px solid black;
+}
+button, select {
+  font-size:14px;
+  margin-right:12px;
+}
+
+.bigstat {
+  font-size: 30px;
+}
+
+.smallstat {
+  font-size: 18px;
+}
+
+body {
+  margin: 2px;
+  padding: 0px;
+}
+
+.container {
+  position: relative;
+  right:0;
+  top:0;
+}
+
+.gear-button {
+  position: fixed;
+  top: 40px;
+  right: -10px;
+  border: none;
+  background-color:transparent;
+  cursor: pointer;
+}
+
+.mode-container {
+  display: inline;
+}
+
+.mode-box {
+  display:inline;
+  text-align: center;
+  margin-right: 5px;
+  padding: 2px;
+  padding-left:10px;
+  padding-right:10px;
+  margin-right:15px;
+  margin-bottom:10px;
+  background-color: white;
+  color: gray;
+  font-weight: normal;
+  cursor: pointer;
+  border: 1px solid black;
+  opacity: 0.7;
+}
+
+.mode-box-bars {
+  display:inline;
+  text-align: center;
+  padding: 1px;
+  margin-right:7px;
+  margin-bottom:7px;
+  background-color: white;
+  color: gray;
+  font-weight: normal;
+  cursor: pointer;
+  border: 1px solid black;
+  opacity:0.7;
+}
+
+.mode-box-bars-selected {
+  outline: 4px solid black;
+  font-weight:bold;
+  color: black;
+}
+
+.selected {
+  background-color: rgba(216, 191, 216, 1);
+  color: black;
+  font-weight: bold;
+}
+
+#scaleArpWizardContainer {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: auto;
+  height: auto;
+  background-color: rgba(0, 0, 0, 0.5);
+  justify-content: center;
+  align-items: center;
+}
+
+#popup-form {
+  background-color: white;
+  padding: 20px;
+  border-radius: 5px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+#popup-form select, #popup-form button {
+  margin: 5px 0;
+}
+
+.mfs {
+  font-family: 'Noto Music', 'Noto Sans Symbols 2';
+  font-weight: normal;
+  font-style: normal;
+  font-size:small;
+}
+
+.mf {
+  font-family: 'Noto Music', 'Noto Sans Symbols 2';
+  font-weight: normal;
+  font-style: normal;
+  font-size: medium;
+}
+
+.mfl {
+  font-family: 'Noto Music', 'Noto Sans Symbols 2';
+  font-weight: normal;
+  font-style: normal;
+  font-size:  large;
+}
+
+.mfxl {
+  font-family: 'Noto Music', 'Noto Sans Symbols 2';
+  font-weight: normal;
+  font-style: normal;
+  font-size:  x-large;
+}
+
+@keyframes flashRedWhite {
+  0%, 100% {outline: none; }
+  50% { outline: solid 3px red; }
+}
+
+.flash-animation {
+  animation: flashRedWhite 1s infinite;
+}
+
+@keyframes expandModeDiv {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+    height: 100vh;
+  }
+}
+
+@keyframes contractModeDiv {
+  from {
+    transform: scaleY(1);
+  }
+  to {
+    transform: scaleY(0);
+    height: 100vh;
+  }
+}
+
+
+input[type='range']::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    background-color: darkgreen;
+    width: 20px;
+    height: 10px;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.slider {
+  background-color: darkgreen;
+}
+
+input[type='range']::-webkit-slider-runnable-track {
+    background: lightgreen;
+}
+
+.fingeringpopup {
+    display: none;
+    position: absolute;
+    background-color: white;
+    border: 1px solid black;
+    padding: 10px;
+    z-index: 1000;
+}
+
+#busy-indicator {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align:center;
+    vertical-align:center;
+    font-size: 50px;
+    z-index: 1000000000;
+    background-color: rgba(0, 0, 0, 0.4);
+    border-radius: 50px;
+    width:80px;
+    height:80px;
+    padding: 10px;
+    animation: rotate 1s linear infinite;
+}
+
+@keyframes rotate {
+    from {
+        transform: translate(-50%, -50%) rotate(0deg);
+    }
+    to {
+        transform: translate(-50%, -50%) rotate(360deg);
+    }
+}
+
+.note-editing {
+  outline: 2px solid green;
+}
+
+.float-right {
+  float: right;
+  margin-left: 20px;
+  margin-right:15px;
+}

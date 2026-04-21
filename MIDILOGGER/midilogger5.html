@@ -1,0 +1,1169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>REPiano MIDI Router/Filter</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #2c3e50;
+      color: #ecf0f1;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    header {
+      background-color: #34495e;
+      padding: 20px;
+      text-align: center;
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    /* Device Container */
+    #deviceContainer {
+      display: flex;
+      overflow-x: auto;
+      white-space: nowrap;
+      padding: 10px 20px;
+      background-color: #1a252f;
+      border-bottom: 2px solid #34495e;
+    }
+    .deviceBox {
+      flex: 0 0 25%;
+      box-sizing: border-box;
+      padding: 10px;
+      margin-right: 10px;
+      border-radius: 8px;
+      color: #ecf0f1;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      align-items: stretch;
+      min-width: 250px;
+    }
+
+    /* Up to 6 background colors for device boxes */
+    .bg-color0 { background-color: rgba(231, 76, 60, 0.2); }
+    .bg-color1 { background-color: rgba(46, 204, 113, 0.2); }
+    .bg-color2 { background-color: rgba(52, 152, 219, 0.2); }
+    .bg-color3 { background-color: rgba(241, 196, 15, 0.2); }
+    .bg-color4 { background-color: rgba(155, 89, 182, 0.2); }
+    .bg-color5 { background-color: rgba(230, 126, 34, 0.2); }
+
+    #deviceContainer::-webkit-scrollbar {
+      height: 8px;
+    }
+    #deviceContainer::-webkit-scrollbar-track {
+      background: #34495e;
+    }
+    #deviceContainer::-webkit-scrollbar-thumb {
+      background-color: #7f8c8d;
+      border-radius: 4px;
+    }
+
+    /* Log Container */
+    #logContainer {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      background-color: #1a252f;
+      white-space: pre-wrap;
+      font-family: monospace;
+    }
+    .logEntry {
+      margin: 2px 0;
+    }
+
+    /* Colors for logs */
+    .color0 { color: #e74c3c; }
+    .color1 { color: #2ecc71; }
+    .color2 { color: #3498db; }
+    .color3 { color: #f1c40f; }
+    .color4 { color: #9b59b6; }
+    .color5 { color: #e67e22; }
+
+    .routingContainer {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      margin-top: 5px;
+    }
+    .routingLabel {
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    .routingRow {
+      display: flex;
+      align-items: center;
+      width: 100%;
+    }
+    .routingMenu {
+      padding: 5px;
+      background-color: #2c3e50;
+      border: none;
+      border-radius: 4px;
+      color: #ecf0f1;
+      cursor: pointer;
+      font-size: 14px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      flex-grow: 1;
+    }
+    .routingMenu:hover {
+      background-color: #34495e;
+    }
+    .routingMenu:focus {
+      outline: none;
+      background-color: #34495e;
+    }
+    .portSection {
+      margin-bottom: 10px;
+    }
+
+    /* MIDI message label ensuring alignment */
+    .midi-label {
+      display: inline-block;
+      width: 12ch;
+    }
+
+    .filtersButton {
+      margin-top: 10px;
+      padding: 5px 10px;
+      background-color: #2980b9;
+      border: none;
+      border-radius: 4px;
+      color: #ecf0f1;
+      cursor: pointer;
+      font-size: 14px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      align-self: flex-start;
+    }
+    .filtersButton:hover {
+      background-color: #3498db;
+    }
+
+    /* Popup Window */
+    #filterPopup {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(44, 62, 80, 0.8);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    #filterPopupContent {
+      background-color: #2c3e50;
+      padding: 20px;
+      border-radius: 8px;
+      width: 80%;
+      max-width: 700px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+    }
+    #filterPopupContent h2 {
+      margin-top: 0;
+      text-align: center;
+    }
+
+    .filterRow {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 15px;
+      border-bottom: 1px solid #34495e;
+      padding-bottom: 15px;
+    }
+    .filterSelection {
+      display: flex;
+      flex-direction: column;
+      width: 45%;
+    }
+    .filterSelection label {
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    .filterOptions {
+      display: flex;
+      flex-wrap: wrap;
+    }
+    .filterOption {
+      padding: 5px 10px;
+      margin: 3px;
+      background-color: #34495e;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      color: #ecf0f1;
+      transition: background-color 0.3s;
+    }
+    .filterOption.selected {
+      background-color: #2980b9;
+    }
+
+    .dropdowns {
+      display: flex;
+      flex-direction: column;
+      width: 50%;
+    }
+    .dropdowns label {
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    .dropdowns select {
+      padding: 5px;
+      margin-bottom: 10px;
+      background-color: #34495e;
+      border: none;
+      border-radius: 4px;
+      color: #ecf0f1;
+      cursor: pointer;
+      font-size: 14px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    .dropdowns select:hover {
+      background-color: #2c3e50;
+    }
+
+    #filterErrors {
+      margin-top: 10px;
+      color: #e74c3c;
+      white-space: pre-wrap;
+    }
+    .popupButtons {
+      margin-top: 15px;
+      display: flex;
+      justify-content: flex-end;
+    }
+    .popupButtons button {
+      padding: 8px 16px;
+      margin-left: 10px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    #saveFilters {
+      background-color: #27ae60;
+      color: #ecf0f1;
+    }
+    #saveFilters:hover {
+      background-color: #2ecc71;
+    }
+    #cancelFilters {
+      background-color: #c0392b;
+      color: #ecf0f1;
+    }
+    #cancelFilters:hover {
+      background-color: #e74c3c;
+    }
+
+    @media (max-width: 768px) {
+      .filterRow {
+        flex-direction: column;
+      }
+      .filterSelection,
+      .dropdowns {
+        width: 100%;
+      }
+      .dropdowns {
+        margin-top: 15px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>MIDI Event Logger with Persistent Routing and Filtering</header>
+  <div id="deviceContainer"></div>
+  <div id="logContainer"></div>
+
+  <!-- Popup Window for Filters -->
+  <div id="filterPopup">
+    <div id="filterPopupContent">
+      <h2>Filter Configuration</h2>
+      <div class="filterRow">
+        <!-- Left Column: Types and Channels -->
+        <div class="filterSelection">
+          <label>Types:</label>
+          <div class="filterOptions" id="typeOptions">
+            <button class="filterOption" data-type="N">Note</button>
+            <button class="filterOption" data-type="C">Control</button>
+            <button class="filterOption" data-type="P">Pitch</button>
+          </div>
+          <label>Channels:</label>
+          <div class="filterOptions" id="channelOptions"></div>
+        </div>
+        <!-- Right Column: Channel Change & Control Change -->
+        <div class="dropdowns">
+          <label for="channelChange">Channel Change:</label>
+          <select id="channelChange">
+            <option value="unchanged">UNCHANGED</option>
+          </select>
+          <label for="controlChange">Control Change:</label>
+          <select id="controlChange">
+            <option value="unchanged">UNCHANGED</option>
+          </select>
+          <label for="valueChange">Value Change:</label>
+          <select id="valueChange">
+            <option value="unchanged">UNCHANGED</option>
+            <option value="reverse">REVERSE</option>
+          </select>
+        </div>
+      </div>
+      <div id="filterErrors"></div>
+      <div class="popupButtons">
+        <button id="saveFilters" type="button">SAVE</button>
+        <button id="cancelFilters" type="button">CANCEL</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /**********************************************************
+     * 1) Variables & Data Structures
+     **********************************************************/
+    let midiAccess = null;
+
+    const deviceMap = new Map();
+    const routingMap = new Map();
+
+    const ROUTING_SETTINGS_KEY = "midiRoutingSettings";
+    const FILTERS_STORAGE_KEY = "midiFilters";
+
+    const logContainer = document.getElementById("logContainer");
+    const deviceContainer = document.getElementById("deviceContainer");
+
+    // Filter popup references
+    let currentFilterDeviceKey = null;
+    const filterPopup = document.getElementById("filterPopup");
+    const filterPopupContent = document.getElementById("filterPopupContent");
+    const filterErrors = document.getElementById("filterErrors");
+    const saveFiltersButton = document.getElementById("saveFilters");
+    const cancelFiltersButton = document.getElementById("cancelFilters");
+    const typeOptionsContainer = document.getElementById("typeOptions");
+    const channelOptionsContainer = document.getElementById("channelOptions");
+    const channelChangeDropdown = document.getElementById("channelChange");
+    const controlChangeDropdown = document.getElementById("controlChange");
+    const valueChangeDropdown = document.getElementById("valueChange");
+
+    /**********************************************************
+     * 2) sanitizeDeviceKey
+     **********************************************************/
+    function sanitizeDeviceKey(deviceKey) {
+      return deviceKey.replace(/\|/g, "_").replace(/[^a-zA-Z0-9_-]/g, "");
+    }
+
+    /**********************************************************
+     * 3) Web MIDI Access
+     **********************************************************/
+    if (navigator.requestMIDIAccess) {
+      navigator.requestMIDIAccess({ sysex: false }).then(onMIDISuccess, onMIDIFailure);
+    } else {
+      alert("Web MIDI API is not supported in this browser.");
+    }
+
+    function onMIDISuccess(midi) {
+      midiAccess = midi;
+      // For existing ports
+      midiAccess.inputs.forEach((inp) => handleDeviceConnect(inp, midiAccess, false));
+      midiAccess.outputs.forEach((outp) => handleDeviceConnect(outp, midiAccess, true));
+
+      // On state change
+      midiAccess.onstatechange = (evt) => {
+        const port = evt.port;
+        if (port.type === "input" || port.type === "output") {
+          if (port.state === "connected") {
+            handleDeviceConnect(port, midiAccess, port.type === "output");
+          } else if (port.state === "disconnected") {
+            handleDeviceDisconnect(port, port.type === "output");
+          }
+        }
+      };
+    }
+
+    function onMIDIFailure(err) {
+      console.error("Could not access MIDI devices:", err);
+      alert("Could not access your MIDI devices.");
+    }
+
+    /**********************************************************
+     * 4) Logging
+     **********************************************************/
+    function logMessage(msg, colorClass = "color0") {
+      const entry = document.createElement("div");
+      entry.classList.add("logEntry", colorClass);
+      entry.textContent = msg;
+      logContainer.appendChild(entry);
+      logContainer.scrollTop = logContainer.scrollHeight;
+    }
+
+    // Function to log messages with multiple color codings
+    // Function to get deviceKey by device name and manufacturer
+    function getDeviceKeyByName(deviceName) {
+        for (let [key, value] of deviceMap.entries()) {
+            if (value.name === deviceName) {
+                return key;
+            }
+        }
+        return null;
+    }
+/**
+* Convert a MIDI note number (0..127) to a note name like "C4", "G#3", etc.
+*/
+function getNoteName(midiNumber) {
+const noteNames = ["C", "C#", "D", "D#", "E", "F",
+               "F#", "G", "G#", "A", "A#", "B"];
+const octave = Math.floor(midiNumber / 12) - 1;
+const noteIndex = midiNumber % 12;
+return noteNames[noteIndex] + octave;
+}
+
+/**
+ * Given a MIDI status (0x80..0xEF), data1, data2, and channel,
+ * return a string like "Note On: Ch:1 N:60=C4 V:77"
+ * or "Control Change: Ch:3 C:11 V:127"
+ */
+function formatMidiMessage(command, data1, data2, channel) {
+  let text = "";
+
+  switch (command) {
+    case 0x90: // Note On (velocity > 0 => On, velocity=0 => Off)
+      if (data2 > 0) {
+        // Note On
+        text = `Note On: Ch:${channel} N:${data1}=${getNoteName(data1)} V:${data2}`;
+      } else {
+        // velocity = 0 => treat as Note Off
+        text = `Note Off: Ch:${channel} N:${data1}=${getNoteName(data1)} V:0`;
+      }
+      break;
+
+    case 0x80: // Note Off
+      text = `Note Off: Ch:${channel} N:${data1}=${getNoteName(data1)} V:${data2}`;
+      break;
+
+    case 0xB0: // Control Change
+      text = `Control Change: Ch:${channel} C:${data1} V:${data2}`;
+      break;
+
+    case 0xC0: // Program Change
+      text = `Program Change: Ch:${channel} P:${data1}`;
+      break;
+
+    case 0xE0: // Pitch Bend
+      // Combine data1 + data2 into 14-bit
+      const pitch = (data2 << 7) | data1;
+      text = `Pitch Bend: Ch:${channel} V:${pitch}`;
+      break;
+
+    default:
+      text = `Other MIDI: Cmd=0x${command.toString(16)} D1=${data1} D2=${data2}`;
+      break;
+  }
+
+  return text;
+}
+
+/**
+ * Logs a single line in the format:
+ * [SendingDevice] Note On: Ch:1 N:60=C4 V:77 ==> [ReceivingDevice] Filtered: Note On: Ch:10 N:60=C4 V:77
+ *
+ * Colors:
+ * - The sending device bracketed name + message is in `sourceColorClass`.
+ * - The arrow "==>" is white.
+ * - The receiving device bracketed name + final message is in `targetColorClass`.
+ *
+ * Dependencies:
+ * - logContainer (DOM element)
+ * - formatMidiMessage(command, data1, data2, channel)
+ * - getNoteName(num)
+ */
+function logFullRoutedMessage({
+  sourceDeviceName,
+  sourceColorClass,
+  sourceCommand,    // e.g. 0x90
+  sourceData1,      // e.g. 60
+  sourceData2,      // e.g. 77
+  sourceChannel,    // e.g. 1
+  targetDeviceName,
+  targetColorClass,
+  targetCommand,    // possibly changed by filter
+  targetData1,
+  targetData2,
+  targetChannel     // e.g. 10
+}) {
+  // 1) Build source message text
+  const sourceMessage = formatMidiMessage(sourceCommand, sourceData1, sourceData2, sourceChannel);
+  // 2) Build target message text (prefix "Filtered: " if you like)
+  const targetMessage = "Filtered: " + formatMidiMessage(targetCommand, targetData1, targetData2, targetChannel);
+
+  // 3) Create top-level log entry
+  const entry = document.createElement("div");
+  entry.classList.add("logEntry");
+
+  // 4) Source portion
+  const sourceSpan = document.createElement("span");
+  sourceSpan.classList.add(sourceColorClass);
+  sourceSpan.textContent = `[${sourceDeviceName}] ${sourceMessage} `;
+
+  // 5) The arrow "==>"
+  const arrowSpan = document.createElement("span");
+  arrowSpan.style.color = "#ffffff"; // white arrow
+  arrowSpan.textContent = " ==> ";
+
+  // 6) Target portion
+  const targetSpan = document.createElement("span");
+  targetSpan.classList.add(targetColorClass);
+  targetSpan.textContent = `[${targetDeviceName}] ${targetMessage}`;
+
+  // 7) Append to the entry
+  entry.appendChild(sourceSpan);
+  entry.appendChild(arrowSpan);
+  entry.appendChild(targetSpan);
+
+  // 8) Insert into log container
+  logContainer.appendChild(entry);
+  logContainer.scrollTop = logContainer.scrollHeight;
+}
+
+
+    /**********************************************************
+     * 5) Local Storage for Routing & Filters
+     **********************************************************/
+    function loadRoutingSettings() {
+      const str = localStorage.getItem(ROUTING_SETTINGS_KEY);
+      if (!str) return {};
+      try {
+        return JSON.parse(str);
+      } catch {
+        return {};
+      }
+    }
+    function saveRoutingSettings(obj) {
+      localStorage.setItem(ROUTING_SETTINGS_KEY, JSON.stringify(obj));
+    }
+    function updateRoutingSettings(deviceKey, value) {
+      const sets = loadRoutingSettings();
+      if (value === "none") {
+        delete sets[deviceKey];
+      } else {
+        sets[deviceKey] = value;
+      }
+      saveRoutingSettings(sets);
+    }
+
+    function loadFilters() {
+      const str = localStorage.getItem(FILTERS_STORAGE_KEY);
+      if (!str) return {};
+      try {
+        return JSON.parse(str);
+      } catch {
+        return {};
+      }
+    }
+    function saveFilters(obj) {
+      localStorage.setItem(FILTERS_STORAGE_KEY, JSON.stringify(obj));
+    }
+
+    function removeDeviceRoutingSettings(deviceKey) {
+      const sets = loadRoutingSettings();
+      if (sets[deviceKey]) {
+        delete sets[deviceKey];
+        saveRoutingSettings(sets);
+        logMessage(`Removed saved routing settings for device key: ${deviceKey}`, "color0");
+      }
+      // also remove filters
+      const fil = loadFilters();
+      if (fil[deviceKey]) {
+        delete fil[deviceKey];
+        saveFilters(fil);
+        logMessage(`Removed filters for device key: ${deviceKey}`, "color0");
+      }
+    }
+
+    /**********************************************************
+     * 6) Device Creation & Updating
+     **********************************************************/
+    const deviceColors = ["color0", "color1", "color2", "color3", "color4", "color5"];
+
+    function assignColor() {
+      if (deviceMap.size >= 6) return "color0";
+      return deviceColors[deviceMap.size];
+    }
+
+    function getDeviceKey(port) {
+      const nm = port.name || "UnknownName";
+      const mf = port.manufacturer || "UnknownManufacturer";
+      return nm + "|" + mf;
+    }
+
+    function handleDeviceConnect(port, access, isOutput = false) {
+      const key = getDeviceKey(port);
+
+      if (!deviceMap.has(key)) {
+        const c = assignColor();
+        deviceMap.set(key, {
+          name: port.name,
+          manufacturer: port.manufacturer || "UnknownManufacturer",
+          id: port.id,
+          type: port.type || "Unknown",
+          colorClass: c,
+          inputPorts: new Set(),
+          outputPorts: new Set(),
+        });
+        createDeviceBox(key, c);
+      }
+      const info = deviceMap.get(key);
+      if (isOutput) info.outputPorts.add(port.id);
+      else info.inputPorts.add(port.id);
+      deviceMap.set(key, info);
+
+      const msg = isOutput
+        ? `Connected Output: ${port.name}, Mfr: ${info.manufacturer}`
+        : `Connected Input:  ${port.name}, Mfr: ${info.manufacturer}`;
+      logMessage(msg, info.colorClass);
+
+      if (!isOutput) {
+        port.onmidimessage = (msg) => handleMIDIMessage(msg, port);
+      }
+      updateDeviceBox(key);
+    }
+
+    function handleDeviceDisconnect(port, isOutput = false) {
+      const key = getDeviceKey(port);
+      if (!deviceMap.has(key)) return;
+      const info = deviceMap.get(key);
+      if (isOutput) info.outputPorts.delete(port.id);
+      else info.inputPorts.delete(port.id);
+
+      const msg = isOutput
+        ? `Disconnected Output: ${port.name}, Mfr: ${info.manufacturer}`
+        : `Disconnected Input:  ${port.name}, Mfr: ${info.manufacturer}`;
+      logMessage(msg, info.colorClass);
+
+      if (info.inputPorts.size === 0 && info.outputPorts.size === 0) {
+        removeDeviceBox(key);
+        deviceMap.delete(key);
+        removeDeviceRoutingSettings(key);
+      } else {
+        deviceMap.set(key, info);
+        updateDeviceBox(key);
+      }
+    }
+
+    function createDeviceBox(deviceKey, colorClass) {
+      const info = deviceMap.get(deviceKey);
+      const safeKey = sanitizeDeviceKey(deviceKey);
+
+      const box = document.createElement("div");
+      box.classList.add("deviceBox", `bg-${colorClass}`);
+      box.id = `deviceBox-${safeKey}`;
+
+      const nameDiv = document.createElement("div");
+      nameDiv.textContent = `Name: ${info.name}`;
+      nameDiv.style.fontWeight = "bold";
+      box.appendChild(nameDiv);
+
+      const manDiv = document.createElement("div");
+      const man = info.manufacturer === "UnknownManufacturer" ? "Unknown" : info.manufacturer;
+      manDiv.textContent = `Manufacturer: ${man}`;
+      manDiv.style.fontSize = "0.9em";
+      box.appendChild(manDiv);
+
+      const sep = document.createElement("hr");
+      sep.style.margin = "10px 0";
+      box.appendChild(sep);
+
+      const portSection = document.createElement("div");
+      portSection.classList.add("portSection");
+      box.appendChild(portSection);
+
+      // Routing
+      const routingContainer = document.createElement("div");
+      routingContainer.classList.add("routingContainer");
+      const routingLabel = document.createElement("div");
+      routingLabel.classList.add("routingLabel");
+      routingLabel.textContent = "Routing:";
+      routingContainer.appendChild(routingLabel);
+
+      const routingRow = document.createElement("div");
+      routingRow.classList.add("routingRow");
+
+      const routingSelect = document.createElement("select");
+      routingSelect.classList.add("routingMenu");
+      routingSelect.dataset.deviceKey = deviceKey;
+
+      const noneOpt = document.createElement("option");
+      noneOpt.value = "none";
+      noneOpt.textContent = "NONE";
+      routingSelect.appendChild(noneOpt);
+
+      const outs = getOutputDevices(deviceKey);
+      outs.forEach((o) => {
+        const opt = document.createElement("option");
+        opt.value = o.key;
+        opt.textContent = `SEND TO ${o.name}`;
+        routingSelect.appendChild(opt);
+      });
+
+      if (routingMap.has(deviceKey)) {
+        routingSelect.value = routingMap.get(deviceKey);
+      } else {
+        routingSelect.value = "none";
+      }
+
+      routingSelect.addEventListener("change", (ev) => {
+        const selVal = ev.target.value;
+        const dk = ev.target.dataset.deviceKey;
+        if (selVal === "none") {
+          routingMap.delete(dk);
+          logMessage(`Routing: Device "${deviceMap.get(dk).name}" => NONE.`, "color0");
+        } else {
+          routingMap.set(dk, selVal);
+          const tar = deviceMap.get(selVal);
+          if (tar) {
+            logMessage(`Routing: Device "${deviceMap.get(dk).name}" => "${tar.name}".`, tar.colorClass);
+          } else {
+            console.warn("Unknown target device key:", selVal);
+          }
+        }
+        updateRoutingSettings(dk, selVal);
+        toggleFiltersButton(dk, selVal);
+      });
+
+      routingRow.appendChild(routingSelect);
+      routingContainer.appendChild(routingRow);
+
+      // FILTERS button
+      const filtersButton = document.createElement("button");
+      filtersButton.classList.add("filtersButton");
+      filtersButton.type = "button";
+      filtersButton.textContent = "FILTERS";
+      filtersButton.dataset.deviceKey = deviceKey;
+      filtersButton.addEventListener("click", () => openFilterPopup(deviceKey));
+
+      if (routingSelect.value !== "none") {
+        routingContainer.appendChild(filtersButton);
+      }
+      routingContainer.appendChild(filtersButton);
+
+      box.appendChild(routingContainer);
+      deviceContainer.appendChild(box);
+
+      populatePorts(deviceKey);
+      applySavedRouting(deviceKey, info);
+    }
+
+    function updateDeviceBox(deviceKey) {
+      const safeKey = sanitizeDeviceKey(deviceKey);
+      const box = document.getElementById(`deviceBox-${safeKey}`);
+      if (!box) return;
+
+      const portSec = box.querySelector(".portSection");
+      if (portSec) portSec.innerHTML = "";
+      populatePorts(deviceKey);
+
+      const routingSelect = box.querySelector(".routingMenu");
+      if (!routingSelect) return;
+      updateRoutingMenuOptions(deviceKey, routingSelect, deviceMap.get(deviceKey).colorClass);
+      applySavedRouting(deviceKey, deviceMap.get(deviceKey));
+      toggleFiltersButton(deviceKey, routingSelect.value);
+    }
+
+    function populatePorts(deviceKey) {
+      const safe = sanitizeDeviceKey(deviceKey);
+      const box = document.getElementById(`deviceBox-${safe}`);
+      if (!box) return;
+      const portSection = box.querySelector(".portSection");
+      const info = deviceMap.get(deviceKey);
+      if (!info) return;
+      const names = [];
+
+      if (midiAccess) {
+        info.inputPorts.forEach((pid) => {
+          const inp = midiAccess.inputs.get(pid);
+          if (inp) names.push(inp.name);
+        });
+        info.outputPorts.forEach((pid) => {
+          const outp = midiAccess.outputs.get(pid);
+          if (outp) names.push(outp.name);
+        });
+      }
+
+      if (names.length === 0) {
+        portSection.textContent = "Ports: None";
+      } else {
+        portSection.textContent = `Ports: ${names.join(", ")}`;
+      }
+    }
+
+    function removeDeviceBox(deviceKey) {
+      const safe = sanitizeDeviceKey(deviceKey);
+      const box = document.getElementById(`deviceBox-${safe}`);
+      if (box) deviceContainer.removeChild(box);
+    }
+
+    function getOutputDevices(currentDeviceKey = null) {
+      const results = [];
+      if (!midiAccess) return results;
+
+      midiAccess.outputs.forEach((port) => {
+        const dk = getDeviceKey(port);
+        if (dk !== currentDeviceKey) {
+          results.push({ key: dk, name: port.name });
+        }
+      });
+      return results;
+    }
+
+    function updateRoutingMenuOptions(deviceKey, routingSelect, colorClass) {
+      while (routingSelect.options.length > 1) {
+        routingSelect.remove(1);
+      }
+      const outDevs = getOutputDevices(deviceKey);
+      outDevs.forEach((o) => {
+        const opt = document.createElement("option");
+        opt.value = o.key;
+        opt.textContent = `SEND TO ${o.name}`;
+        routingSelect.appendChild(opt);
+      });
+      if (routingMap.has(deviceKey)) {
+        routingSelect.value = routingMap.get(deviceKey);
+      } else {
+        routingSelect.value = "none";
+      }
+    }
+
+    function toggleFiltersButton(deviceKey, selectedValue) {
+      const safe = sanitizeDeviceKey(deviceKey);
+      const box = document.getElementById(`deviceBox-${safe}`);
+      if (!box) return;
+
+      const btn = box.querySelector(".filtersButton");
+      if (!btn) return;
+
+      if (selectedValue === "none") btn.style.display = "none";
+      else btn.style.display = "inline-block";
+    }
+
+    function applySavedRouting(deviceKey, deviceInfo) {
+      const sets = loadRoutingSettings();
+      if (sets[deviceKey]) {
+        routingMap.set(deviceKey, sets[deviceKey]);
+        logMessage(`Applied saved routing for device: ${deviceInfo.name}`, "color0");
+      }
+    }
+
+    /**********************************************************
+     * 7) MIDI Message Handling & Filters
+     **********************************************************/
+function handleMIDIMessage(message, inputPort) {
+   const [status, d1, d2] = message.data;
+   const cmd = status & 0xf0;
+   const chan = (status & 0x0f) + 1;
+
+   const dKey = getDeviceKey(inputPort);
+   if (!routingMap.has(dKey)) {
+     console.log("No routing for device:", dKey);
+     return;
+   }
+   const tarKey = routingMap.get(dKey);
+   if (tarKey === "none") return;
+
+   const tarInfo = deviceMap.get(tarKey);
+   if (!tarInfo || tarInfo.outputPorts.size === 0) {
+     console.warn("No target device or no output ports for key:", tarKey);
+     return;
+   }
+
+   const srcInfo = deviceMap.get(dKey);
+
+   // retrieve filters
+   const filters = getParsedFiltersForDevice(dKey);
+   console.log(`Applying ${filters.length} filter(s) from "${srcInfo.name}"`);
+
+   // which apply?
+   const applicable = filters.filter((ft) => ft.appliesTo(cmd, chan));
+   console.log(`${applicable.length} filter(s) apply.`);
+
+   // apply
+   // This returns the final status (nst), data1 (nd1), data2 (nd2)
+   const [nst, nd1, nd2] = applyFilters([status, d1, d2], applicable);
+
+   // route
+   const outs = Array.from(tarInfo.outputPorts)
+     .map((pid) => midiAccess.outputs.get(pid))
+     .filter((o) => o && o.type === "output");
+   outs.forEach((o) => {
+     o.send([nst, nd1, nd2]);
+     console.log(`Sent to "${tarInfo.name}" via port "${o.name}"`);
+   });
+
+   // 1) Calculate final channel from 'nst'
+   const newChan = (nst & 0x0f) + 1;
+
+   // 2) Call logFullRoutedMessage with all details
+   //    so the log line looks like:
+   //    [SENDING DEVICE] Note On: Ch:1 N:60=C4 V:77 ==> [RECEIVING DEVICE] Filtered: Note On: Ch:10 N:60=C4 V:77
+   logFullRoutedMessage({
+     // The original message (source) portion
+     sourceDeviceName:   srcInfo.name,
+     sourceColorClass:   srcInfo.colorClass,  // e.g. "color0"
+     sourceCommand:      cmd,                 // e.g. 0x90
+     sourceData1:        d1,                  // original note/controller
+     sourceData2:        d2,                  // original velocity/value
+     sourceChannel:      chan,
+
+     // The final message (target) portion
+     targetDeviceName:   tarInfo.name,
+     targetColorClass:   tarInfo.colorClass,  // e.g. "color2"
+     targetCommand:      (nst & 0xf0),        // e.g. 0x90 or 0x80 or 0xB0
+     targetData1:        nd1,
+     targetData2:        nd2,
+     targetChannel:      newChan
+   });
+ }
+
+
+    function applyFilters([st, d1, d2], filters) {
+      let status = st, data1 = d1, data2 = d2;
+      for (const ft of filters) {
+        console.log("Applying Filter:", ft.getDescription());
+        if (ft.channelChange !== "UNCHANGED") {
+          const originalChannel = (status & 0x0f) + 1;
+          const newChan = ft.channelChange - 1;
+          if (newChan >= 0 && newChan < 16) {
+            console.log(`Channel from ${originalChannel} => ${ft.channelChange}`);
+            status = (status & 0xf0) | (newChan & 0x0f);
+          }
+        }
+        if (ft.controlChange !== "UNCHANGED" && (status & 0xf0) === 0xb0) {
+          console.log(`ControlChange from ${data1} => ${ft.controlChange}`);
+          data1 = ft.controlChange;
+        }
+        if (ft.valueChange === "reverse") {
+          data2 = 127 - data2;
+          console.log(`Value Change from ${d2} => ${data2}`);
+        } else {
+          console.log("unknown value change: "+ft.valueChange);
+        }
+      }
+      return [status, data1, data2];
+    }
+
+    function formatMessage([st, dd1, dd2], cmd, chan) {
+      switch (cmd) {
+        case 0x90:
+          if (dd2 > 0) {
+            return `Note On:   Ch:${chan} N:${dd1} V:${dd2}`;
+          } else {
+            return `Note Off:  Ch:${chan} N:${dd1} V:${dd2}`;
+          }
+        case 0x80:
+          return `Note Off:  Ch:${chan} N:${dd1} V:${dd2}`;
+        case 0xb0:
+          return `Control Change: Ch:${chan} C:${dd1} V:${dd2}`;
+        case 0xc0:
+          return `Program Change: Ch:${chan} P:${dd1}`;
+        case 0xe0:
+          const pitch = (dd2 << 7) | dd1;
+          return `Pitch Bend: Ch:${chan} V:${pitch}`;
+        default:
+          return `Other MIDI: 0x${st.toString(16)} D1:${dd1} D2:${dd2}`;
+      }
+    }
+
+    /**********************************************************
+     * 8) Filter Implementation
+     **********************************************************/
+    function getParsedFiltersForDevice(deviceKey) {
+      const all = loadFilters();
+      const devFil = all[deviceKey] || [];
+      return devFil.map(parseFilterObject);
+    }
+
+    function parseFilterObject(fobj) {
+      if (!Array.isArray(fobj.types)) fobj.types = [];
+      if (!Array.isArray(fobj.channels)) fobj.channels = [];
+
+      return {
+        types: fobj.types,
+        channels: fobj.channels,
+        channelChange: fobj.channelChange,
+        controlChange: fobj.controlChange,
+        valueChange: fobj.valueChange,
+        appliesTo(cmd, ch) {
+          let typeMatch = false;
+          if (this.types.includes("*")) {
+            typeMatch = true;
+          } else {
+            if (cmd === 0x90 || cmd === 0x80) {
+              typeMatch = this.types.includes("N");
+            } else if (cmd === 0xb0) {
+              typeMatch = this.types.includes("C");
+            } else if (cmd === 0xe0) {
+              typeMatch = this.types.includes("P");
+            }
+          }
+          let channelMatch = false;
+          if (this.channels.includes("*")) {
+            channelMatch = true;
+          } else {
+            channelMatch = this.channels.includes(ch);
+          }
+          return typeMatch && channelMatch;
+        },
+        getDescription() {
+          const parts = [];
+          if (this.channelChange !== "UNCHANGED") parts.push(`C${this.channelChange}`);
+          if (this.controlChange !== "UNCHANGED") parts.push(`CC${this.controlChange}`);
+          if (this.valueChange !== "UNCHANGED") parts.push(`CC${this.valueChange}`);
+          return parts.join("; ");
+        },
+      };
+    }
+
+    /**********************************************************
+     * 9) Filter Popup Behavior
+     **********************************************************/
+     function initFilterUI() {
+       // 1) CHANNEL BUTTONS
+       for (let i = 1; i <= 16; i++) {
+         const btn = document.createElement("button");
+         btn.classList.add("filterOption");
+         btn.textContent = i;
+         btn.dataset.channel = i;
+         btn.addEventListener("click", () => {
+           btn.classList.toggle("selected");
+         });
+         channelOptionsContainer.appendChild(btn);
+       }
+
+       // 2) Channel Change dropdown 1..16
+       for (let i = 1; i <= 16; i++) {
+         const opt = document.createElement("option");
+         opt.value = i.toString();
+         opt.textContent = i.toString();
+         channelChangeDropdown.appendChild(opt);
+       }
+       // 3) Control Change dropdown 1..127
+       for (let i = 1; i <= 127; i++) {
+         const opt2 = document.createElement("option");
+         opt2.value = i.toString();
+         opt2.textContent = i.toString();
+         controlChangeDropdown.appendChild(opt2);
+       }
+
+       // 4) TYPE BUTTONS (N, C, P)
+       const typeBtns = typeOptionsContainer.querySelectorAll('.filterOption');
+       typeBtns.forEach(btn => {
+         btn.addEventListener('click', () => {
+           btn.classList.toggle('selected');
+         });
+       });
+     }
+
+    initFilterUI();
+
+    function openFilterPopup(deviceKey) {
+      currentFilterDeviceKey = deviceKey;
+      filterErrors.textContent = "";
+
+      // reset
+      typeOptionsContainer.querySelectorAll(".filterOption").forEach((b) => b.classList.remove("selected"));
+      channelOptionsContainer.querySelectorAll(".filterOption").forEach((b) => b.classList.remove("selected"));
+      channelChangeDropdown.value = "unchanged";
+      controlChangeDropdown.value = "unchanged";
+      valueChangeDropdown.value = "unchanged";
+
+      const allFilters = loadFilters();
+      const devFil = allFilters[deviceKey] || [];
+      if (devFil.length > 0) {
+        const f = devFil[0];
+        if (Array.isArray(f.types)) {
+          f.types.forEach((t) => {
+            const btn = typeOptionsContainer.querySelector(`.filterOption[data-type="${t}"]`);
+            if (btn) btn.classList.add("selected");
+          });
+        }
+        if (Array.isArray(f.channels)) {
+          f.channels.forEach((ch) => {
+            const cbtn = channelOptionsContainer.querySelector(`.filterOption[data-channel="${ch}"]`);
+            if (cbtn) cbtn.classList.add("selected");
+          });
+        }
+        if (f.channelChange !== undefined) {
+          channelChangeDropdown.value = f.channelChange.toString().toLowerCase();
+        }
+        if (f.controlChange !== undefined) {
+          controlChangeDropdown.value = f.controlChange.toString().toLowerCase();
+        }
+        if (f.valueChange !== undefined) {
+          valueChangeDropdown.value = f.valueChange.toString().toLowerCase();
+        }
+      }
+      filterPopup.style.display = "flex";
+    }
+
+    function closeFilterPopup() {
+      currentFilterDeviceKey = null;
+      filterErrors.textContent = "";
+      filterPopup.style.display = "none";
+    }
+
+    saveFiltersButton.addEventListener("click", (ev) => {
+      ev.preventDefault();
+      const selTypes = Array.from(typeOptionsContainer.querySelectorAll(".filterOption.selected")).map(
+        (b) => b.dataset.type
+      );
+      const selChans = Array.from(channelOptionsContainer.querySelectorAll(".filterOption.selected")).map((b) =>
+        parseInt(b.dataset.channel, 10)
+      );
+      const chVal = channelChangeDropdown.value;
+      const ccVal = controlChangeDropdown.value;
+      const vVal = valueChangeDropdown.value;
+
+      const errors = [];
+      //if (selTypes.length === 0) errors.push("At least one Type must be selected.");
+      //if (selChans.length === 0) errors.push("At least one Channel must be selected.");
+      //if (chVal === "unchanged" && ccVal === "unchanged") {
+        //errors.push("At least one change (Channel or Control Change) must be selected.");
+      //}
+      if (errors.length > 0) {
+        filterErrors.textContent = errors.join("\n");
+        return;
+      }
+      const filter = {
+        types: selTypes,
+        channels: selChans,
+        channelChange: chVal === "unchanged" ? "UNCHANGED" : parseInt(chVal, 10),
+        controlChange: ccVal === "unchanged" ? "UNCHANGED" : parseInt(ccVal, 10),
+        valueChange: vVal
+      };
+      console.log("Saving filter for deviceKey:", currentFilterDeviceKey, filter);
+
+      const all = loadFilters();
+      all[currentFilterDeviceKey] = [filter]; // only one filter per device for now
+      saveFilters(all);
+
+      const dev = deviceMap.get(currentFilterDeviceKey);
+      if (dev) {
+        logMessage(`Filters saved for device: ${dev.name}`, "color1");
+      }
+      closeFilterPopup();
+    });
+
+    cancelFiltersButton.addEventListener("click", () => {
+      closeFilterPopup();
+    });
+  </script>
+</body>
+</html>
