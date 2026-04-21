@@ -170,7 +170,7 @@ const bluesscalemetrics = {HTQ: true, MetQ: true, DynQ: true, LegQ: true, StaQ: 
 const bluesSwungEighths = [[1/8], [1/8], 1/8, true];
 
 // Free play presets
-const freePlay = [
+let freePlay = [
   {
     name: "Scales3",
     description: "Scales, 3 octaves in chromatic order",

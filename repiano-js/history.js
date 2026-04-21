@@ -104,8 +104,24 @@ function filterAndDisplayHistory() {
     const historyTableBody = document.getElementById("historyTableBody");
     historyTableBody.innerHTML = ""; // Clear the existing rows in the table
 
+    // Populate the routine name dropdown from runHistory
+    if (runHistory === null) {
+      loadRunHistory();
+    }
+    
+    // Save the current selection before repopulating
+    const testNameSelect = document.getElementById("testNameHistorySelect");
+    const savedSelection = testNameSelect.value;
+    
+    populateTestNameOptions();
+    
+    // Restore the saved selection if it still exists in the repopulated list
+    if (savedSelection && testNameSelect.querySelector(`option[value="${savedSelection}"]`)) {
+      testNameSelect.value = savedSelection;
+    }
+
     const dateRange = document.getElementById("dateRangeSelect").value;
-    const selectedTestName = document.getElementById("testNameHistorySelect").value;
+    const selectedTestName = testNameSelect.value;
     const selectedHand = document.getElementById("handSelect").value;
 
     // Initialize an object to store statistics for graphing

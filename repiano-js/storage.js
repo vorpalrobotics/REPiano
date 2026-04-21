@@ -175,43 +175,82 @@ function checkBackupStatus() {
 }
 
 function handleImportFileSelect(evt) {
+    console.log('=== IMPORT PROCESS STARTED ===');
     let file = evt.target.files[0]; // FileList object
 
     // Only proceed if a file was selected
     if (!file) {
+        console.log('No file selected, aborting import');
         return;
     }
 
+    console.log('File selected:', file.name, 'Size:', file.size, 'bytes');
     let reader = new FileReader();
 
     // Closure to capture the file information.
     reader.onload = (function(theFile) {
         return function(e) {
+            console.log('File read complete, length:', e.target.result.length);
             try {
                 const importedJSON = e.target.result;
+                console.log('Calling restoreRunHistoryFromJSON...');
                 restoreRunHistoryFromJSON(importedJSON);
             } catch (error) {
-                console.error('Error parsing JSON:', error);
+                console.error('Error in handleImportFileSelect:', error);
                 alert('Failed to import data. Please ensure the file is a valid JSON.');
             }
         };
     })(file);
 
+    reader.onerror = function(e) {
+        console.error('FileReader error:', e);
+        alert('Failed to read file.');
+    };
+
     // Read in the file as text.
+    console.log('Starting to read file...');
     reader.readAsText(file);
 }
 
 function restoreRunHistoryFromJSON(importedJSON) {
+  console.log('restoreRunHistoryFromJSON called, JSON length:', importedJSON.length);
   try {
+      console.log('Parsing JSON...');
       const importedData = JSON.parse(importedJSON);
+      console.log('JSON parsed successfully');
+      console.log('Number of keys in imported data:', Object.keys(importedData).length);
+      
+      // Check for .PREF.FREEPLAY
+      if (importedData[".PREF.FREEPLAY"]) {
+        console.log('.PREF.FREEPLAY found in import, type:', typeof importedData[".PREF.FREEPLAY"], 
+                    'isArray:', Array.isArray(importedData[".PREF.FREEPLAY"]),
+                    'length:', importedData[".PREF.FREEPLAY"].length);
+      } else {
+        console.log('.PREF.FREEPLAY NOT found in imported data');
+      }
+      
       // Replace the existing runHistory with importedData
+      console.log('Replacing runHistory with imported data...');
       runHistory = importedData;
+      console.log('runHistory replaced, new key count:', Object.keys(runHistory).length);
+      
       // Save the imported data to localStorage
+      console.log('Saving to localStorage...');
       saveRunHistory();
+      console.log('Save complete');
+      
+      // Reload freePlay array from the imported data
+      console.log('Reloading freePlay from imported data...');
+      loadFreePlay();
+      console.log('FreePlay reloaded, count:', freePlay.length);
+      
+      console.log('=== IMPORT SUCCESSFUL ===');
       alert('Data successfully imported!');
+      console.log('Reloading page...');
       location.reload(); // Reload the page to reflect the imported data
   } catch (error) {
       console.error('Error importing data:', error);
+      console.error('Error stack:', error.stack);
       alert('Failed to import data. Please ensure the JSON is valid.');
   }
 }
@@ -280,9 +319,11 @@ function loadRunHistory(force=false) {
     saveRunHistory();
   }
 
-  console.log("NO FREEPLAY IN RUNHISTORY:"+runHistory[".PREF.FREEPLAY"]);
   if (!isAvail(runHistory[".PREF.FREEPLAY"])) {
-    runHistory[".PREF.FREEPLAY"] = {};
+    console.log("NO FREEPLAY IN RUNHISTORY, initializing empty array");
+    runHistory[".PREF.FREEPLAY"] = [];
+  } else if (Array.isArray(runHistory[".PREF.FREEPLAY"])) {
+    console.log("FREEPLAY LOADED FROM RUNHISTORY, length="+runHistory[".PREF.FREEPLAY"].length);
   }
 }
 
