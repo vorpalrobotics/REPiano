@@ -233,11 +233,16 @@ async function flushVimsyBuffer() {
     return;
   }
   
-  if (!vimsyCurrentUser) {
+  // Check auth state from Firebase directly
+  const currentUser = vimsyAuth ? vimsyAuth.currentUser : null;
+  if (!currentUser) {
     console.log('[Vimsy] Not logged in, cannot flush buffer');
     logVimsyActivity('⚠ Cannot sync: Not logged in', 'warning');
     return;
   }
+  
+  // Update cached user
+  vimsyCurrentUser = currentUser;
   
   console.log('[Vimsy] Flushing buffer:', buffer);
   logVimsyActivity('📤 Syncing ' + buffer.totalMinutes.toFixed(1) + ' minutes...', 'info');
@@ -253,7 +258,7 @@ async function flushVimsyBuffer() {
         appName: "REPiano - Piano Practice Tracker",
         version: "1.0",
         timestamp: now.toISOString(),
-        userId: vimsyCurrentUser.uid,
+        userId: currentUser.uid,
         documentId: documentId
       },
       data: {
@@ -277,7 +282,7 @@ async function flushVimsyBuffer() {
     };
     
     // Upload to Firestore
-    const docPath = `users/${vimsyCurrentUser.uid}/externalAppData/repiano/documents/${documentId}`;
+    const docPath = `users/${currentUser.uid}/externalAppData/repiano/documents/${documentId}`;
     console.log('[Vimsy] Uploading to:', docPath);
     
     await vimsyDb.doc(docPath).set(importDoc);
