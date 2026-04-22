@@ -251,7 +251,7 @@ async function restoreRunHistoryFromJSON(importedJSON) {
       
       // Reset backup timestamp since we just imported fresh data
       console.log('Resetting backup timestamp...');
-      localStorage.setItem('lastBackupDate', new Date().toISOString());
+      localStorage.setItem(lastBackupKey, Date.now());
       
       console.log('=== IMPORT SUCCESSFUL ===');
       alert('Data successfully imported!');
