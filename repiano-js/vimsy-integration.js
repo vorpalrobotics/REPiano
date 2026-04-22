@@ -16,25 +16,36 @@ let vimsyStatusMonitor = null;
 // ============================================================================
 
 function initVimsy() {
-  console.log('[Vimsy] Initializing Firebase...');
+  console.log('[Vimsy] Initializing...');
   
   try {
-    const app = firebase.initializeApp(firebaseConfig);
+    // Initialize Firebase
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+    
     vimsyAuth = firebase.auth();
     vimsyDb = firebase.firestore();
     
-    console.log('[Vimsy] Firebase initialized successfully');
+    console.log('[Vimsy] Firebase initialized');
+    logVimsyActivity('🔧 Vimsy integration initialized', 'info');
     
     // Listen for auth state changes
     vimsyAuth.onAuthStateChanged((user) => {
-      console.log('[Vimsy] Auth state changed:', user ? user.email : 'signed out');
-      vimsyCurrentUser = user;
-      updateVimsyUI();
+      if (user) {
+        vimsyCurrentUser = user;
+        console.log('[Vimsy] User already logged in:', user.email);
+        logVimsyActivity('✓ Logged in as: ' + user.email, 'success');
+        updateVimsyUI();
+      } else {
+        vimsyCurrentUser = null;
+        console.log('[Vimsy] No user logged in');
+        logVimsyActivity('ℹ Not logged in - click Login button to connect', 'info');
+      }
     });
     
-    // Check for old buffer that needs flushing
+    // Check for old buffer on page load
     checkAndFlushOldBuffer();
-    
   } catch (error) {
     console.error('[Vimsy] Initialization failed:', error);
   }
