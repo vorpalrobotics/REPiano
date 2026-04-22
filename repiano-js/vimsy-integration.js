@@ -62,6 +62,17 @@ function loginToVimsy() {
       logVimsyActivity('✓ Login successful: ' + vimsyCurrentUser.email, 'success');
       updateVimsyUI();
       
+      // Clear the initial "Waiting for login" message
+      const logContainer = document.getElementById('vimsyActivityLog');
+      if (logContainer && logContainer.children.length > 0) {
+        // Remove any "Waiting for login" messages
+        Array.from(logContainer.children).forEach(child => {
+          if (child.textContent.includes('Waiting for login')) {
+            child.remove();
+          }
+        });
+      }
+      
       // Enable Vimsy sync by default after first login
       if (!localStorage.getItem('vimsyEnabled')) {
         localStorage.setItem('vimsyEnabled', 'true');
