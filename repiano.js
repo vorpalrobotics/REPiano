@@ -326,6 +326,13 @@ setTimeout(async function() {
   loadFreePlay(); // Load freePlay items from runHistory and rebuild preset menu
   checkBackupStatus();
   updateMetronome();
+  
+  // Initialize Vimsy integration (if available)
+  if (typeof initVimsy === 'function') {
+    initVimsy();
+  } else {
+    console.warn('Vimsy integration not loaded');
+  }
 
   console.log("Last preset selected:" + runHistory[".PREF.LASTPRESETSELECTED"]);
   if (isAvail(runHistory[".PREF.LASTPRESETSELECTED"])) {
@@ -8323,7 +8330,8 @@ let run = 0;
 
 async function endTest() {
   if (testOptions.isFreePlay) {
-    await logFreePlay(Date.now() - testStartTime + testPauseTime);
+    const elapsed = Date.now() - testStartTime + testPauseTime;
+    await logFreePlay(elapsed);
     console.log("Free play time logged in endTest");
     
     // Update the manual input field to show the new total
@@ -8334,6 +8342,16 @@ async function endTest() {
       console.log("Updated freePlayManualInput to:", newTotal);
     }
     //document.getElementById("PresetMenu").disabled = false; // it was disabled during the test.
+  } else {
+    // Regular timed practice (not free play)
+    const elapsed = Date.now() - testStartTime + testPauseTime;
+    if (typeof getVimsyPreferences === 'function' && typeof isVimsyEnabled === 'function' && typeof addToVimsyBuffer === 'function') {
+      const prefs = getVimsyPreferences();
+      if (isVimsyEnabled() && prefs.autoSync && prefs.includePractice && elapsed > 0) {
+        console.log("[Vimsy] Adding timed practice to buffer:", curPresetName, elapsed);
+        addToVimsyBuffer(elapsed, curPresetName);
+      }
+    }
   }
   testStartTime = null;
   testPauseTime = 0;

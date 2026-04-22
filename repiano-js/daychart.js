@@ -111,13 +111,6 @@ function dayChartDate(days) {
           continue;
         }
 
-        if (runHistory[key].reps < 3 || runHistory[key].elapsed < 10000) {
-          // very few reps or less than 10 seconds of practice time that day,
-          // this is usually just an error like selected wrong number of octaves and didn't realize it
-          // so don't bother showing it on the day chart.
-          continue;
-        }
-
         const [date, preset, hand] = key.split("|");
 
         //console.log("DAYCHART date=["+date+"]");
@@ -127,6 +120,10 @@ function dayChartDate(days) {
         }
         //console.log("DAYCHART FOUND A RECORD");
         if (runHistory[key].isFreePlay) {
+          // Free play: filter by time only (at least 10 seconds)
+          if (runHistory[key].elapsed < 10000) {
+            continue;
+          }
           // free play items have far less data
           pr += "<tr style=text-align:center>";
           pr += "<td style=text-align:left;background-color:beige;color:purple>"+preset+"</td>";
@@ -148,6 +145,14 @@ function dayChartDate(days) {
             "</td><td></td><td></td><td></td><td></td><td></td>";
           pr += "</tr>";
 
+          continue;
+        }
+
+        // Regular practice: filter by reps AND time
+        if (runHistory[key].reps < 3 || runHistory[key].elapsed < 10000) {
+          // very few reps or less than 10 seconds of practice time that day,
+          // this is usually just an error like selected wrong number of octaves and didn't realize it
+          // so don't bother showing it on the day chart.
           continue;
         }
 

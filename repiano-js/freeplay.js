@@ -85,9 +85,20 @@ async function logFreePlay(elapsed, replace=false) {
               "elapsed:", oldElapsed, "->", runHistory[key].elapsed);
 
   console.log("[LOGFREEPLAY] Calling saveRunHistory (awaiting)...");
+  console.log("[LOGFREEPLAY] Entry to save:", JSON.stringify(runHistory[key], null, 2));
   await saveRunHistory();
   console.log("[LOGFREEPLAY] saveRunHistory returned");
   console.log("[LOGFREEPLAY] Completed, total elapsed:", runHistory[key].elapsed);
+  console.log("[LOGFREEPLAY] Final entry:", JSON.stringify(runHistory[key], null, 2));
+  
+  // Add to Vimsy buffer if enabled
+  if (typeof getVimsyPreferences === 'function' && typeof isVimsyEnabled === 'function' && typeof addToVimsyBuffer === 'function') {
+    const prefs = getVimsyPreferences();
+    if (isVimsyEnabled() && prefs.autoSync && prefs.includeFreePlay) {
+      console.log("[Vimsy] Adding free play to buffer:", testOptions.shortName, elapsed);
+      addToVimsyBuffer(elapsed, testOptions.shortName);
+    }
+  }
 }
 
 function showFreePlay() {

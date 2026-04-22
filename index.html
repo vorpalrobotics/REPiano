@@ -273,6 +273,12 @@ TO IMPLEMENT:
   <div id="prefsScreen" class="prefs-screen" style="display:none;position:fixed;top:25px;right:25px;background-color:lightgrey;padding:10px;">
     <div style="max-height:70vh;overflow-y:auto;">
     <h2 style=margin-top:2px;padding-top:2px;>Preferences</h2>
+    
+    <button onclick="showVimsyModal()" style="background-color:#667eea;color:white;padding:8px 16px;border:none;border-radius:6px;cursor:pointer;margin-bottom:15px;font-weight:600;">
+      ☁️ Vimsy Cloud Sync
+    </button>
+    <br>
+    
     <label>
       <input id='autoFullscreenStartToggle' type="checkbox" onchange="togglePref('autoFullscreenStart')" checked />
       Auto Full Screen on START
@@ -853,6 +859,128 @@ TO IMPLEMENT:
   </div>
 </div>  <!-- end of Free Play container -->
 
+<!-- Vimsy Cloud Sync Modal -->
+<div id="vimsyContainer" style="display:none;z-index:3000000;position:fixed;top:0;left:0;width:100vw;min-height:100vh;background-color:#f5f5f5;overflow-y:auto;">
+  <button onclick="closeVimsyModal();" style="position:fixed;top:10px;right:15px;z-index:10;">
+    <span class=mf><i class="fa-regular fa-rectangle-xmark"></i></span>&nbsp;Close
+  </button>
+  
+  <div style="max-width:700px;margin:0 auto;padding:40px 20px;">
+    <h2 style="margin:0 0 10px 0;"><i class="fa-solid fa-cloud"></i> Vimsy Cloud Sync</h2>
+    <p style="color:#666;margin:0 0 30px 0;">Automatically sync your piano practice sessions to Vimsy for comprehensive health tracking.</p>
+    
+    <!-- Status Box -->
+    <div id="vimsyStatusBox" class="vimsy-status-box" style="background:#fff;border-radius:8px;padding:20px;margin-bottom:30px;border-left:4px solid #ccc;">
+      <div id="vimsyStatusText"><strong>Status:</strong> ⚫ Not Connected</div>
+    </div>
+    
+    <!-- Login Section -->
+    <div id="vimsyLoginSection" style="margin-bottom:30px;">
+      <button onclick="loginToVimsy()" style="background-color:#4285f4;color:white;padding:12px 24px;border:none;border-radius:6px;cursor:pointer;font-size:16px;font-weight:600;">
+        🔐 Login with Google
+      </button>
+      <p style="color:#666;font-size:14px;margin-top:10px;">Sign in with the same Google account you use in Vimsy</p>
+    </div>
+    
+    <!-- Logout & Settings Section (hidden until logged in) -->
+    <div id="vimsyLogoutSection" style="display:none;margin-bottom:30px;">
+      <button onclick="logoutFromVimsy()" style="background-color:#dc3545;color:white;padding:10px 20px;border:none;border-radius:6px;cursor:pointer;font-weight:600;">
+        🚪 Logout
+      </button>
+      
+      <div style="margin-top:20px;background:#fff;border-radius:8px;padding:20px;">
+        <h3 style="margin:0 0 15px 0;font-size:16px;">Sync Settings</h3>
+        
+        <label style="display:block;margin-bottom:10px;">
+          <input type="checkbox" id="vimsyAutoSyncCheck" onchange="setVimsyPreference('autoSync', this.checked)" checked>
+          <strong>Auto-sync practice sessions</strong>
+        </label>
+        
+        <label style="display:block;margin-bottom:10px;">
+          <input type="checkbox" id="vimsyIncludeFreePlayCheck" onchange="setVimsyPreference('includeFreePlay', this.checked)" checked>
+          Include free play sessions
+        </label>
+        
+        <label style="display:block;margin-bottom:15px;">
+          <input type="checkbox" id="vimsyIncludePracticeCheck" onchange="setVimsyPreference('includePractice', this.checked)" checked>
+          Include timed practice sessions
+        </label>
+        
+        <label style="display:block;">
+          <strong>Buffer time (hours):</strong>
+          <input type="number" id="vimsyBufferHoursInput" min="0.01" max="24" step="0.1" value="1.0" 
+                 onchange="setVimsyPreference('bufferHours', this.value)"
+                 style="width:80px;padding:4px;margin-left:10px;">
+          <span style="color:#666;font-size:13px;margin-left:10px;">Time to accumulate before syncing (use 0.01 for testing)</span>
+        </label>
+      </div>
+    </div>
+    
+    <!-- Buffer Status Section (hidden until logged in) -->
+    <div id="vimsyBufferSection" style="display:none;margin-bottom:30px;">
+      <div style="background:#fff;border-radius:8px;padding:20px;">
+        <h3 style="margin:0 0 15px 0;font-size:16px;">📊 Current Session Buffer</h3>
+        <div id="vimsyBufferDisplay" style="color:#666;font-size:14px;">
+          <em>No practice data buffered yet</em>
+        </div>
+        
+        <div style="margin-top:15px;">
+          <button onclick="manualSyncNow()" style="background-color:#28a745;color:white;padding:8px 16px;border:none;border-radius:6px;cursor:pointer;font-weight:600;margin-right:10px;">
+            📤 Sync Now
+          </button>
+          <button onclick="manualClearBuffer()" style="background-color:#ffc107;color:#333;padding:8px 16px;border:none;border-radius:6px;cursor:pointer;font-weight:600;">
+            🗑️ Clear Buffer
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Activity Log -->
+    <div style="margin-bottom:30px;">
+      <div style="background:#fff;border-radius:8px;padding:20px;">
+        <h3 style="margin:0 0 15px 0;font-size:16px;">Activity Log</h3>
+        <div id="vimsyActivityLog" style="max-height:300px;overflow-y:auto;font-size:14px;">
+          <div class="vimsy-log-entry info">
+            <span class="vimsy-log-time" style="color:#999;margin-right:10px;">Ready</span>
+            <span class="vimsy-log-message">Waiting for login...</span>
+          </div>
+        </div>
+        <button onclick="clearVimsyLog()" style="background-color:#6c757d;color:white;padding:6px 12px;border:none;border-radius:4px;cursor:pointer;margin-top:10px;font-size:13px;">
+          Clear Log
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- End Vimsy Modal -->
+
+<style>
+.vimsy-status-box.connected {
+  border-left-color: #28a745 !important;
+  background: #d4edda !important;
+}
+.vimsy-log-entry {
+  padding: 6px 0;
+  border-bottom: 1px solid #eee;
+}
+.vimsy-log-entry:last-child {
+  border-bottom: none;
+}
+.vimsy-log-entry.success .vimsy-log-message {
+  color: #28a745;
+}
+.vimsy-log-entry.error .vimsy-log-message {
+  color: #dc3545;
+}
+.vimsy-log-entry.warning .vimsy-log-message {
+  color: #ffc107;
+}
+.vimsy-log-time {
+  font-size: 12px;
+  color: #999;
+}
+</style>
+
 <div id="freePlayHelp" style='display:none;z-index:3000000;position:fixed;top:0;left:0;padding-left:8px;width:100vw;min-height:100vh;background-color:lightgray;transform-origin:top;transition:0.5s ease-in-out'>
 <button onclick="animateClose('freePlayHelp');"
   style=position:fixed;top:0;right:15px><span class=mf><i class="fa-regular fa-rectangle-xmark"></i></span>
@@ -1040,8 +1168,14 @@ will generally be shorter than your clock time at the keyboard practicing, depen
 </div>
 
 
+  <!-- Firebase SDK for Vimsy integration -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
   <!-- Load modular scripts in order, then legacy code -->
   <script src="repiano-js/config.js"></script>
+  <script src="repiano-js/firebase-config.js"></script>
   <script src="repiano-js/utils.js"></script>
   <script src="repiano-js/init-globals.js"></script>
   <script src="repiano-js/idb-wrapper.js"></script>
@@ -1053,6 +1187,7 @@ will generally be shorter than your clock time at the keyboard practicing, depen
   <script src="repiano-js/skillmap.js"></script>
   <script src="repiano-js/daychart.js"></script>
   <script src="repiano-js/freeplay.js"></script>
+  <script src="repiano-js/vimsy-integration.js"></script>
   <script src="repiano-js/manage.js"></script>
   <script src="repiano-js/scales.js"></script>
   <script src="repiano-js/import-export.js"></script>
