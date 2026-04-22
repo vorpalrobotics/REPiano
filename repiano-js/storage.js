@@ -249,6 +249,10 @@ async function restoreRunHistoryFromJSON(importedJSON) {
       loadFreePlay();
       console.log('FreePlay reloaded, count:', freePlay.length);
       
+      // Reset backup timestamp since we just imported fresh data
+      console.log('Resetting backup timestamp...');
+      localStorage.setItem('lastBackupDate', new Date().toISOString());
+      
       console.log('=== IMPORT SUCCESSFUL ===');
       alert('Data successfully imported!');
       console.log('Reloading page...');
