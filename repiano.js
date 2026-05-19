@@ -8329,8 +8329,13 @@ function formatTime(seconds) {
 let run = 0;
 
 async function endTest() {
+  // Capture elapsed and stop the clock display immediately, before any async work.
+  const elapsed = Date.now() - testStartTime + testPauseTime;
+  testStartTime = null;
+  testPauseTime = 0;
+  console.log("Cleared testPauseTime in endtest");
+
   if (testOptions.isFreePlay) {
-    const elapsed = Date.now() - testStartTime + testPauseTime;
     await logFreePlay(elapsed);
     console.log("Free play time logged in endTest");
     
@@ -8344,7 +8349,6 @@ async function endTest() {
     //document.getElementById("PresetMenu").disabled = false; // it was disabled during the test.
   } else {
     // Regular timed practice (not free play)
-    const elapsed = Date.now() - testStartTime + testPauseTime;
     if (typeof getVimsyPreferences === 'function' && typeof isVimsyEnabled === 'function' && typeof addToVimsyBuffer === 'function') {
       const prefs = getVimsyPreferences();
       if (isVimsyEnabled() && prefs.autoSync && prefs.includePractice && elapsed > 0) {
@@ -8353,9 +8357,6 @@ async function endTest() {
       }
     }
   }
-  testStartTime = null;
-  testPauseTime = 0;
-  console.log("Cleared testPauseTime in endtest");
   enablePresetMenu();
 
   if (preferences.autoExitFullscreenStop) {
